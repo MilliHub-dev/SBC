@@ -33,7 +33,7 @@ app.post("/sign-payload", async (req, res) => {
 
     const signedPayload = await contract.erc20.signature.generate({
       to: walletAddress,
-      quantity: amount.toString(), // ensure it's string format
+      quantity: amount.toString(), 
     });
 
     res.json(signedPayload);
