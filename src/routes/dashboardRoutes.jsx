@@ -6,6 +6,7 @@ import ConvertTokens from "../dashboard/pages/convert/ConvertTokens";
 import Rewards from "../dashboard/pages/rewards/Rewards";
 import Staking from "../dashboard/pages/staking/Staking";
 import Swap from "../dashboard/pages/swap/Swap";
+import AdminPanel from "../dashboard/pages/admin/AdminPanel";
 
 export const dashboardRoutes = [
 	{
@@ -37,6 +38,10 @@ export const dashboardRoutes = [
 			{
 				path: "swap-tokens",
 				element: <Swap />,
+			},
+			{
+				path: "admin",
+				element: <AdminPanel />,
 			},
 		],
 	},
