@@ -7,231 +7,203 @@ import {
 	Collapsible,
 	IconButton,
 	Image,
+	Container,
+	Heading,
+	VStack,
+	HStack,
+	Card,
+	CardBody,
+	Select,
+	Alert,
+	AlertIcon,
+	useToast,
+	FormControl,
+	FormLabel,
+	Badge
 } from "@chakra-ui/react";
 import React, { useState } from "react";
-import { FaArrowDown, FaChevronDown, FaChevronUp } from "react-icons/fa6";
+import { FaArrowDown, FaChevronDown, FaChevronUp, FaEthereum } from "react-icons/fa6";
 import { IoMdRefresh } from "react-icons/io";
+import { useWeb3 } from "../../../hooks/useWeb3";
 
 const BuyTokens = () => {
 	const [isCollapsibleOpen, setIsCollapasibleOpen] = useState(null);
+	const [paymentMethod, setPaymentMethod] = useState('polygon');
+	const [amount, setAmount] = useState('');
+	const [isLoading, setIsLoading] = useState(false);
+	
+	const { 
+		isConnected, 
+		ethBalance, 
+		sabiBalance, 
+		buySabiWithPolygon, 
+		buySabiWithUSDT 
+	} = useWeb3();
+	const toast = useToast();
+
+	const handleBuy = async () => {
+		if (!isConnected) {
+			toast({
+				title: 'Wallet Not Connected',
+				description: 'Please connect your wallet first',
+				status: 'error',
+				duration: 3000,
+				isClosable: true,
+			});
+			return;
+		}
+
+		if (!amount || parseFloat(amount) <= 0) {
+			toast({
+				title: 'Invalid Amount',
+				description: 'Please enter a valid amount',
+				status: 'error',
+				duration: 3000,
+				isClosable: true,
+			});
+			return;
+		}
+
+		setIsLoading(true);
+		try {
+			if (paymentMethod === 'polygon') {
+				await buySabiWithPolygon(amount);
+				toast({
+					title: 'Purchase Successful',
+					description: `Successfully bought Sabi Cash with ${amount} ETH`,
+					status: 'success',
+					duration: 5000,
+					isClosable: true,
+				});
+			} else if (paymentMethod === 'usdt') {
+				await buySabiWithUSDT(amount);
+				toast({
+					title: 'Purchase Successful',
+					description: `Successfully bought Sabi Cash with ${amount} USDT`,
+					status: 'success',
+					duration: 5000,
+					isClosable: true,
+				});
+			}
+			setAmount('');
+		} catch (error) {
+			toast({
+				title: 'Purchase Failed',
+				description: error.message,
+				status: 'error',
+				duration: 5000,
+				isClosable: true,
+			});
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
 	return (
-		<Box
-			display={"flex"}
-			alignItems={"center"}
-			justifyContent={"center"}
-			w={"full"}
-		>
-			<Box
-				w={{ base: "80%", md: "40%" }}
-				bg={"gray.900"}
-				padding={"2rem 1.8rem"}
-				rounded={"lg"}
-				display={"flex"}
-				flexDir={"column"}
-				gap={5}
-			>
-				<Box
-					display={"flex"}
-					justifyContent={"space-between"}
-					alignItems={"center"}
-				>
-					<Box>
-						<Text as={"h2"} fontSize={20} fontWeight={"bold"}>
-							Buy Crypto
-						</Text>
-						<Text mt={3} fontSize={18}>
-							Buy crypto in just a few clicks
-						</Text>
-					</Box>
-					<Button bg={"transparent"} border={"none"} color={"#0088CD"}>
-						<Icon height={"70px"} width={"35px"}>
-							<IoMdRefresh />
-						</Icon>
-					</Button>
+		<Container maxW="2xl" py={8}>
+			<VStack spacing={6} align="stretch">
+				<Box textAlign="center">
+					<Heading size="lg" mb={2}>Buy Sabi Cash</Heading>
+					<Text color="gray.600">
+						Purchase Sabi Cash tokens with Polygon (ETH) or USDT
+					</Text>
 				</Box>
 
-				{/* Crypto Inputs */}
-				<Box>
-					<Box
-						display={"flex"}
-						justifyContent={"space-between"}
-						alignItems={"center"}
-						bg={"gray.800"}
-						padding={".35rem .2rem"}
-						rounded={"lg"}
-					>
-						<Input
-							type="text"
-							placeholder="000"
-							w={"1/2"}
-							outline={"none"}
-							focusRing={"none"}
-							border={0}
-							paddingInline={"1rem"}
-						/>
-						<Box w={"1px"} height={"30px"} bg={"gray.700"}></Box>
-						<Button w={"1/2"} bg={"transparent"}>
-							<Box
-								height={"full"}
-								display={"flex"}
-								alignItems={"center"}
-							>
-								<Image
-									src={"../Sabi-Cash-logo-icon-dollar.png"}
-									w={10}
-									height={"full"}
-								/>
-								<Text fontWeight={""}>Sabi Cash</Text>
-							</Box>
-							<FaChevronDown style={{ width: "20px", height: "10px" }} />
-						</Button>
-					</Box>
-					<Box
-						justifySelf={"center"}
-						bg={"gray.800"}
-						padding={".34rem"}
-						rounded={"full"}
-						// marginBlock={1}
-					>
-						<Icon size={"md"}>
-							<FaArrowDown />
-						</Icon>
-					</Box>
-					<Box
-						display={"flex"}
-						justifyContent={"space-between"}
-						alignItems={"center"}
-						bg={"gray.800"}
-						padding={".35rem .2rem"}
-						rounded={"lg"}
-					>
-						<Input
-							type="text"
-							placeholder="000"
-							w={"1/2"}
-							outline={"none"}
-							focusRing={"none"}
-							border={0}
-							paddingInline={"1rem"}
-						/>
-						<Box w={"1px"} height={"30px"} bg={"gray.700"}></Box>
-						<Button w={"1/2"} bg={"transparent"}>
-							<Box
-								height={"full"}
-								display={"flex"}
-								alignItems={"center"}
-							>
-								<Image
-									src={"../Sabi-Cash-logo-icon-dollar.png"}
-									w={10}
-									height={"full"}
-								/>
-								<Text fontWeight={""}>Sabi Cash</Text>
-							</Box>
-							<FaChevronDown style={{ width: "20px", height: "10px" }} />
-						</Button>
-					</Box>
-				</Box>
+				{!isConnected && (
+					<Alert status="warning">
+						<AlertIcon />
+						Please connect your wallet to buy Sabi Cash
+					</Alert>
+				)}
 
-				{/* Choosen Crypto */}
-				<Box
-					alignSelf={"center"}
-					display={"flex"}
-					alignItems={"center"}
-					justifyContent={"center"}
-					bg={"gray.700"}
-					rounded={"full"}
-					padding={".2rem 2rem"}
-				>
-					<IconButton bg={"transparent"} p={0}>
-						e
-					</IconButton>
-					<Text>Sabi Cash</Text>
-				</Box>
+				{isConnected && (
+					<>
+						<Card>
+							<CardBody>
+								<VStack spacing={4}>
+									<HStack justify="space-between" w="full">
+										<Text fontWeight="bold">ETH Balance:</Text>
+										<Badge colorScheme="blue" fontSize="md" p={2}>
+											{ethBalance} ETH
+										</Badge>
+									</HStack>
+									<HStack justify="space-between" w="full">
+										<Text fontWeight="bold">Sabi Cash Balance:</Text>
+										<Badge colorScheme="green" fontSize="md" p={2}>
+											{sabiBalance} SABI
+										</Badge>
+									</HStack>
+								</VStack>
+							</CardBody>
+						</Card>
 
-				{/* Fees Details  */}
+						<Card>
+							<CardBody>
+								<VStack spacing={4}>
+									<FormControl>
+										<FormLabel>Payment Method</FormLabel>
+										<Select 
+											value={paymentMethod} 
+											onChange={(e) => setPaymentMethod(e.target.value)}
+										>
+											<option value="polygon">Polygon (ETH)</option>
+											<option value="usdt">USDT</option>
+										</Select>
+									</FormControl>
 
-				<Collapsible.Root
-					unmountOnExit
-					onOpenChange={(e) => setIsCollapasibleOpen(e.open)}
-				>
-					<Collapsible.Trigger
-						paddingY="3"
-						paddingX={3}
-						mb={2}
-						display={"flex"}
-						alignItems={"center"}
-						justifyContent={"space-between"}
-						w={"full"}
-						rounded={"lg"}
-						border={"1px dotted"}
-						borderColor={"gray.700"}
-					>
-						<Text>Est total fees: $5.55</Text>
-						<Text
-							display={"flex"}
-							alignItems={"center"}
-							gap={2}
-							color={"#0088CD"}
-							fontWeight={"bold"}
-							fontSize={15}
-						>
-							<Text>
-								{isCollapsibleOpen ? "Hide Details" : "Show Details"}
-							</Text>
-							{isCollapsibleOpen ? (
-								<FaChevronDown
-									style={{ width: "20px", height: "14px" }}
-								/>
-							) : (
-								<FaChevronUp
-									style={{ width: "20px", height: "14px" }}
-								/>
-							)}
-						</Text>
-					</Collapsible.Trigger>
-					<Collapsible.Content>
-						<Box
-							padding="4"
-							border={"1px dotted"}
-							borderColor={"gray.700"}
-							rounded={"lg"}
-						>
-							<Box
-								display={"flex"}
-								justifyContent={"space-between"}
-								alignItems={"center"}
-								mb={1}
-							>
-								<Text color={"gray.700"}>Provider Fees</Text>
-								<Text fontWeight={"bold"}>${4.99}</Text>
-							</Box>
-							<Box
-								display={"flex"}
-								justifyContent={"space-between"}
-								alignItems={"center"}
-							>
-								<Text color={"gray.700"}>Sabi Cash Fees</Text>
-								<Text fontWeight={"bold"}>${1.99}</Text>
-							</Box>
-						</Box>
-					</Collapsible.Content>
-				</Collapsible.Root>
+									<FormControl>
+										<FormLabel>
+											Amount {paymentMethod === 'polygon' ? '(ETH)' : '(USDT)'}
+										</FormLabel>
+										<Input
+											type="number"
+											step="0.001"
+											placeholder={`Enter amount in ${paymentMethod === 'polygon' ? 'ETH' : 'USDT'}`}
+											value={amount}
+											onChange={(e) => setAmount(e.target.value)}
+										/>
+									</FormControl>
 
-				{/* Connect Wallet Button=  */}
-				<Box>
-					<Button
-						bg={"#0088CD"}
-						w={"full"}
-						rounded={"lg"}
-						fontWeight={"bold"}
-						padding={"22px 12px"}
-					>
-						Connect Wallet
-					</Button>
-				</Box>
-			</Box>
-		</Box>
+									<Button
+										bg="#0088CD"
+										color="white"
+										size="lg"
+										w="full"
+										onClick={handleBuy}
+										isLoading={isLoading}
+										loadingText="Processing..."
+										isDisabled={!isConnected || !amount}
+										_hover={{ bg: "#0077B6" }}
+									>
+										Buy Sabi Cash
+									</Button>
+								</VStack>
+							</CardBody>
+						</Card>
+
+						<Card bg="blue.50" borderColor="blue.200">
+							<CardBody>
+								<VStack spacing={3} align="start">
+									<Text fontWeight="bold" color="blue.800">Purchase Information:</Text>
+									<Text fontSize="sm" color="blue.700">
+										• Buy Sabi Cash directly with Polygon (ETH) or USDT
+									</Text>
+									<Text fontSize="sm" color="blue.700">
+										• Tokens will be minted to your connected wallet
+									</Text>
+									<Text fontSize="sm" color="blue.700">
+										• Make sure you have enough balance for transaction fees
+									</Text>
+									<Text fontSize="sm" color="blue.700">
+										• Contract deployment required before purchases can be made
+									</Text>
+								</VStack>
+							</CardBody>
+						</Card>
+					</>
+				)}
+			</VStack>
+		</Container>
 	);
 };
 
