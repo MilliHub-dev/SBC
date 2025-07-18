@@ -7,13 +7,23 @@ import {
   Image,
   Link,
   Text,
+  Badge,
+  useDisclosure
 } from "@chakra-ui/react";
 import React from "react";
-import { FaWallet } from "react-icons/fa6";
+import { FaWallet, FaUser } from "react-icons/fa6";
 import { IoMenuSharp } from "react-icons/io5";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useWeb3 } from "../../../hooks/useWeb3";
+import LoginModal from "../../../components/Login/LoginModal";
 
 const DashboardNav = ({ onToggleSidebar }) => {
+  const { isConnected, address, isLoggedIn, userPoints, sabiBalance, ethBalance } = useWeb3();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   return (
+    <>
+      <LoginModal isOpen={isOpen} onClose={onClose} />
     <Container
       fluid
       position={"fixed"}
@@ -52,29 +62,43 @@ const DashboardNav = ({ onToggleSidebar }) => {
             objectFit={"contain"}
           />
         </Box>
-        <Box display={"flex"} gap={"3"} fontSize={14}>
-          {/* <Button
-            bg={"#0088CD"}
-            rounded={"sm"}
-            padding={".3rem 1rem"}
-            color={"#fff"}
-          >
-            <Icon>
-              <FaWallet />
-            </Icon>
-            Price History
-          </Button> */}
-          <Button
-            bg={"gray.900"}
-            rounded={"sm"}
-            padding={".3rem 1rem"}
-            color={"#fff"}
-          >
-            <Icon size={"sm"}>
-              <FaWallet />
-            </Icon>
-            Connect Wallet
-          </Button>
+        <Box display={"flex"} gap={"3"} fontSize={14} alignItems="center">
+          {isConnected && (
+            <Box display={{ base: "none", md: "flex" }} alignItems="center" gap={3}>
+              <Box textAlign="center">
+                <Text fontSize="xs" color="gray.400">ETH</Text>
+                <Text fontSize="sm" fontWeight="bold">{ethBalance}</Text>
+              </Box>
+              <Box textAlign="center">
+                <Text fontSize="xs" color="gray.400">SABI</Text>
+                <Text fontSize="sm" fontWeight="bold">{sabiBalance}</Text>
+              </Box>
+              {isLoggedIn && (
+                <Box textAlign="center">
+                  <Text fontSize="xs" color="gray.400">Points</Text>
+                  <Text fontSize="sm" fontWeight="bold">{userPoints}</Text>
+                </Box>
+              )}
+            </Box>
+          )}
+          
+          {isConnected && !isLoggedIn && (
+            <Button
+              bg={"#0088CD"}
+              rounded={"sm"}
+              padding={".3rem 1rem"}
+              color={"#fff"}
+              onClick={onOpen}
+              size="sm"
+            >
+              <Icon mr={2}>
+                <FaUser />
+              </Icon>
+              Login to Sabi Ride
+            </Button>
+          )}
+          
+          <ConnectButton />
           <Link
             as={"button"}
             href="#"
@@ -94,6 +118,7 @@ const DashboardNav = ({ onToggleSidebar }) => {
         </Box>
       </Box>
     </Container>
+    </>
   );
 };
 

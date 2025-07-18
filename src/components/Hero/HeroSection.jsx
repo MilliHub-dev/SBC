@@ -2,8 +2,18 @@ import { Box, Button, Container, Image, Text } from "@chakra-ui/react";
 import React from "react";
 import { cryptoImgData } from "../../assets/images/imagesData";
 import MinersCard from "../MinersCard/MinersCard";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useWeb3 } from "../../hooks/useWeb3";
+import { useNavigate } from "react-router";
 
 const HeroSection = () => {
+	const { isConnected, address } = useWeb3();
+	const navigate = useNavigate();
+
+	const handleDashboardClick = () => {
+		navigate('/dashboard');
+	};
+
 	return (
 		<Container mt={5}>
 			<Box
@@ -75,23 +85,44 @@ const HeroSection = () => {
 					alignItems={"center"}
 					fontWeight={"500"}
 					gap={{ base: 3, md: 10 }}
+					flexDirection={{ base: "column", md: "row" }}
 				>
-					<Button
-						padding={{ base: "1.6rem 1.4rem", md: "1.9rem 1.7rem" }}
-						bg={"#0088CD"}
-						color={"#fff"}
-						rounded={"lg"}
-					>
-						Start Mining Now
-					</Button>
-					<Button
-						padding={{ base: "1.6rem 1.4rem", md: "1.9rem 1.7rem" }}
-						bg={"gray.800"}
-						color={"#fff"}
-						rounded={"lg"}
-					>
-						Join Community
-					</Button>
+					{!isConnected ? (
+						<>
+							<ConnectButton />
+							<Button
+								padding={{ base: "1.6rem 1.4rem", md: "1.9rem 1.7rem" }}
+								bg={"gray.800"}
+								color={"#fff"}
+								rounded={"lg"}
+							>
+								Join Community
+							</Button>
+						</>
+					) : (
+						<>
+							<Box 
+								display="flex" 
+								alignItems="center" 
+								gap={4}
+								flexDirection={{ base: "column", md: "row" }}
+							>
+								<Text fontSize="sm" color="gray.600">
+									Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+								</Text>
+								<Button
+									padding={{ base: "1.6rem 1.4rem", md: "1.9rem 1.7rem" }}
+									bg={"#0088CD"}
+									color={"#fff"}
+									rounded={"lg"}
+									onClick={handleDashboardClick}
+								>
+									Go to Dashboard
+								</Button>
+								<ConnectButton />
+							</Box>
+						</>
+					)}
 				</Box>
 				<MinersCard />
 			</Box>
