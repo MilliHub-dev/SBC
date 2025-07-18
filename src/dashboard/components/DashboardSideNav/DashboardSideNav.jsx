@@ -3,7 +3,7 @@ import { Box, Icon, Image, Link as ChakraLink, Text } from "@chakra-ui/react";
 import React from "react";
 import { IoMenuSharp } from "react-icons/io5";
 
-import { Link, useLocation } from "react-router";
+import { Link, useLocation } from "react-router-dom";
 import { RiQuestionLine } from "react-icons/ri";
 import navigationItems from "./NavigationItems";
 import NavItem from "./NavItem";

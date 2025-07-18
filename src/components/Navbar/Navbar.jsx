@@ -8,7 +8,7 @@ import {
 	Link as ChakraLink,
 	Text,
 } from "@chakra-ui/react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { LuMoon, LuSun } from "react-icons/lu";
 import { CiMenuKebab } from "react-icons/ci";
 // import { useColorMode, useColorModeValue } from "../ui/color-mode";

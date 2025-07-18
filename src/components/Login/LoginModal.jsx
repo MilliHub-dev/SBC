@@ -25,7 +25,7 @@ const LoginModal = ({ isOpen, onClose }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { loginToSabiRide, isConnected } = useWeb3();
+  // const { loginToSabiRide, isConnected } = useWeb3();
   const toast = useToast();
 
   const handleInputChange = (e) => {
@@ -39,11 +39,6 @@ const LoginModal = ({ isOpen, onClose }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     
-    if (!isConnected) {
-      setError('Please connect your wallet first');
-      return;
-    }
-
     if (!formData.email || !formData.password) {
       setError('Please fill in all fields');
       return;
@@ -53,7 +48,7 @@ const LoginModal = ({ isOpen, onClose }) => {
     setError('');
 
     try {
-      await loginToSabiRide(formData);
+      // Mock login for now
       toast({
         title: 'Login Successful',
         description: 'You can now access your Sabi Ride points and features',
@@ -87,12 +82,7 @@ const LoginModal = ({ isOpen, onClose }) => {
             Login to access your Sabi Ride points and convert them to Sabi Cash
           </Text>
           
-          {!isConnected && (
-            <Alert status="warning" mb={4}>
-              <AlertIcon />
-              Please connect your wallet first before logging in
-            </Alert>
-          )}
+
 
           {error && (
             <Alert status="error" mb={4}>
@@ -132,7 +122,7 @@ const LoginModal = ({ isOpen, onClose }) => {
                 width="full"
                 isLoading={isLoading}
                 loadingText="Logging in..."
-                isDisabled={!isConnected}
+                isDisabled={false}
                 _hover={{ bg: "#0077B6" }}
               >
                 Login

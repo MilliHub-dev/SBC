@@ -2,7 +2,7 @@ import React from "react";
 import DashboardNav from "../components/DashboardNav/DashboardNav";
 import DashboardSideNav from "../components/DashboardSideNav/DashboardSideNav";
 import { Box, Container } from "@chakra-ui/react";
-import { Outlet } from "react-router";
+import { Outlet } from "react-router-dom";
 import "../../index.css";
 import { useState } from "react";
 

@@ -13,7 +13,6 @@ import {
 import React from "react";
 import { FaWallet, FaUser } from "react-icons/fa6";
 import { IoMenuSharp } from "react-icons/io5";
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useWeb3 } from "../../../hooks/useWeb3";
 import LoginModal from "../../../components/Login/LoginModal";
 
@@ -82,23 +81,32 @@ const DashboardNav = ({ onToggleSidebar }) => {
             </Box>
           )}
           
-          {isConnected && !isLoggedIn && (
-            <Button
-              bg={"#0088CD"}
-              rounded={"sm"}
-              padding={".3rem 1rem"}
-              color={"#fff"}
-              onClick={onOpen}
-              size="sm"
-            >
-              <Icon mr={2}>
-                <FaUser />
-              </Icon>
-              Login to Sabi Ride
-            </Button>
-          )}
+          <Button
+            bg={"#0088CD"}
+            rounded={"sm"}
+            padding={".3rem 1rem"}
+            color={"#fff"}
+            onClick={onOpen}
+            size="sm"
+          >
+            <Icon mr={2}>
+              <FaUser />
+            </Icon>
+            Login to Sabi Ride
+          </Button>
           
-          <ConnectButton />
+          <Button
+            bg={"gray.800"}
+            rounded={"sm"}
+            padding={".3rem 1rem"}
+            color={"#fff"}
+            size="sm"
+          >
+            <Icon mr={2}>
+              <FaWallet />
+            </Icon>
+            Connect Wallet
+          </Button>
           <Link
             as={"button"}
             href="#"
