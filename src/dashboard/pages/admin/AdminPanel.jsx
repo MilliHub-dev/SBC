@@ -13,7 +13,9 @@ import {
   Alert,
   AlertIcon,
   useToast,
+
   Tabs,
+
   Badge,
   Icon,
   Stat,
@@ -284,6 +286,7 @@ const AdminPanel = () => {
         {/* Admin Navigation */}
         <Card>
           <CardBody>
+
             <Tabs.Root value={activeTab.toString()} onValueChange={(details) => setActiveTab(parseInt(details.value))}>
               <Tabs.List>
                 {adminTabs.map((tab, index) => (
@@ -304,6 +307,7 @@ const AdminPanel = () => {
                 </Tabs.Content>
               ))}
             </Tabs.Root>
+
           </CardBody>
         </Card>
 

@@ -2,12 +2,18 @@ import { Box, Button, Container, Image, Text } from "@chakra-ui/react";
 import React from "react";
 import { cryptoImgData } from "../../assets/images/imagesData";
 import MinersCard from "../MinersCard/MinersCard";
+
+import { useNavigate } from "react-router-dom";
+
+const HeroSection = () => {
+
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useWeb3 } from "../../hooks/useWeb3";
 import { useNavigate } from "react-router";
 
-const HeroSection = () => {
+
 	const { isConnected, address } = useWeb3();
+
 	const navigate = useNavigate();
 
 	const handleDashboardClick = () => {
@@ -87,6 +93,8 @@ const HeroSection = () => {
 					gap={{ base: 3, md: 10 }}
 					flexDirection={{ base: "column", md: "row" }}
 				>
+
+
 					{!isConnected ? (
 						<>
 							<ConnectButton />
@@ -123,6 +131,7 @@ const HeroSection = () => {
 							</Box>
 						</>
 					)}
+
 				</Box>
 				<MinersCard />
 			</Box>

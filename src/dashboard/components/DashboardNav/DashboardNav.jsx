@@ -13,7 +13,9 @@ import {
 import React from "react";
 import { FaWallet, FaUser } from "react-icons/fa6";
 import { IoMenuSharp } from "react-icons/io5";
+
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+
 import { useWeb3 } from "../../../hooks/useWeb3";
 import LoginModal from "../../../components/Login/LoginModal";
 
@@ -81,7 +83,7 @@ const DashboardNav = ({ onToggleSidebar }) => {
               )}
             </Box>
           )}
-          
+
           {isConnected && !isLoggedIn && (
             <Button
               bg={"#0088CD"}
@@ -99,6 +101,7 @@ const DashboardNav = ({ onToggleSidebar }) => {
           )}
           
           <ConnectButton />
+
           <Link
             as={"button"}
             href="#"
