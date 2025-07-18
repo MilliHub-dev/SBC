@@ -13,6 +13,9 @@ import {
   Alert,
   AlertIcon,
   useToast,
+
+  Tabs,
+
   Badge,
   Icon,
   Stat,
@@ -283,25 +286,28 @@ const AdminPanel = () => {
         {/* Admin Navigation */}
         <Card>
           <CardBody>
-            <VStack spacing={4} align="stretch">
-              <HStack spacing={4} wrap="wrap">
+
+            <Tabs.Root value={activeTab.toString()} onValueChange={(details) => setActiveTab(parseInt(details.value))}>
+              <Tabs.List>
                 {adminTabs.map((tab, index) => (
-                  <Button
-                    key={tab.id}
-                    leftIcon={<Icon as={tab.icon} />}
-                    variant={activeTab === index ? "solid" : "outline"}
-                    colorScheme={activeTab === index ? "blue" : "gray"}
-                    onClick={() => setActiveTab(index)}
-                  >
-                    {tab.label}
-                  </Button>
+                  <Tabs.Trigger key={tab.id} value={index.toString()}>
+                    <HStack>
+                      <Icon as={tab.icon} />
+                      <Text>{tab.label}</Text>
+                    </HStack>
+                  </Tabs.Trigger>
                 ))}
-              </HStack>
-              
-              <Box>
-                {adminTabs[activeTab]?.component}
-              </Box>
-            </VStack>
+              </Tabs.List>
+
+              {adminTabs.map((tab, index) => (
+                <Tabs.Content key={tab.id} value={index.toString()}>
+                  <Box mt={6}>
+                    {tab.component}
+                  </Box>
+                </Tabs.Content>
+              ))}
+            </Tabs.Root>
+
           </CardBody>
         </Card>
 
