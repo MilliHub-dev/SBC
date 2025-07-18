@@ -5,6 +5,7 @@ import {
   LuPiggyBank,
   LuRefreshCw,
   LuShoppingCart,
+  LuShield,
 } from "react-icons/lu";
 import { PiPiggyBank } from "react-icons/pi";
 
@@ -44,6 +45,12 @@ const navigationItems = [
     path: "/dashboard/rewards",
     icon: LuGift,
     description: "View your rewards",
+  },
+  {
+    name: "admin",
+    path: "/dashboard/admin",
+    icon: LuShield,
+    description: "Admin panel",
   },
 ];
 
