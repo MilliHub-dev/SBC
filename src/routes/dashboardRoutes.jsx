@@ -15,9 +15,11 @@ export const dashboardRoutes = [
 		children: [
 			{
 				index: true,
+				element: <StartMining />,
+			},
+			{
 				path: "start-mining",
 				element: <StartMining />,
-				exact: true,
 			},
 			{
 				path: "buy",

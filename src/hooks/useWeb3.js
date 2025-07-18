@@ -298,5 +298,6 @@ export const useWeb3 = () => {
     MINING_PLANS,
     POINT_TO_SABI_RATE,
     MIN_POINT_CONVERSION,
+
   };
 };

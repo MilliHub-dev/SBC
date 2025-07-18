@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Icon, Image, Link as ChakraLink, Text } from "@chakra-ui/react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 
 const NavItem = ({ item, isExpanded, isActive }) => {
 	const IconComponent = item.icon;
