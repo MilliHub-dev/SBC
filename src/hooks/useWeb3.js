@@ -9,6 +9,7 @@ import {
   POINT_TO_SABI_RATE,
   MIN_POINT_CONVERSION 
 } from '../config/web3Config';
+import { authApi, pointsApi, walletApi } from '../config/apiConfig';
 
 export const useWeb3 = () => {
   const { address, isConnected, isConnecting, isDisconnected } = useAccount();
@@ -86,22 +87,11 @@ export const useWeb3 = () => {
 
       const sabiAmount = points * POINT_TO_SABI_RATE;
       
-      // TODO: Call backend API to validate points and clear them
-      const response = await fetch('/api/convert-points', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('sabiToken')}`,
-        },
-        body: JSON.stringify({
-          points: points,
-          walletAddress: address,
-          sabiAmount: sabiAmount,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to validate points conversion');
+      // Call backend API to validate points and clear them
+      const conversionData = await pointsApi.convertPoints(points);
+      
+      if (!conversionData.success) {
+        throw new Error(conversionData.message || 'Failed to validate points conversion');
       }
 
       // Mint Sabi Cash tokens
@@ -184,29 +174,32 @@ export const useWeb3 = () => {
   };
 
   // Login to Sabi Ride backend
-  const loginToSabiRide = async (credentials) => {
+  const loginToSabiRide = async (email, password) => {
     try {
-      // TODO: Implement actual login API call
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...credentials,
-          walletAddress: address,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('sabiToken', data.token);
-        setIsLoggedIn(true);
-        setUserPoints(data.points || 0);
-        return data;
-      } else {
-        throw new Error('Login failed');
+      const credentials = {
+        email,
+        password,
+        walletAddress: address,
+      };
+      
+      const data = await authApi.login(credentials);
+      
+      // Store the auth token
+      localStorage.setItem('sabiride_auth_token', data.token);
+      setIsLoggedIn(true);
+      setUserPoints(data.points || 0);
+      
+      // Link wallet if not already linked
+      if (address && data.token) {
+        try {
+          await walletApi.linkWallet(address, data.signature || '');
+        } catch (linkError) {
+          console.warn('Wallet linking failed:', linkError);
+          // Don't throw error for wallet linking failure
+        }
       }
+      
+      return data;
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -218,17 +211,8 @@ export const useWeb3 = () => {
     try {
       if (!isLoggedIn) return;
       
-      // TODO: Implement actual API call to get user points
-      const response = await fetch('/api/user/points', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('sabiToken')}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUserPoints(data.points || 0);
-      }
+      const data = await pointsApi.getUserPoints();
+      setUserPoints(data.points || 0);
     } catch (error) {
       console.error('Error fetching user points:', error);
     }
@@ -236,10 +220,20 @@ export const useWeb3 = () => {
 
   // Check if user is logged in on mount
   useEffect(() => {
-    const token = localStorage.getItem('sabiToken');
+    const token = localStorage.getItem('sabiride_auth_token');
     if (token) {
-      setIsLoggedIn(true);
-      fetchUserPoints();
+      // Verify token with backend
+      authApi.verifyToken()
+        .then((data) => {
+          setIsLoggedIn(true);
+          setUserPoints(data.points || 0);
+          fetchUserPoints();
+        })
+        .catch((error) => {
+          console.error('Token verification failed:', error);
+          localStorage.removeItem('sabiride_auth_token');
+          setIsLoggedIn(false);
+        });
     }
   }, []);
 

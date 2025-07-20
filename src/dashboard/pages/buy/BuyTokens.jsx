@@ -103,7 +103,6 @@ const BuyTokens = () => {
 
 				{!isConnected && (
 					<Alert status="warning">
-						<Field.Icon as={FaEthereum} />
 						Please connect your wallet to buy Sabi Cash
 					</Alert>
 				)}
