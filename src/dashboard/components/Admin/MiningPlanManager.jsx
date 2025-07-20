@@ -19,7 +19,6 @@ import {
   useDisclosure,
   Badge,
   Icon,
-  useToast,
   Switch,
   NumberInput,
   NumberInputField,
@@ -54,6 +53,7 @@ import {
   FaChartLine,
   FaClock
 } from "react-icons/fa";
+import { toaster } from "../../../components/ui/toaster";
 
 const MiningPlanManager = () => {
   const [plans, setPlans] = useState([]);
@@ -63,7 +63,6 @@ const MiningPlanManager = () => {
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure();
-  const toast = useToast();
 
   // Plan form state
   const [planForm, setPlanForm] = useState({
@@ -185,24 +184,22 @@ const MiningPlanManager = () => {
 
       setPlans(prev => [...prev, newPlan]);
       
-      toast({
-        title: 'Plan Created',
-        description: `${planForm.name} has been created successfully`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Plan Created',
+         description: `${planForm.name} has been created successfully`,
+         status: 'success',
+         duration: 3000,
+       });
 
       resetForm();
       onCreateClose();
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to create plan. Please try again.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Error',
+         description: 'Failed to create plan. Please try again.',
+         status: 'error',
+         duration: 3000,
+       });
     } finally {
       setIsLoading(false);
     }
@@ -224,23 +221,21 @@ const MiningPlanManager = () => {
           : plan
       ));
 
-      toast({
-        title: 'Plan Updated',
-        description: `${planForm.name} has been updated successfully`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Plan Updated',
+         description: `${planForm.name} has been updated successfully`,
+         status: 'success',
+         duration: 3000,
+       });
 
       onClose();
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update plan. Please try again.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Error',
+         description: 'Failed to update plan. Please try again.',
+         status: 'error',
+         duration: 3000,
+       });
     } finally {
       setIsLoading(false);
     }
@@ -259,42 +254,38 @@ const MiningPlanManager = () => {
       ));
 
       const plan = plans.find(p => p.id === planId);
-      toast({
-        title: 'Plan Status Updated',
-        description: `${plan.name} has been ${plan.isActive ? 'deactivated' : 'activated'}`,
-        status: 'info',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Plan Status Updated',
+         description: `${plan.name} has been ${plan.isActive ? 'deactivated' : 'activated'}`,
+         status: 'info',
+         duration: 3000,
+       });
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update plan status',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Error',
+         description: 'Failed to update plan status',
+         status: 'error',
+         duration: 3000,
+       });
     }
   };
 
   const handleDeletePlan = async (planId) => {
     try {
       setPlans(prev => prev.filter(plan => plan.id !== planId));
-      toast({
-        title: 'Plan Deleted',
-        description: 'Mining plan has been deleted successfully',
-        status: 'info',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Plan Deleted',
+         description: 'Mining plan has been deleted successfully',
+         status: 'info',
+         duration: 3000,
+       });
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to delete plan',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Error',
+         description: 'Failed to delete plan',
+         status: 'error',
+         duration: 3000,
+       });
     }
   };
 
