@@ -8,23 +8,15 @@ import {
   HStack,
   Text,
   Input,
-  FormControl,
-  FormLabel,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
+  Field,
+  Dialog,
+  Portal,
+  CloseButton,
   useDisclosure,
   Badge,
   Icon,
   Switch,
   NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
   Heading,
   SimpleGrid,
   Stat,
@@ -515,26 +507,32 @@ const MiningPlanManager = () => {
       </Card>
 
       {/* Create Plan Modal */}
-      <Modal isOpen={isCreateOpen} onClose={onCreateClose} size="xl">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Create New Mining Plan</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
+      <Dialog.Root open={isCreateOpen} onOpenChange={(e) => !e.open && onCreateClose()} size="xl">
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>Create New Mining Plan</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.CloseTrigger asChild>
+                <CloseButton size="sm" />
+              </Dialog.CloseTrigger>
+              <Dialog.Body pb={6}>
             <form onSubmit={handleCreatePlan}>
               <VStack spacing={4}>
                 <HStack w="full" spacing={4}>
-                  <FormControl isRequired>
-                    <FormLabel>Plan Name</FormLabel>
+                  <Field.Root required>
+                    <Field.Label>Plan Name</Field.Label>
                     <Input
                       value={planForm.name}
                       onChange={(e) => setPlanForm(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="Enter plan name"
                     />
-                  </FormControl>
+                  </Field.Root>
 
-                  <FormControl isRequired>
-                    <FormLabel>Plan Type</FormLabel>
+                  <Field.Root required>
+                    <Field.Label>Plan Type</Field.Label>
                     <Select
                       value={planForm.type}
                       onChange={(e) => setPlanForm(prev => ({ ...prev, type: e.target.value }))}
@@ -542,23 +540,23 @@ const MiningPlanManager = () => {
                       <option value="MINING">Mining</option>
                       <option value="STAKING">Staking</option>
                     </Select>
-                  </FormControl>
+                  </Field.Root>
                 </HStack>
 
-                <FormControl isRequired>
-                  <FormLabel>Description</FormLabel>
+                <Field.Root required>
+                  <Field.Label>Description</Field.Label>
                   <Textarea
                     value={planForm.description}
                     onChange={(e) => setPlanForm(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Enter plan description"
                     rows={3}
                   />
-                </FormControl>
+                </Field.Root>
 
                 <HStack w="full" spacing={4}>
-                  <FormControl isRequired>
-                    <FormLabel>Deposit Amount (SABI)</FormLabel>
-                    <NumberInput
+                  <Field.Root required>
+                    <Field.Label>Deposit Amount (SABI)</Field.Label>
+                    <NumberInput.Root
                       value={planForm.deposit}
                       onChange={(valueString) => setPlanForm(prev => ({ 
                         ...prev, 
@@ -566,17 +564,17 @@ const MiningPlanManager = () => {
                       }))}
                       min={0}
                     >
-                      <NumberInputField />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </FormControl>
+                      <NumberInput.Input />
+                      <NumberInput.Control>
+                        <NumberInput.IncrementTrigger />
+                        <NumberInput.DecrementTrigger />
+                      </NumberInput.Control>
+                    </NumberInput.Root>
+                  </Field.Root>
 
-                  <FormControl isRequired>
-                    <FormLabel>Daily Reward (SABI)</FormLabel>
-                    <NumberInput
+                  <Field.Root required>
+                    <Field.Label>Daily Reward (SABI)</Field.Label>
+                    <NumberInput.Root
                       value={planForm.dailyReward}
                       onChange={(valueString) => setPlanForm(prev => ({ 
                         ...prev, 
@@ -585,19 +583,19 @@ const MiningPlanManager = () => {
                       min={0}
                       step={0.1}
                     >
-                      <NumberInputField />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </FormControl>
+                      <NumberInput.Input />
+                      <NumberInput.Control>
+                        <NumberInput.IncrementTrigger />
+                        <NumberInput.DecrementTrigger />
+                      </NumberInput.Control>
+                    </NumberInput.Root>
+                  </Field.Root>
                 </HStack>
 
                 <HStack w="full" spacing={4}>
-                  <FormControl isRequired>
-                    <FormLabel>Duration (Days)</FormLabel>
-                    <NumberInput
+                  <Field.Root required>
+                    <Field.Label>Duration (Days)</Field.Label>
+                    <NumberInput.Root
                       value={planForm.duration}
                       onChange={(valueString) => setPlanForm(prev => ({ 
                         ...prev, 
@@ -605,17 +603,17 @@ const MiningPlanManager = () => {
                       }))}
                       min={1}
                     >
-                      <NumberInputField />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </FormControl>
+                      <NumberInput.Input />
+                      <NumberInput.Control>
+                        <NumberInput.IncrementTrigger />
+                        <NumberInput.DecrementTrigger />
+                      </NumberInput.Control>
+                    </NumberInput.Root>
+                  </Field.Root>
 
-                  <FormControl>
-                    <FormLabel>Max Participants</FormLabel>
-                    <NumberInput
+                  <Field.Root>
+                    <Field.Label>Max Participants</Field.Label>
+                    <NumberInput.Root
                       value={planForm.maxParticipants}
                       onChange={(valueString) => setPlanForm(prev => ({ 
                         ...prev, 
@@ -623,18 +621,18 @@ const MiningPlanManager = () => {
                       }))}
                       min={1}
                     >
-                      <NumberInputField />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </FormControl>
+                      <NumberInput.Input />
+                      <NumberInput.Control>
+                        <NumberInput.IncrementTrigger />
+                        <NumberInput.DecrementTrigger />
+                      </NumberInput.Control>
+                    </NumberInput.Root>
+                  </Field.Root>
                 </HStack>
 
                 <HStack w="full" spacing={4}>
-                  <FormControl>
-                    <FormLabel>Auto Trigger</FormLabel>
+                  <Field.Root>
+                    <Field.Label>Auto Trigger</Field.Label>
                     <Switch
                       isChecked={planForm.autoTrigger}
                       onChange={(e) => setPlanForm(prev => ({ 
@@ -642,10 +640,10 @@ const MiningPlanManager = () => {
                         autoTrigger: e.target.checked 
                       }))}
                     />
-                  </FormControl>
+                  </Field.Root>
 
-                  <FormControl>
-                    <FormLabel>Active Status</FormLabel>
+                  <Field.Root>
+                    <Field.Label>Active Status</Field.Label>
                     <Switch
                       isChecked={planForm.isActive}
                       onChange={(e) => setPlanForm(prev => ({ 
@@ -653,7 +651,7 @@ const MiningPlanManager = () => {
                         isActive: e.target.checked 
                       }))}
                     />
-                  </FormControl>
+                  </Field.Root>
                 </HStack>
 
                 <HStack w="full" spacing={4} pt={4}>
@@ -673,31 +671,39 @@ const MiningPlanManager = () => {
                 </HStack>
               </VStack>
             </form>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+              </Dialog.Body>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
 
       {/* Edit Plan Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="xl">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Edit Mining Plan</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
+      <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="xl">
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>Edit Mining Plan</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.CloseTrigger asChild>
+                <CloseButton size="sm" />
+              </Dialog.CloseTrigger>
+              <Dialog.Body pb={6}>
             <form onSubmit={handleUpdatePlan}>
               <VStack spacing={4}>
                 <HStack w="full" spacing={4}>
-                  <FormControl isRequired>
-                    <FormLabel>Plan Name</FormLabel>
+                  <Field.Root required>
+                    <Field.Label>Plan Name</Field.Label>
                     <Input
                       value={planForm.name}
                       onChange={(e) => setPlanForm(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="Enter plan name"
                     />
-                  </FormControl>
+                  </Field.Root>
 
-                  <FormControl isRequired>
-                    <FormLabel>Plan Type</FormLabel>
+                  <Field.Root required>
+                    <Field.Label>Plan Type</Field.Label>
                     <Select
                       value={planForm.type}
                       onChange={(e) => setPlanForm(prev => ({ ...prev, type: e.target.value }))}
@@ -705,23 +711,23 @@ const MiningPlanManager = () => {
                       <option value="MINING">Mining</option>
                       <option value="STAKING">Staking</option>
                     </Select>
-                  </FormControl>
+                  </Field.Root>
                 </HStack>
 
-                <FormControl isRequired>
-                  <FormLabel>Description</FormLabel>
+                <Field.Root required>
+                  <Field.Label>Description</Field.Label>
                   <Textarea
                     value={planForm.description}
                     onChange={(e) => setPlanForm(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Enter plan description"
                     rows={3}
                   />
-                </FormControl>
+                </Field.Root>
 
                 <HStack w="full" spacing={4}>
-                  <FormControl isRequired>
-                    <FormLabel>Deposit Amount (SABI)</FormLabel>
-                    <NumberInput
+                  <Field.Root required>
+                    <Field.Label>Deposit Amount (SABI)</Field.Label>
+                    <NumberInput.Root
                       value={planForm.deposit}
                       onChange={(valueString) => setPlanForm(prev => ({ 
                         ...prev, 
@@ -729,17 +735,17 @@ const MiningPlanManager = () => {
                       }))}
                       min={0}
                     >
-                      <NumberInputField />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </FormControl>
+                      <NumberInput.Input />
+                      <NumberInput.Control>
+                        <NumberInput.IncrementTrigger />
+                        <NumberInput.DecrementTrigger />
+                      </NumberInput.Control>
+                    </NumberInput.Root>
+                  </Field.Root>
 
-                  <FormControl isRequired>
-                    <FormLabel>Daily Reward (SABI)</FormLabel>
-                    <NumberInput
+                  <Field.Root required>
+                    <Field.Label>Daily Reward (SABI)</Field.Label>
+                    <NumberInput.Root
                       value={planForm.dailyReward}
                       onChange={(valueString) => setPlanForm(prev => ({ 
                         ...prev, 
@@ -748,19 +754,19 @@ const MiningPlanManager = () => {
                       min={0}
                       step={0.1}
                     >
-                      <NumberInputField />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </FormControl>
+                      <NumberInput.Input />
+                      <NumberInput.Control>
+                        <NumberInput.IncrementTrigger />
+                        <NumberInput.DecrementTrigger />
+                      </NumberInput.Control>
+                    </NumberInput.Root>
+                  </Field.Root>
                 </HStack>
 
                 <HStack w="full" spacing={4}>
-                  <FormControl isRequired>
-                    <FormLabel>Duration (Days)</FormLabel>
-                    <NumberInput
+                  <Field.Root required>
+                    <Field.Label>Duration (Days)</Field.Label>
+                    <NumberInput.Root
                       value={planForm.duration}
                       onChange={(valueString) => setPlanForm(prev => ({ 
                         ...prev, 
@@ -768,17 +774,17 @@ const MiningPlanManager = () => {
                       }))}
                       min={1}
                     >
-                      <NumberInputField />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </FormControl>
+                      <NumberInput.Input />
+                      <NumberInput.Control>
+                        <NumberInput.IncrementTrigger />
+                        <NumberInput.DecrementTrigger />
+                      </NumberInput.Control>
+                    </NumberInput.Root>
+                  </Field.Root>
 
-                  <FormControl>
-                    <FormLabel>Max Participants</FormLabel>
-                    <NumberInput
+                  <Field.Root>
+                    <Field.Label>Max Participants</Field.Label>
+                    <NumberInput.Root
                       value={planForm.maxParticipants}
                       onChange={(valueString) => setPlanForm(prev => ({ 
                         ...prev, 
@@ -786,18 +792,18 @@ const MiningPlanManager = () => {
                       }))}
                       min={1}
                     >
-                      <NumberInputField />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </FormControl>
+                      <NumberInput.Input />
+                      <NumberInput.Control>
+                        <NumberInput.IncrementTrigger />
+                        <NumberInput.DecrementTrigger />
+                      </NumberInput.Control>
+                    </NumberInput.Root>
+                  </Field.Root>
                 </HStack>
 
                 <HStack w="full" spacing={4}>
-                  <FormControl>
-                    <FormLabel>Auto Trigger</FormLabel>
+                  <Field.Root>
+                    <Field.Label>Auto Trigger</Field.Label>
                     <Switch
                       isChecked={planForm.autoTrigger}
                       onChange={(e) => setPlanForm(prev => ({ 
@@ -805,10 +811,10 @@ const MiningPlanManager = () => {
                         autoTrigger: e.target.checked 
                       }))}
                     />
-                  </FormControl>
+                  </Field.Root>
 
-                  <FormControl>
-                    <FormLabel>Active Status</FormLabel>
+                  <Field.Root>
+                    <Field.Label>Active Status</Field.Label>
                     <Switch
                       isChecked={planForm.isActive}
                       onChange={(e) => setPlanForm(prev => ({ 
@@ -816,7 +822,7 @@ const MiningPlanManager = () => {
                         isActive: e.target.checked 
                       }))}
                     />
-                  </FormControl>
+                  </Field.Root>
                 </HStack>
 
                 <HStack w="full" spacing={4} pt={4}>
@@ -836,9 +842,11 @@ const MiningPlanManager = () => {
                 </HStack>
               </VStack>
             </form>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+              </Dialog.Body>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </VStack>
   );
 };
