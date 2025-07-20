@@ -16,9 +16,9 @@ import {
   Icon,
   Stat,
   StatLabel,
-  StatNumber,
+  StatValueText,
   StatHelpText,
-  StatArrow,
+
   Table,
   Thead,
   Tbody,
@@ -31,7 +31,7 @@ import {
   TabsContent,
   Spinner
 } from "@chakra-ui/react";
-import { FaUsers, FaTasks, FaCoins, FaChartLine, FaCog, FaDatabase } from "react-icons/fa6";
+import { FaUsers, FaListCheck, FaCoins, FaChartLine, FaGear, FaDatabase } from "react-icons/fa6";
 import { useWeb3 } from "../../../hooks/useWeb3";
 import { toaster } from "../../../components/ui/toaster";
 import TaskManager from "../../components/Admin/TaskManager";
@@ -117,7 +117,7 @@ const AdminPanel = () => {
     {
       id: 'tasks',
       label: 'Task Manager',
-      icon: FaTasks,
+      icon: FaListCheck,
       component: <TaskManager />
     },
     {
@@ -135,7 +135,7 @@ const AdminPanel = () => {
     {
       id: 'contract',
       label: 'Contract Admin',
-      icon: FaCog,
+      icon: FaGear,
       component: <ContractManager />
     }
   ];
@@ -204,10 +204,9 @@ const AdminPanel = () => {
             <CardBody>
               <Stat>
                 <StatLabel>Total Users</StatLabel>
-                <StatNumber>{adminStats.totalUsers.toLocaleString()}</StatNumber>
+                <StatValueText>{adminStats.totalUsers.toLocaleString()}</StatValueText>
                 <StatHelpText>
-                  <StatArrow type="increase" />
-                  {adminStats.monthlyGrowth}% this month
+                  ↗ {adminStats.monthlyGrowth}% this month
                 </StatHelpText>
               </Stat>
             </CardBody>
@@ -217,7 +216,7 @@ const AdminPanel = () => {
             <CardBody>
               <Stat>
                 <StatLabel>Total SABI</StatLabel>
-                <StatNumber>{adminStats.totalTokens.toLocaleString()}</StatNumber>
+                <StatValueText>{adminStats.totalTokens.toLocaleString()}</StatValueText>
                 <StatHelpText>In circulation</StatHelpText>
               </Stat>
             </CardBody>
@@ -227,7 +226,7 @@ const AdminPanel = () => {
             <CardBody>
               <Stat>
                 <StatLabel>Active Tasks</StatLabel>
-                <StatNumber>{adminStats.activeTasks}</StatNumber>
+                <StatValueText>{adminStats.activeTasks}</StatValueText>
                 <StatHelpText>Currently available</StatHelpText>
               </Stat>
             </CardBody>
@@ -237,7 +236,7 @@ const AdminPanel = () => {
             <CardBody>
               <Stat>
                 <StatLabel>Pending Rewards</StatLabel>
-                <StatNumber>{adminStats.pendingRewards.toLocaleString()}</StatNumber>
+                <StatValueText>{adminStats.pendingRewards.toLocaleString()}</StatValueText>
                 <StatHelpText>SABI to be claimed</StatHelpText>
               </Stat>
             </CardBody>
@@ -247,7 +246,7 @@ const AdminPanel = () => {
             <CardBody>
               <Stat>
                 <StatLabel>Total Staked</StatLabel>
-                <StatNumber>{adminStats.totalStaked.toLocaleString()}</StatNumber>
+                <StatValueText>{adminStats.totalStaked.toLocaleString()}</StatValueText>
                 <StatHelpText>SABI in mining plans</StatHelpText>
               </Stat>
             </CardBody>
@@ -257,7 +256,7 @@ const AdminPanel = () => {
             <CardBody>
               <Stat>
                 <StatLabel>Growth Rate</StatLabel>
-                <StatNumber>{adminStats.monthlyGrowth}%</StatNumber>
+                <StatValueText>{adminStats.monthlyGrowth}%</StatValueText>
                 <StatHelpText>Monthly increase</StatHelpText>
               </Stat>
             </CardBody>
@@ -314,7 +313,7 @@ const AdminPanel = () => {
               </Button>
               
               <Button
-                leftIcon={<FaCog />}
+                leftIcon={<FaGear />}
                 colorScheme="orange"
                 onClick={() => setActiveTab(4)} // Switch to Contract Manager
               >
