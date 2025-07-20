@@ -20,15 +20,8 @@ import {
   ModalCloseButton,
   useDisclosure,
   Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer,
   Badge,
   Icon,
-  useToast,
   Switch,
   NumberInput,
   NumberInputField,
@@ -42,11 +35,7 @@ import {
   AlertDialogContent,
   AlertDialogOverlay,
   Heading,
-  SimpleGrid,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText
+  SimpleGrid
 } from "@chakra-ui/react";
 import {
   FaPlus,
@@ -61,6 +50,7 @@ import {
   FaComment,
   FaTasks
 } from "react-icons/fa";
+import { toaster } from "../../../components/ui/toaster";
 
 const TaskManager = () => {
   const [tasks, setTasks] = useState([]);
@@ -76,7 +66,6 @@ const TaskManager = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const cancelRef = React.useRef();
-  const toast = useToast();
 
   // Task form state
   const [taskForm, setTaskForm] = useState({
@@ -162,13 +151,12 @@ const TaskManager = () => {
             ? { ...task, ...taskForm, updatedAt: new Date().toISOString().split('T')[0] }
             : task
         ));
-        toast({
-          title: 'Task Updated',
-          description: 'Task has been updated successfully',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        });
+                 toaster.create({
+           title: 'Task Updated',
+           description: 'Task has been updated successfully',
+           status: 'success',
+           duration: 3000,
+         });
       } else {
         // Create new task
         const newTask = {
@@ -180,26 +168,24 @@ const TaskManager = () => {
         };
         
         setTasks(prev => [...prev, newTask]);
-        toast({
-          title: 'Task Created',
-          description: 'New task has been created successfully',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        });
+                 toaster.create({
+           title: 'Task Created',
+           description: 'New task has been created successfully',
+           status: 'success',
+           duration: 3000,
+         });
       }
 
       // Reset form and close modal
       resetForm();
       onClose();
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to save task. Please try again.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Error',
+         description: 'Failed to save task. Please try again.',
+         status: 'error',
+         duration: 3000,
+       });
     } finally {
       setIsLoading(false);
     }
@@ -210,23 +196,21 @@ const TaskManager = () => {
 
     try {
       setTasks(prev => prev.filter(task => task.id !== selectedTask.id));
-      toast({
-        title: 'Task Deleted',
-        description: 'Task has been deleted successfully',
-        status: 'info',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Task Deleted',
+         description: 'Task has been deleted successfully',
+         status: 'info',
+         duration: 3000,
+       });
       onDeleteClose();
       setSelectedTask(null);
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to delete task. Please try again.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Error',
+         description: 'Failed to delete task. Please try again.',
+         status: 'error',
+         duration: 3000,
+       });
     }
   };
 
@@ -238,21 +222,19 @@ const TaskManager = () => {
           : task
       ));
       
-      toast({
-        title: 'Task Status Updated',
-        description: 'Task status has been changed',
-        status: 'success',
-        duration: 2000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Task Status Updated',
+         description: 'Task status has been changed',
+         status: 'success',
+         duration: 2000,
+       });
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update task status',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Error',
+         description: 'Failed to update task status',
+         status: 'error',
+         duration: 3000,
+       });
     }
   };
 
@@ -315,41 +297,41 @@ const TaskManager = () => {
       <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
         <Card>
           <CardBody>
-            <Stat>
-              <StatLabel>Total Tasks</StatLabel>
-              <StatNumber>{taskStats.totalTasks}</StatNumber>
-              <StatHelpText>All time</StatHelpText>
-            </Stat>
+            <Box>
+              <Text fontSize="sm" color="gray.500" fontWeight="medium">Total Tasks</Text>
+              <Text fontSize="2xl" fontWeight="bold">{taskStats.totalTasks}</Text>
+              <Text fontSize="xs" color="gray.400">All time</Text>
+            </Box>
           </CardBody>
         </Card>
 
         <Card>
           <CardBody>
-            <Stat>
-              <StatLabel>Active Tasks</StatLabel>
-              <StatNumber>{taskStats.activeTasks}</StatNumber>
-              <StatHelpText>Currently available</StatHelpText>
-            </Stat>
+            <Box>
+              <Text fontSize="sm" color="gray.500" fontWeight="medium">Active Tasks</Text>
+              <Text fontSize="2xl" fontWeight="bold">{taskStats.activeTasks}</Text>
+              <Text fontSize="xs" color="gray.400">Currently available</Text>
+            </Box>
           </CardBody>
         </Card>
 
         <Card>
           <CardBody>
-            <Stat>
-              <StatLabel>Completed Today</StatLabel>
-              <StatNumber>{taskStats.completedToday}</StatNumber>
-              <StatHelpText>Task completions</StatHelpText>
-            </Stat>
+            <Box>
+              <Text fontSize="sm" color="gray.500" fontWeight="medium">Completed Today</Text>
+              <Text fontSize="2xl" fontWeight="bold">{taskStats.completedToday}</Text>
+              <Text fontSize="xs" color="gray.400">Task completions</Text>
+            </Box>
           </CardBody>
         </Card>
 
         <Card>
           <CardBody>
-            <Stat>
-              <StatLabel>Rewards Distributed</StatLabel>
-              <StatNumber>{taskStats.totalRewardsDistributed}</StatNumber>
-              <StatHelpText>Total SABI</StatHelpText>
-            </Stat>
+            <Box>
+              <Text fontSize="sm" color="gray.500" fontWeight="medium">Rewards Distributed</Text>
+              <Text fontSize="2xl" fontWeight="bold">{taskStats.totalRewardsDistributed}</Text>
+              <Text fontSize="xs" color="gray.400">Total SABI</Text>
+            </Box>
           </CardBody>
         </Card>
       </SimpleGrid>
@@ -374,22 +356,21 @@ const TaskManager = () => {
       {/* Tasks Table */}
       <Card>
         <CardBody>
-          <TableContainer>
             <Table variant="simple">
-              <Thead>
-                <Tr>
-                  <Th>Task</Th>
-                  <Th>Category</Th>
-                  <Th>Reward</Th>
-                  <Th>Completions</Th>
-                  <Th>Status</Th>
-                  <Th>Actions</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
+              <thead>
+                <tr>
+                  <th>Task</th>
+                  <th>Category</th>
+                  <th>Reward</th>
+                  <th>Completions</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
                 {tasks.map((task) => (
-                  <Tr key={task.id}>
-                    <Td>
+                  <tr key={task.id}>
+                    <td>
                       <HStack>
                         <Icon as={task.icon} color="blue.500" />
                         <Box>
@@ -399,17 +380,17 @@ const TaskManager = () => {
                           </Text>
                         </Box>
                       </HStack>
-                    </Td>
-                    <Td>
+                    </td>
+                    <td>
                       <Badge colorScheme="blue">
                         {task.category}
                       </Badge>
-                    </Td>
-                    <Td>{task.reward} SABI</Td>
-                    <Td>
+                    </td>
+                    <td>{task.reward} SABI</td>
+                    <td>
                       {task.completions} / {task.maxCompletions}
-                    </Td>
-                    <Td>
+                    </td>
+                    <td>
                       <HStack>
                         <Badge colorScheme={getStatusColor(task.isActive)}>
                           {getStatusText(task.isActive)}
@@ -419,9 +400,9 @@ const TaskManager = () => {
                           onChange={() => toggleTaskStatus(task.id)}
                           size="sm"
                         />
-                      </HStack>
-                    </Td>
-                    <Td>
+                                              </HStack>
+                    </td>
+                    <td>
                       <HStack spacing={2}>
                         <Button
                           size="sm"
@@ -429,12 +410,12 @@ const TaskManager = () => {
                           variant="outline"
                           onClick={() => {
                             // TODO: Implement view task details
-                            toast({
-                              title: 'Task Details',
-                              description: `Viewing details for: ${task.title}`,
-                              status: 'info',
-                              duration: 2000,
-                            });
+                                                         toaster.create({
+                               title: 'Task Details',
+                               description: `Viewing details for: ${task.title}`,
+                               status: 'info',
+                               duration: 2000,
+                             });
                           }}
                         >
                           View
@@ -455,13 +436,12 @@ const TaskManager = () => {
                         >
                           Delete
                         </Button>
-                      </HStack>
-                    </Td>
-                  </Tr>
+                                              </HStack>
+                    </td>
+                  </tr>
                 ))}
-              </Tbody>
+              </tbody>
             </Table>
-          </TableContainer>
         </CardBody>
       </Card>
 

@@ -19,7 +19,6 @@ import {
   useDisclosure,
   Badge,
   Icon,
-  useToast,
   Switch,
   NumberInput,
   NumberInputField,
@@ -51,6 +50,7 @@ import {
   FaPause
 } from "react-icons/fa";
 import { useWeb3 } from "../../../hooks/useWeb3";
+import { toaster } from "../../../components/ui/toaster";
 
 const ContractManager = () => {
   const { isConnected, address } = useWeb3();
@@ -78,7 +78,6 @@ const ContractManager = () => {
   const { isOpen: isRateOpen, onOpen: onRateOpen, onClose: onRateClose } = useDisclosure();
   const { isOpen: isPlanOpen, onOpen: onPlanOpen, onClose: onPlanClose } = useDisclosure();
   const { isOpen: isMinterOpen, onOpen: onMinterOpen, onClose: onMinterClose } = useDisclosure();
-  const toast = useToast();
 
   // Selected plan for editing
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -120,22 +119,20 @@ const ContractManager = () => {
         usdtToSabiRate: newRates.usdt
       }));
 
-      toast({
-        title: 'Rates Updated',
-        description: `ETH rate: ${newRates.eth}, USDT rate: ${newRates.usdt}`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+          title: 'Rates Updated',
+          description: `ETH rate: ${newRates.eth}, USDT rate: ${newRates.usdt}`,
+          status: 'success',
+          duration: 3000,
+        });
       onRateClose();
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update rates. Please try again.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+          title: 'Error',
+          description: 'Failed to update rates. Please try again.',
+          status: 'error',
+          duration: 3000,
+        });
     } finally {
       setIsLoading(false);
     }
@@ -152,21 +149,19 @@ const ContractManager = () => {
         [selectedPlan]: planForm
       }));
 
-      toast({
+      toaster.create({
         title: 'Mining Plan Updated',
         description: `${selectedPlan} plan has been updated successfully`,
         status: 'success',
         duration: 3000,
-        isClosable: true,
       });
       onPlanClose();
     } catch (error) {
-      toast({
+      toaster.create({
         title: 'Error',
         description: 'Failed to update mining plan. Please try again.',
         status: 'error',
         duration: 3000,
-        isClosable: true,
       });
     } finally {
       setIsLoading(false);
@@ -175,12 +170,11 @@ const ContractManager = () => {
 
   const handleAddMinter = async () => {
     if (!newMinter || !newMinter.startsWith('0x') || newMinter.length !== 42) {
-      toast({
+      toaster.create({
         title: 'Invalid Address',
         description: 'Please enter a valid Ethereum address',
         status: 'error',
         duration: 3000,
-        isClosable: true,
       });
       return;
     }
@@ -191,21 +185,19 @@ const ContractManager = () => {
       setAuthorizedMinters(prev => [...prev, newMinter]);
       setNewMinter('');
 
-      toast({
+      toaster.create({
         title: 'Minter Added',
         description: 'Authorized minter added successfully',
         status: 'success',
         duration: 3000,
-        isClosable: true,
       });
       onMinterClose();
     } catch (error) {
-      toast({
+      toaster.create({
         title: 'Error',
         description: 'Failed to add authorized minter. Please try again.',
         status: 'error',
         duration: 3000,
-        isClosable: true,
       });
     } finally {
       setIsLoading(false);
@@ -217,21 +209,19 @@ const ContractManager = () => {
       // TODO: Call smart contract setAuthorizedMinter(address, false) function
       setAuthorizedMinters(prev => prev.filter(m => m !== minterAddress));
 
-      toast({
+      toaster.create({
         title: 'Minter Removed',
         description: 'Authorized minter removed successfully',
         status: 'info',
         duration: 3000,
-        isClosable: true,
       });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to remove authorized minter. Please try again.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+          } catch (error) {
+        toaster.create({
+          title: 'Error',
+          description: 'Failed to remove authorized minter. Please try again.',
+          status: 'error',
+          duration: 3000,
+        });
     }
   };
 
@@ -243,20 +233,18 @@ const ContractManager = () => {
         isPaused: !prev.isPaused
       }));
 
-      toast({
+      toaster.create({
         title: `Contract ${contractData.isPaused ? 'Unpaused' : 'Paused'}`,
         description: `Smart contract has been ${contractData.isPaused ? 'unpaused' : 'paused'}`,
-        status: contractData.isPaused ? 'success' : 'warning',
+        status: 'success',
         duration: 3000,
-        isClosable: true,
       });
     } catch (error) {
-      toast({
+      toaster.create({
         title: 'Error',
         description: 'Failed to change contract status. Please try again.',
         status: 'error',
         duration: 3000,
-        isClosable: true,
       });
     }
   };
@@ -264,20 +252,18 @@ const ContractManager = () => {
   const handleWithdrawFunds = async (tokenType) => {
     try {
       // TODO: Call smart contract withdraw functions
-      toast({
+      toaster.create({
         title: 'Withdrawal Initiated',
         description: `${tokenType} withdrawal has been initiated`,
         status: 'success',
         duration: 3000,
-        isClosable: true,
       });
     } catch (error) {
-      toast({
+      toaster.create({
         title: 'Error',
         description: 'Failed to withdraw funds. Please try again.',
         status: 'error',
         duration: 3000,
-        isClosable: true,
       });
     }
   };

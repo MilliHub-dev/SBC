@@ -11,11 +11,7 @@ import {
   HStack,
   SimpleGrid,
   Alert,
-  AlertIcon,
-  useToast,
-
   Tabs,
-
   Badge,
   Icon,
   Stat,
@@ -29,25 +25,15 @@ import {
   Tr,
   Th,
   Td,
-  TableContainer,
-  Switch,
-  FormControl,
-  FormLabel,
-  useColorModeValue
+  TabsRoot,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  Spinner
 } from "@chakra-ui/react";
-import { 
-  FaUsers, 
-  FaCoins, 
-  FaTasks, 
-  FaCog, 
-  FaChartLine,
-  FaShieldAlt,
-  FaPlus,
-  FaEdit,
-  FaTrash,
-  FaEye
-} from "react-icons/fa";
+import { FaUsers, FaTasks, FaCoins, FaChartLine, FaCog, FaDatabase } from "react-icons/fa6";
 import { useWeb3 } from "../../../hooks/useWeb3";
+import { toaster } from "../../../components/ui/toaster";
 import TaskManager from "../../components/Admin/TaskManager";
 import UserManager from "../../components/Admin/UserManager";
 import ContractManager from "../../components/Admin/ContractManager";
@@ -67,8 +53,6 @@ const AdminPanel = () => {
     monthlyGrowth: 0
   });
 
-  const toast = useToast();
-
   // Check if user is admin
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -86,19 +70,18 @@ const AdminPanel = () => {
       
       setIsAuthorized(isAdmin);
       
-      if (!isAdmin) {
-        toast({
-          title: 'Access Denied',
-          description: 'You do not have administrator privileges',
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
-      }
+              if (!isAdmin) {
+         toaster.create({
+            title: 'Access Denied',
+            description: 'You do not have administrator privileges',
+            status: 'error',
+            duration: 5000,
+          });
+        }
     };
 
     checkAdminStatus();
-  }, [isConnected, address, toast]);
+  }, [isConnected, address]);
 
   // Fetch admin statistics
   useEffect(() => {
@@ -161,7 +144,6 @@ const AdminPanel = () => {
     return (
       <Container maxW="md" py={8}>
         <Alert status="warning">
-          <AlertIcon />
           Please connect your wallet to access the admin panel
         </Alert>
       </Container>
@@ -172,7 +154,6 @@ const AdminPanel = () => {
     return (
       <Container maxW="md" py={8}>
         <Alert status="error">
-          <AlertIcon />
           <Box>
             <Text fontWeight="bold">Access Denied</Text>
             <Text>You do not have administrator privileges for this panel.</Text>
@@ -204,7 +185,7 @@ const AdminPanel = () => {
           <HStack justify="space-between" align="center">
             <Box>
               <Heading size="lg" mb={2}>
-                <Icon as={FaShieldAlt} mr={3} color="red.500" />
+                <Icon as={FaDatabase} mr={3} color="red.500" />
                 Admin Panel
               </Heading>
               <Text color="gray.600">
@@ -287,26 +268,26 @@ const AdminPanel = () => {
         <Card>
           <CardBody>
 
-            <Tabs.Root value={activeTab.toString()} onValueChange={(details) => setActiveTab(parseInt(details.value))}>
-              <Tabs.List>
+            <TabsRoot value={activeTab.toString()} onValueChange={(details) => setActiveTab(parseInt(details.value))}>
+              <TabsList>
                 {adminTabs.map((tab, index) => (
-                  <Tabs.Trigger key={tab.id} value={index.toString()}>
+                  <TabsTrigger key={tab.id} value={index.toString()}>
                     <HStack>
                       <Icon as={tab.icon} />
                       <Text>{tab.label}</Text>
                     </HStack>
-                  </Tabs.Trigger>
+                  </TabsTrigger>
                 ))}
-              </Tabs.List>
+              </TabsList>
 
               {adminTabs.map((tab, index) => (
-                <Tabs.Content key={tab.id} value={index.toString()}>
+                <TabsContent key={tab.id} value={index.toString()}>
                   <Box mt={6}>
                     {tab.component}
                   </Box>
-                </Tabs.Content>
+                </TabsContent>
               ))}
-            </Tabs.Root>
+            </TabsRoot>
 
           </CardBody>
         </Card>

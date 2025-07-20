@@ -27,7 +27,6 @@ import {
   TableContainer,
   Badge,
   Icon,
-  useToast,
   Switch,
   NumberInput,
   NumberInputField,
@@ -64,6 +63,7 @@ import {
   FaGift,
   FaChevronDown
 } from "react-icons/fa";
+import { toaster } from "../../../components/ui/toaster";
 
 const UserManager = () => {
   const [users, setUsers] = useState([]);
@@ -84,7 +84,6 @@ const UserManager = () => {
   const { isOpen: isActionOpen, onOpen: onActionOpen, onClose: onActionClose } = useDisclosure();
   const { isOpen: isRewardOpen, onOpen: onRewardOpen, onClose: onRewardClose } = useDisclosure();
   const cancelRef = React.useRef();
-  const toast = useToast();
 
   // Reward form state
   const [rewardForm, setRewardForm] = useState({
@@ -194,26 +193,24 @@ const UserManager = () => {
           setUsers(prev => prev.map(u => 
             u.id === user.id ? { ...u, isBlocked: !u.isBlocked, status: u.isBlocked ? 'active' : 'inactive' } : u
           ));
-          toast({
-            title: `User ${user.isBlocked ? 'Unblocked' : 'Blocked'}`,
-            description: `${user.name} has been ${user.isBlocked ? 'unblocked' : 'blocked'} successfully`,
-            status: user.isBlocked ? 'success' : 'warning',
-            duration: 3000,
-            isClosable: true,
-          });
+                     toaster.create({
+             title: `User ${user.isBlocked ? 'Unblocked' : 'Blocked'}`,
+             description: `${user.name} has been ${user.isBlocked ? 'unblocked' : 'blocked'} successfully`,
+             status: user.isBlocked ? 'success' : 'warning',
+             duration: 3000,
+           });
           break;
           
         case 'promote':
           setUsers(prev => prev.map(u => 
             u.id === user.id ? { ...u, userType: u.userType === 'premium' ? 'regular' : 'premium' } : u
           ));
-          toast({
-            title: 'User Updated',
-            description: `${user.name} is now a ${user.userType === 'premium' ? 'regular' : 'premium'} user`,
-            status: 'success',
-            duration: 3000,
-            isClosable: true,
-          });
+                     toaster.create({
+             title: 'User Updated',
+             description: `${user.name} is now a ${user.userType === 'premium' ? 'regular' : 'premium'} user`,
+             status: 'success',
+             duration: 3000,
+           });
           break;
           
         case 'reward':
@@ -224,13 +221,12 @@ const UserManager = () => {
           break;
       }
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to perform action. Please try again.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Error',
+         description: 'Failed to perform action. Please try again.',
+         status: 'error',
+         duration: 3000,
+       });
     }
   };
 
@@ -248,24 +244,22 @@ const UserManager = () => {
           : u
       ));
 
-      toast({
-        title: 'Reward Sent',
-        description: `${rewardForm.amount} ${rewardForm.type === 'points' ? 'points' : 'SABI'} awarded to ${selectedUser.name}`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Reward Sent',
+         description: `${rewardForm.amount} ${rewardForm.type === 'points' ? 'points' : 'SABI'} awarded to ${selectedUser.name}`,
+         status: 'success',
+         duration: 3000,
+       });
 
       setRewardForm({ amount: 0, reason: '', type: 'bonus' });
       onRewardClose();
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to send reward. Please try again.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+             toaster.create({
+         title: 'Error',
+         description: 'Failed to send reward. Please try again.',
+         status: 'error',
+         duration: 3000,
+       });
     }
   };
 
@@ -295,13 +289,12 @@ const UserManager = () => {
     link.click();
     window.URL.revokeObjectURL(url);
 
-    toast({
-      title: 'Export Complete',
-      description: 'User data has been exported successfully',
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
+         toaster.create({
+       title: 'Export Complete',
+       description: 'User data has been exported successfully',
+       status: 'success',
+       duration: 3000,
+     });
   };
 
   const getStatusColor = (status) => {
