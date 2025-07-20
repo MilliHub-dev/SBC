@@ -29,16 +29,16 @@ import {
   SimpleGrid,
   Stat,
   StatLabel,
-  StatNumber,
+  StatValueText,
   StatHelpText,
   Progress,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer,
+  TableRoot,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableColumnHeader,
+  TableCell,
+  TableScrollArea,
   Textarea,
   Select
 } from "@chakra-ui/react";
@@ -345,7 +345,7 @@ const MiningPlanManager = () => {
           <CardBody>
             <Stat>
               <StatLabel>Total Plans</StatLabel>
-              <StatNumber>{planStats.totalPlans}</StatNumber>
+              <StatValueText>{planStats.totalPlans}</StatValueText>
               <StatHelpText>All mining plans</StatHelpText>
             </Stat>
           </CardBody>
@@ -355,7 +355,7 @@ const MiningPlanManager = () => {
           <CardBody>
             <Stat>
               <StatLabel>Active Plans</StatLabel>
-              <StatNumber>{planStats.activePlans}</StatNumber>
+              <StatValueText>{planStats.activePlans}</StatValueText>
               <StatHelpText>Currently running</StatHelpText>
             </Stat>
           </CardBody>
@@ -365,7 +365,7 @@ const MiningPlanManager = () => {
           <CardBody>
             <Stat>
               <StatLabel>Total Participants</StatLabel>
-              <StatNumber>{planStats.totalParticipants}</StatNumber>
+              <StatValueText>{planStats.totalParticipants}</StatValueText>
               <StatHelpText>Across all plans</StatHelpText>
             </Stat>
           </CardBody>
@@ -375,7 +375,7 @@ const MiningPlanManager = () => {
           <CardBody>
             <Stat>
               <StatLabel>Rewards Distributed</StatLabel>
-              <StatNumber>{planStats.totalRewardsDistributed}</StatNumber>
+              <StatValueText>{planStats.totalRewardsDistributed}</StatValueText>
               <StatHelpText>Total SABI</StatHelpText>
             </Stat>
           </CardBody>

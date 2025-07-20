@@ -9,40 +9,40 @@ import {
   Text,
   Input,
   Select,
-  FormControl,
-  FormLabel,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
+  FieldRoot,
+  FieldLabel,
+  DialogRoot,
+  DialogBackdrop,
+  DialogContent,
+  DialogHeader,
+  DialogBody,
+  DialogCloseTrigger,
   useDisclosure,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer,
+  TableRoot,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableColumnHeader,
+  TableCell,
+  TableScrollArea,
   Badge,
   Icon,
   Switch,
-  NumberInput,
-  NumberInputField,
+  NumberInputRoot,
+  NumberInputInput,
   Heading,
   SimpleGrid,
   Stat,
   StatLabel,
-  StatNumber,
+  StatValueText,
   StatHelpText,
   InputGroup,
-  InputLeftElement,
   Avatar,
-  Menu,
-  MenuButton,
-  MenuList,
+  MenuRoot,
+  MenuTrigger,
+  MenuContent,
   MenuItem,
+  Portal,
   AlertDialog,
   AlertDialogBody,
   AlertDialogFooter,
@@ -321,7 +321,7 @@ const UserManager = () => {
           <CardBody>
             <Stat>
               <StatLabel>Total Users</StatLabel>
-              <StatNumber>{userStats.totalUsers}</StatNumber>
+                              <StatValueText>{userStats.totalUsers}</StatValueText>
               <StatHelpText>All registered users</StatHelpText>
             </Stat>
           </CardBody>
@@ -331,7 +331,7 @@ const UserManager = () => {
           <CardBody>
             <Stat>
               <StatLabel>Active Users</StatLabel>
-              <StatNumber>{userStats.activeUsers}</StatNumber>
+                              <StatValueText>{userStats.activeUsers}</StatValueText>
               <StatHelpText>Currently active</StatHelpText>
             </Stat>
           </CardBody>
@@ -341,7 +341,7 @@ const UserManager = () => {
           <CardBody>
             <Stat>
               <StatLabel>Total Points</StatLabel>
-              <StatNumber>{userStats.totalPoints.toLocaleString()}</StatNumber>
+                              <StatValueText>{userStats.totalPoints.toLocaleString()}</StatValueText>
               <StatHelpText>All user points</StatHelpText>
             </Stat>
           </CardBody>
@@ -351,7 +351,7 @@ const UserManager = () => {
           <CardBody>
             <Stat>
               <StatLabel>SABI Earned</StatLabel>
-              <StatNumber>{userStats.totalSabiEarned.toLocaleString()}</StatNumber>
+                              <StatValueText>{userStats.totalSabiEarned.toLocaleString()}</StatValueText>
               <StatHelpText>Total distributed</StatHelpText>
             </Stat>
           </CardBody>
@@ -374,10 +374,10 @@ const UserManager = () => {
             </HStack>
 
             <HStack spacing={4} w="full">
-              <InputGroup flex={2}>
-                <InputLeftElement>
-                  <Icon as={FaSearch} color="gray.400" />
-                </InputLeftElement>
+              <InputGroup 
+                flex={2}
+                startElement={<Icon as={FaSearch} color="gray.400" />}
+              >
                 <Input
                   placeholder="Search by name, email, or wallet address..."
                   value={searchTerm}
@@ -414,24 +414,24 @@ const UserManager = () => {
       {/* Users Table */}
       <Card>
         <CardBody>
-          <TableContainer>
-            <Table variant="simple">
-              <Thead>
-                <Tr>
-                  <Th>User</Th>
-                  <Th>Wallet</Th>
-                  <Th>Status</Th>
-                  <Th>Type</Th>
-                  <Th>Points</Th>
-                  <Th>SABI Earned</Th>
-                  <Th>Rides</Th>
-                  <Th>Actions</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
+                        <TableScrollArea>
+            <TableRoot variant="simple">
+              <TableHeader>
+                <TableRow>
+                  <TableColumnHeader>User</TableColumnHeader>
+                  <TableColumnHeader>Wallet</TableColumnHeader>
+                  <TableColumnHeader>Status</TableColumnHeader>
+                  <TableColumnHeader>Type</TableColumnHeader>
+                  <TableColumnHeader>Points</TableColumnHeader>
+                  <TableColumnHeader>SABI Earned</TableColumnHeader>
+                  <TableColumnHeader>Rides</TableColumnHeader>
+                  <TableColumnHeader>Actions</TableColumnHeader>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredUsers.map((user) => (
-                  <Tr key={user.id}>
-                    <Td>
+                  <TableRow key={user.id}>
+                    <TableCell>
                       <HStack>
                         <Avatar size="sm" name={user.name} src={user.avatar} />
                         <Box>
@@ -441,31 +441,34 @@ const UserManager = () => {
                           </Text>
                         </Box>
                       </HStack>
-                    </Td>
-                    <Td>
+                    </TableCell>
+                    <TableCell>
                       <Text fontSize="sm" fontFamily="mono">
                         {user.walletAddress}
                       </Text>
-                    </Td>
-                    <Td>
+                    </TableCell>
+                    <TableCell>
                       <Badge colorScheme={getStatusColor(user.status)}>
                         {user.status}
                       </Badge>
-                    </Td>
-                    <Td>
+                    </TableCell>
+                    <TableCell>
                       <Badge colorScheme={getUserTypeColor(user.userType)}>
                         {user.userType}
                       </Badge>
-                    </Td>
-                    <Td>{user.points.toLocaleString()}</Td>
-                    <Td>{user.sabiEarned.toLocaleString()}</Td>
-                    <Td>{user.totalRides}</Td>
-                    <Td>
-                      <Menu>
-                        <MenuButton as={Button} size="sm" rightIcon={<FaChevronDown />}>
-                          Actions
-                        </MenuButton>
-                        <MenuList>
+                    </TableCell>
+                    <TableCell>{user.points.toLocaleString()}</TableCell>
+                    <TableCell>{user.sabiEarned.toLocaleString()}</TableCell>
+                    <TableCell>{user.totalRides}</TableCell>
+                    <TableCell>
+                      <MenuRoot>
+                        <MenuTrigger asChild>
+                          <Button size="sm" rightIcon={<FaChevronDown />}>
+                            Actions
+                          </Button>
+                        </MenuTrigger>
+                        <Portal>
+                          <MenuContent>
                           <MenuItem 
                             icon={<FaEye />}
                             onClick={() => {
@@ -494,24 +497,25 @@ const UserManager = () => {
                           >
                             {user.isBlocked ? 'Unblock User' : 'Block User'}
                           </MenuItem>
-                        </MenuList>
-                      </Menu>
-                    </Td>
-                  </Tr>
+                          </MenuContent>
+                        </Portal>
+                      </MenuRoot>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </Tbody>
-            </Table>
-          </TableContainer>
+              </TableBody>
+            </TableRoot>
+                        </TableScrollArea>
         </CardBody>
       </Card>
 
       {/* User Details Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="xl">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>User Details</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
+      <DialogRoot open={isOpen} onOpenChange={({ open }) => !open && onClose()} size="xl">
+        <DialogBackdrop />
+        <DialogContent>
+          <DialogHeader>User Details</DialogHeader>
+          <DialogCloseTrigger />
+          <DialogBody pb={6}>
             {selectedUser && (
               <VStack spacing={4} align="stretch">
                 <HStack spacing={4}>
@@ -535,7 +539,7 @@ const UserManager = () => {
                     <CardBody>
                       <Stat>
                         <StatLabel>Points Balance</StatLabel>
-                        <StatNumber>{selectedUser.points.toLocaleString()}</StatNumber>
+                        <StatValueText>{selectedUser.points.toLocaleString()}</StatValueText>
                       </Stat>
                     </CardBody>
                   </Card>
@@ -544,7 +548,7 @@ const UserManager = () => {
                     <CardBody>
                       <Stat>
                         <StatLabel>SABI Earned</StatLabel>
-                        <StatNumber>{selectedUser.sabiEarned.toLocaleString()}</StatNumber>
+                        <StatValueText>{selectedUser.sabiEarned.toLocaleString()}</StatValueText>
                       </Stat>
                     </CardBody>
                   </Card>
@@ -553,7 +557,7 @@ const UserManager = () => {
                     <CardBody>
                       <Stat>
                         <StatLabel>Total Rides</StatLabel>
-                        <StatNumber>{selectedUser.totalRides}</StatNumber>
+                        <StatValueText>{selectedUser.totalRides}</StatValueText>
                       </Stat>
                     </CardBody>
                   </Card>
@@ -562,7 +566,7 @@ const UserManager = () => {
                     <CardBody>
                       <Stat>
                         <StatLabel>Referrals</StatLabel>
-                        <StatNumber>{selectedUser.referrals}</StatNumber>
+                        <StatValueText>{selectedUser.referrals}</StatValueText>
                       </Stat>
                     </CardBody>
                   </Card>
@@ -591,20 +595,20 @@ const UserManager = () => {
                 </Box>
               </VStack>
             )}
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+          </DialogBody>
+        </DialogContent>
+      </DialogRoot>
 
       {/* Send Reward Modal */}
-      <Modal isOpen={isRewardOpen} onClose={onRewardClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Send Reward to {selectedUser?.name}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
+      <DialogRoot open={isRewardOpen} onOpenChange={({ open }) => !open && onRewardClose()}>
+        <DialogBackdrop />
+        <DialogContent>
+          <DialogHeader>Send Reward to {selectedUser?.name}</DialogHeader>
+          <DialogCloseTrigger />
+          <DialogBody pb={6}>
             <VStack spacing={4}>
-              <FormControl isRequired>
-                <FormLabel>Reward Type</FormLabel>
+              <FieldRoot required>
+                <FieldLabel>Reward Type</FieldLabel>
                 <Select
                   value={rewardForm.type}
                   onChange={(e) => setRewardForm(prev => ({ ...prev, type: e.target.value }))}
@@ -612,30 +616,30 @@ const UserManager = () => {
                   <option value="bonus">SABI Bonus</option>
                   <option value="points">Points</option>
                 </Select>
-              </FormControl>
+              </FieldRoot>
 
-              <FormControl isRequired>
-                <FormLabel>Amount</FormLabel>
-                <NumberInput
+              <FieldRoot required>
+                <FieldLabel>Amount</FieldLabel>
+                <NumberInputRoot
                   value={rewardForm.amount}
-                  onChange={(valueString) => setRewardForm(prev => ({ 
+                  onValueChange={({ value }) => setRewardForm(prev => ({ 
                     ...prev, 
-                    amount: parseInt(valueString) || 0 
+                    amount: parseInt(value) || 0 
                   }))}
                   min={1}
                 >
-                  <NumberInputField />
-                </NumberInput>
-              </FormControl>
+                  <NumberInputInput />
+                </NumberInputRoot>
+              </FieldRoot>
 
-              <FormControl isRequired>
-                <FormLabel>Reason</FormLabel>
+              <FieldRoot required>
+                <FieldLabel>Reason</FieldLabel>
                 <Input
                   value={rewardForm.reason}
                   onChange={(e) => setRewardForm(prev => ({ ...prev, reason: e.target.value }))}
                   placeholder="Enter reason for reward"
                 />
-              </FormControl>
+              </FieldRoot>
 
               <HStack w="full" spacing={4} pt={4}>
                 <Button variant="outline" onClick={onRewardClose} flex={1}>
@@ -652,9 +656,9 @@ const UserManager = () => {
                 </Button>
               </HStack>
             </VStack>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+          </DialogBody>
+        </DialogContent>
+      </DialogRoot>
     </VStack>
   );
 };
