@@ -10,18 +10,19 @@ import {
   SimpleGrid,
   Stat,
   StatLabel,
-  StatNumber,
+  StatValueText,
   StatHelpText,
-  StatArrow,
+  StatUpIndicator,
+  StatDownIndicator,
   Badge,
   Progress,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer,
+  TableRoot,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableColumnHeader,
+  TableCell,
+  TableScrollArea,
   Select,
   Button
 } from "@chakra-ui/react";
@@ -31,8 +32,8 @@ import {
   FaTasks,
   FaChartLine,
   FaDownload,
-  FaTrendUp,
-  FaTrendDown
+  FaArrowUp,
+  FaArrowDown
 } from "react-icons/fa";
 
 const AnalyticsDashboard = ({ stats }) => {
@@ -239,10 +240,10 @@ const AnalyticsDashboard = ({ stats }) => {
           <CardBody>
             <Stat>
               <StatLabel>User Growth</StatLabel>
-              <StatNumber>+{stats.monthlyGrowth}%</StatNumber>
-              <StatHelpText>
-                <StatArrow type="increase" />
-                vs last month
+              <StatValueText>+{stats.monthlyGrowth}%</StatValueText>
+                              <StatHelpText>
+                  <StatUpIndicator />
+                  vs last month
               </StatHelpText>
             </Stat>
           </CardBody>
@@ -252,10 +253,10 @@ const AnalyticsDashboard = ({ stats }) => {
           <CardBody>
             <Stat>
               <StatLabel>Task Completion Rate</StatLabel>
-              <StatNumber>87.3%</StatNumber>
-              <StatHelpText>
-                <StatArrow type="increase" />
-                +2.1% from last week
+              <StatValueText>87.3%</StatValueText>
+                              <StatHelpText>
+                  <StatUpIndicator />
+                  +2.1% from last week
               </StatHelpText>
             </Stat>
           </CardBody>
@@ -265,10 +266,10 @@ const AnalyticsDashboard = ({ stats }) => {
           <CardBody>
             <Stat>
               <StatLabel>Avg. Tokens per User</StatLabel>
-              <StatNumber>425</StatNumber>
-              <StatHelpText>
-                <StatArrow type="increase" />
-                +15.2% growth
+              <StatValueText>425</StatValueText>
+                              <StatHelpText>
+                  <StatUpIndicator />
+                  +15.2% growth
               </StatHelpText>
             </Stat>
           </CardBody>
@@ -278,10 +279,10 @@ const AnalyticsDashboard = ({ stats }) => {
           <CardBody>
             <Stat>
               <StatLabel>Daily Active Users</StatLabel>
-              <StatNumber>2,847</StatNumber>
-              <StatHelpText>
-                <StatArrow type="decrease" />
-                -1.2% vs yesterday
+              <StatValueText>2,847</StatValueText>
+                              <StatHelpText>
+                  <StatDownIndicator />
+                  -1.2% vs yesterday
               </StatHelpText>
             </Stat>
           </CardBody>
@@ -321,44 +322,44 @@ const AnalyticsDashboard = ({ stats }) => {
           <CardBody>
             <VStack spacing={4} align="stretch">
               <Heading size="sm">Top Performing Users</Heading>
-              <TableContainer>
-                <Table size="sm">
-                  <Thead>
-                    <Tr>
-                      <Th>Rank</Th>
-                      <Th>User</Th>
-                      <Th>Earned</Th>
-                      <Th>Tasks</Th>
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {topUsers.map((user) => (
-                      <Tr key={user.rank}>
-                        <Td>
+              <TableScrollArea>
+                <TableRoot size="sm">
+                  <TableHeader>
+                    <TableRow>
+                      <TableColumnHeader>Rank</TableColumnHeader>
+                      <TableColumnHeader>User</TableColumnHeader>
+                      <TableColumnHeader>Earned</TableColumnHeader>
+                      <TableColumnHeader>Tasks</TableColumnHeader>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                                          {topUsers.map((user) => (
+                        <TableRow key={user.rank}>
+                          <TableCell>
                           <HStack>
                             <Text fontWeight="bold">#{user.rank}</Text>
                             {user.trend === 'up' ? (
-                              <FaTrendUp color="green" />
+                              <FaArrowUp color="green" />
                             ) : (
-                              <FaTrendDown color="red" />
+                              <FaArrowDown color="red" />
                             )}
                           </HStack>
-                        </Td>
-                        <Td>
+                        </TableCell>
+                        <TableCell>
                           <Box>
                             <Text fontSize="sm" fontWeight="bold">{user.name}</Text>
                             <Text fontSize="xs" color="gray.600">{user.email}</Text>
                           </Box>
-                        </Td>
-                        <Td>
+                        </TableCell>
+                        <TableCell>
                           <Text fontWeight="bold">{user.totalEarned} SABI</Text>
-                        </Td>
-                        <Td>{user.tasksCompleted}</Td>
-                      </Tr>
+                        </TableCell>
+                        <TableCell>{user.tasksCompleted}</TableCell>
+                      </TableRow>
                     ))}
-                  </Tbody>
-                </Table>
-              </TableContainer>
+                  </TableBody>
+                </TableRoot>
+              </TableScrollArea>
             </VStack>
           </CardBody>
         </Card>
@@ -369,24 +370,24 @@ const AnalyticsDashboard = ({ stats }) => {
         <CardBody>
           <VStack spacing={4} align="stretch">
             <Heading size="sm">Task Performance Analysis</Heading>
-            <TableContainer>
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>Task Name</Th>
-                    <Th>Completions</Th>
-                    <Th>Success Rate</Th>
-                    <Th>Avg. Time</Th>
-                    <Th>Total Rewards</Th>
-                    <Th>Performance</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
+            <TableScrollArea>
+              <TableRoot>
+                <TableHeader>
+                  <TableRow>
+                    <TableColumnHeader>Task Name</TableColumnHeader>
+                    <TableColumnHeader>Completions</TableColumnHeader>
+                    <TableColumnHeader>Success Rate</TableColumnHeader>
+                    <TableColumnHeader>Avg. Time</TableColumnHeader>
+                    <TableColumnHeader>Total Rewards</TableColumnHeader>
+                    <TableColumnHeader>Performance</TableColumnHeader>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {taskPerformance.map((task, index) => (
-                    <Tr key={index}>
-                      <Td fontWeight="bold">{task.taskName}</Td>
-                      <Td>{task.completions}</Td>
-                      <Td>
+                    <TableRow key={index}>
+                      <TableCell fontWeight="bold">{task.taskName}</TableCell>
+                      <TableCell>{task.completions}</TableCell>
+                      <TableCell>
                         <HStack>
                           <Text>{task.successRate}%</Text>
                           <Progress
@@ -396,10 +397,10 @@ const AnalyticsDashboard = ({ stats }) => {
                             w="50px"
                           />
                         </HStack>
-                      </Td>
-                      <Td>{task.avgTimeToComplete}</Td>
-                      <Td>{task.totalRewards} SABI</Td>
-                      <Td>
+                      </TableCell>
+                      <TableCell>{task.avgTimeToComplete}</TableCell>
+                      <TableCell>{task.totalRewards} SABI</TableCell>
+                      <TableCell>
                         <Badge
                           colorScheme={
                             task.successRate > 85 ? 'green' :
@@ -409,12 +410,12 @@ const AnalyticsDashboard = ({ stats }) => {
                           {task.successRate > 85 ? 'Excellent' :
                            task.successRate > 70 ? 'Good' : 'Needs Improvement'}
                         </Badge>
-                      </Td>
-                    </Tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </Tbody>
-              </Table>
-            </TableContainer>
+                </TableBody>
+              </TableRoot>
+            </TableScrollArea>
           </VStack>
         </CardBody>
       </Card>

@@ -8,32 +8,32 @@ import {
   HStack,
   Text,
   Input,
-  FormControl,
-  FormLabel,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
+  FieldRoot,
+  FieldLabel,
+  DialogRoot,
+  DialogBackdrop,
+  DialogContent,
+  DialogHeader,
+  DialogBody,
+  DialogCloseTrigger,
   useDisclosure,
   Badge,
   Icon,
   Switch,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
+  NumberInputRoot,
+  NumberInputInput,
+  NumberInputControl,
+  NumberInputIncrementTrigger,
+  NumberInputDecrementTrigger,
   Heading,
   SimpleGrid,
   Stat,
   StatLabel,
-  StatNumber,
+  StatValueText,
   StatHelpText,
   Textarea,
   Alert,
-  AlertIcon,
+  AlertIndicator,
   Code,
   Divider
 } from "@chakra-ui/react";
@@ -277,7 +277,7 @@ const ContractManager = () => {
   if (!isConnected) {
     return (
       <Alert status="warning">
-        <AlertIcon />
+                    <AlertIndicator />
         Please connect your wallet to access contract management features
       </Alert>
     );
@@ -291,7 +291,7 @@ const ContractManager = () => {
           <CardBody>
             <Stat>
               <StatLabel>Contract Address</StatLabel>
-              <StatNumber fontSize="sm">{contractData.address.slice(0, 10)}...</StatNumber>
+              <StatValueText fontSize="sm">{contractData.address.slice(0, 10)}...</StatValueText>
               <StatHelpText>Polygon zkEVM</StatHelpText>
             </Stat>
           </CardBody>
@@ -301,7 +301,7 @@ const ContractManager = () => {
           <CardBody>
             <Stat>
               <StatLabel>Total Supply</StatLabel>
-              <StatNumber>{contractData.totalSupply.toLocaleString()}</StatNumber>
+              <StatValueText>{contractData.totalSupply.toLocaleString()}</StatValueText>
               <StatHelpText>SABI tokens</StatHelpText>
             </Stat>
           </CardBody>
@@ -311,7 +311,7 @@ const ContractManager = () => {
           <CardBody>
             <Stat>
               <StatLabel>Max Supply</StatLabel>
-              <StatNumber>{contractData.maxSupply.toLocaleString()}</StatNumber>
+              <StatValueText>{contractData.maxSupply.toLocaleString()}</StatValueText>
               <StatHelpText>Token limit</StatHelpText>
             </Stat>
           </CardBody>
@@ -321,11 +321,11 @@ const ContractManager = () => {
           <CardBody>
             <Stat>
               <StatLabel>Contract Status</StatLabel>
-              <StatNumber>
+              <StatValueText>
                 <Badge colorScheme={contractData.isPaused ? 'red' : 'green'}>
                   {contractData.isPaused ? 'Paused' : 'Active'}
                 </Badge>
-              </StatNumber>
+              </StatValueText>
               <StatHelpText>Current state</StatHelpText>
             </Stat>
           </CardBody>
@@ -488,48 +488,42 @@ const ContractManager = () => {
       </Card>
 
       {/* Update Rates Modal */}
-      <Modal isOpen={isRateOpen} onClose={onRateClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Update Conversion Rates</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            <VStack spacing={4}>
-              <FormControl>
-                <FormLabel>ETH to SABI Rate</FormLabel>
-                <NumberInput
+      <DialogRoot open={isRateOpen} onOpenChange={({ open }) => !open && onRateClose()}>
+        <DialogBackdrop />
+        <DialogContent>
+          <DialogHeader>Update Conversion Rates</DialogHeader>
+          <DialogCloseTrigger />
+          <DialogBody pb={6}>
+                          <VStack spacing={4}>
+                <FieldRoot>
+                  <FieldLabel>ETH to SABI Rate</FieldLabel>
+                <NumberInputRoot
                   value={newRates.eth}
-                  onChange={(valueString) => setNewRates(prev => ({ 
+                  onValueChange={({ value }) => setNewRates(prev => ({ 
                     ...prev, 
-                    eth: parseInt(valueString) || 0 
+                    eth: parseInt(value) || 0 
                   }))}
                   min={1}
                 >
-                  <NumberInputField />
-                  <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                  </NumberInputStepper>
-                </NumberInput>
-              </FormControl>
+                  <NumberInputInput />
+                  <NumberInputControl />
+                </NumberInputRoot>
+              </FieldRoot>
 
-              <FormControl>
-                <FormLabel>USDT to SABI Rate</FormLabel>
-                <NumberInput
+              <FieldRoot>
+                <FieldLabel>USDT to SABI Rate</FieldLabel>
+                <NumberInputRoot
                   value={newRates.usdt}
-                  onChange={(valueString) => setNewRates(prev => ({ 
+                  onValueChange={({ value }) => setNewRates(prev => ({ 
                     ...prev, 
-                    usdt: parseInt(valueString) || 0 
+                    usdt: parseInt(value) || 0 
                   }))}
                   min={1}
                 >
-                  <NumberInputField />
-                  <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                  </NumberInputStepper>
-                </NumberInput>
-              </FormControl>
+                  <NumberInputInput />
+                  <NumberInputControl />
+                </NumberInputRoot>
+              </FieldRoot>
 
               <HStack w="full" spacing={4} pt={4}>
                 <Button variant="outline" onClick={onRateClose} flex={1}>
@@ -547,75 +541,66 @@ const ContractManager = () => {
                 </Button>
               </HStack>
             </VStack>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+          </DialogBody>
+        </DialogContent>
+      </DialogRoot>
 
       {/* Update Mining Plan Modal */}
-      <Modal isOpen={isPlanOpen} onClose={onPlanClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Edit {selectedPlan} Mining Plan</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            <VStack spacing={4}>
-              <FormControl>
-                <FormLabel>Deposit Amount (SABI)</FormLabel>
-                <NumberInput
+      <DialogRoot open={isPlanOpen} onOpenChange={({ open }) => !open && onPlanClose()}>
+        <DialogBackdrop />
+        <DialogContent>
+          <DialogHeader>Edit {selectedPlan} Mining Plan</DialogHeader>
+          <DialogCloseTrigger />
+          <DialogBody pb={6}>
+                          <VStack spacing={4}>
+                <FieldRoot>
+                  <FieldLabel>Deposit Amount (SABI)</FieldLabel>
+                <NumberInputRoot
                   value={planForm.deposit}
-                  onChange={(valueString) => setPlanForm(prev => ({ 
+                  onValueChange={({ value }) => setPlanForm(prev => ({ 
                     ...prev, 
-                    deposit: parseInt(valueString) || 0 
+                    deposit: parseInt(value) || 0 
                   }))}
                   min={0}
                 >
-                  <NumberInputField />
-                  <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                  </NumberInputStepper>
-                </NumberInput>
-              </FormControl>
+                  <NumberInputInput />
+                  <NumberInputControl />
+                </NumberInputRoot>
+              </FieldRoot>
 
-              <FormControl>
-                <FormLabel>Daily Reward (SABI)</FormLabel>
-                <NumberInput
+              <FieldRoot>
+                <FieldLabel>Daily Reward (SABI)</FieldLabel>
+                <NumberInputRoot
                   value={planForm.dailyReward}
-                  onChange={(valueString) => setPlanForm(prev => ({ 
+                  onValueChange={({ value }) => setPlanForm(prev => ({ 
                     ...prev, 
-                    dailyReward: parseFloat(valueString) || 0 
+                    dailyReward: parseFloat(value) || 0 
                   }))}
                   min={0}
                   step={0.1}
                 >
-                  <NumberInputField />
-                  <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                  </NumberInputStepper>
-                </NumberInput>
-              </FormControl>
+                  <NumberInputInput />
+                  <NumberInputControl />
+                </NumberInputRoot>
+              </FieldRoot>
 
-              <FormControl>
-                <FormLabel>Duration (Days)</FormLabel>
-                <NumberInput
+              <FieldRoot>
+                <FieldLabel>Duration (Days)</FieldLabel>
+                <NumberInputRoot
                   value={planForm.duration}
-                  onChange={(valueString) => setPlanForm(prev => ({ 
+                  onValueChange={({ value }) => setPlanForm(prev => ({ 
                     ...prev, 
-                    duration: parseInt(valueString) || 1 
+                    duration: parseInt(value) || 1 
                   }))}
                   min={1}
                 >
-                  <NumberInputField />
-                  <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                  </NumberInputStepper>
-                </NumberInput>
-              </FormControl>
+                  <NumberInputInput />
+                  <NumberInputControl />
+                </NumberInputRoot>
+              </FieldRoot>
 
-              <FormControl>
-                <FormLabel>Auto Trigger</FormLabel>
+              <FieldRoot>
+                <FieldLabel>Auto Trigger</FieldLabel>
                 <Switch
                   isChecked={planForm.autoTrigger}
                   onChange={(e) => setPlanForm(prev => ({ 
@@ -623,7 +608,7 @@ const ContractManager = () => {
                     autoTrigger: e.target.checked 
                   }))}
                 />
-              </FormControl>
+              </FieldRoot>
 
               <HStack w="full" spacing={4} pt={4}>
                 <Button variant="outline" onClick={onPlanClose} flex={1}>
@@ -641,26 +626,26 @@ const ContractManager = () => {
                 </Button>
               </HStack>
             </VStack>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+          </DialogBody>
+        </DialogContent>
+      </DialogRoot>
 
       {/* Add Minter Modal */}
-      <Modal isOpen={isMinterOpen} onClose={onMinterClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Add Authorized Minter</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
+      <DialogRoot open={isMinterOpen} onOpenChange={({ open }) => !open && onMinterClose()}>
+        <DialogBackdrop />
+        <DialogContent>
+          <DialogHeader>Add Authorized Minter</DialogHeader>
+          <DialogCloseTrigger />
+          <DialogBody pb={6}>
             <VStack spacing={4}>
-              <FormControl>
-                <FormLabel>Wallet Address</FormLabel>
+              <FieldRoot>
+                <FieldLabel>Wallet Address</FieldLabel>
                 <Input
                   value={newMinter}
                   onChange={(e) => setNewMinter(e.target.value)}
                   placeholder="0x..."
                 />
-              </FormControl>
+              </FieldRoot>
 
               <HStack w="full" spacing={4} pt={4}>
                 <Button variant="outline" onClick={onMinterClose} flex={1}>
@@ -678,9 +663,9 @@ const ContractManager = () => {
                 </Button>
               </HStack>
             </VStack>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+          </DialogBody>
+        </DialogContent>
+      </DialogRoot>
     </VStack>
   );
 };
