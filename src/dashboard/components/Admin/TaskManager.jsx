@@ -10,30 +10,15 @@ import {
   Input,
   Textarea,
   Select,
-  FormControl,
-  FormLabel,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
+  Field,
+  Dialog,
+  Portal,
   useDisclosure,
   Table,
   Badge,
   Icon,
   Switch,
   NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogContent,
-  AlertDialogOverlay,
   Heading,
   SimpleGrid
 } from "@chakra-ui/react";
@@ -292,9 +277,9 @@ const TaskManager = () => {
   const getStatusText = (isActive) => isActive ? 'Active' : 'Inactive';
 
   return (
-    <VStack spacing={6} align="stretch">
+    <VStack gap={6} align="stretch">
       {/* Task Statistics */}
-      <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
+              <SimpleGrid columns={{ base: 2, md: 4 }} gap={4}>
         <Card>
           <CardBody>
             <Box>
@@ -340,7 +325,6 @@ const TaskManager = () => {
       <HStack justify="space-between">
         <Heading size="md">Task Management</Heading>
         <Button
-          leftIcon={<FaPlus />}
           bg="#0088CD"
           color="white"
           onClick={() => {
@@ -349,6 +333,7 @@ const TaskManager = () => {
           }}
           _hover={{ bg: "#0077B6" }}
         >
+          <FaPlus />
           Add New Task
         </Button>
       </HStack>
@@ -382,7 +367,7 @@ const TaskManager = () => {
                       </HStack>
                     </td>
                     <td>
-                      <Badge colorScheme="blue">
+                      <Badge colorPalette="blue">
                         {task.category}
                       </Badge>
                     </td>
@@ -392,21 +377,24 @@ const TaskManager = () => {
                     </td>
                     <td>
                       <HStack>
-                        <Badge colorScheme={getStatusColor(task.isActive)}>
+                        <Badge colorPalette={getStatusColor(task.isActive)}>
                           {getStatusText(task.isActive)}
                         </Badge>
-                        <Switch
-                          isChecked={task.isActive}
-                          onChange={() => toggleTaskStatus(task.id)}
+                        <Switch.Root
+                          checked={task.isActive}
+                          onCheckedChange={() => toggleTaskStatus(task.id)}
                           size="sm"
-                        />
+                        >
+                          <Switch.Control>
+                            <Switch.Thumb />
+                          </Switch.Control>
+                        </Switch.Root>
                                               </HStack>
                     </td>
                     <td>
-                      <HStack spacing={2}>
+                      <HStack gap={2}>
                         <Button
                           size="sm"
-                          leftIcon={<FaEye />}
                           variant="outline"
                           onClick={() => {
                             // TODO: Implement view task details
@@ -418,22 +406,23 @@ const TaskManager = () => {
                              });
                           }}
                         >
+                          <FaEye />
                           View
                         </Button>
                         <Button
                           size="sm"
-                          leftIcon={<FaEdit />}
-                          colorScheme="blue"
+                          colorPalette="blue"
                           onClick={() => openEditModal(task)}
                         >
+                          <FaEdit />
                           Edit
                         </Button>
                         <Button
                           size="sm"
-                          leftIcon={<FaTrash />}
-                          colorScheme="red"
+                          colorPalette="red"
                           onClick={() => openDeleteModal(task)}
                         >
+                          <FaTrash />
                           Delete
                         </Button>
                                               </HStack>
@@ -446,38 +435,40 @@ const TaskManager = () => {
       </Card>
 
       {/* Add/Edit Task Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="xl">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>
-            {selectedTask ? 'Edit Task' : 'Add New Task'}
-          </ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
+      <Dialog.Root open={isOpen} onOpenChange={(e) => e.open ? null : onClose()} size="xl">
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>
+                {selectedTask ? 'Edit Task' : 'Add New Task'}
+              </Dialog.Header>
+              <Dialog.CloseTrigger />
+              <Dialog.Body pb={6}>
             <form onSubmit={handleTaskSubmit}>
-              <VStack spacing={4}>
-                <FormControl isRequired>
-                  <FormLabel>Task Title</FormLabel>
-                  <Input
-                    value={taskForm.title}
-                    onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="Enter task title"
-                  />
-                </FormControl>
+              <VStack gap={4}>
+                                  <Field.Root required>
+                    <Field.Label>Task Title</Field.Label>
+                    <Input
+                      value={taskForm.title}
+                      onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Enter task title"
+                    />
+                  </Field.Root>
 
-                <FormControl isRequired>
-                  <FormLabel>Description</FormLabel>
+                <Field.Root required>
+                  <Field.Label>Description</Field.Label>
                   <Textarea
                     value={taskForm.description}
                     onChange={(e) => setTaskForm(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Enter task description"
                     rows={3}
                   />
-                </FormControl>
+                </Field.Root>
 
-                <HStack w="full" spacing={4}>
-                  <FormControl isRequired>
-                    <FormLabel>Task Type</FormLabel>
+                <HStack w="full" gap={4}>
+                  <Field.Root required>
+                    <Field.Label>Task Type</Field.Label>
                     <Select
                       value={taskForm.type}
                       onChange={(e) => setTaskForm(prev => ({ ...prev, type: e.target.value }))}
@@ -488,10 +479,10 @@ const TaskManager = () => {
                       <option value="education">Educational</option>
                       <option value="survey">Survey</option>
                     </Select>
-                  </FormControl>
+                  </Field.Root>
 
-                  <FormControl isRequired>
-                    <FormLabel>Category</FormLabel>
+                  <Field.Root required>
+                    <Field.Label>Category</Field.Label>
                     <Select
                       value={taskForm.category}
                       onChange={(e) => setTaskForm(prev => ({ ...prev, category: e.target.value }))}
@@ -503,59 +494,59 @@ const TaskManager = () => {
                       <option value="follow">Follow</option>
                       <option value="share">Share</option>
                     </Select>
-                  </FormControl>
+                  </Field.Root>
                 </HStack>
 
-                <HStack w="full" spacing={4}>
-                  <FormControl isRequired>
-                    <FormLabel>Reward (SABI)</FormLabel>
-                    <NumberInput
+                <HStack w="full" gap={4}>
+                  <Field.Root required>
+                    <Field.Label>Reward (SABI)</Field.Label>
+                    <NumberInput.Root
                       value={taskForm.reward}
-                      onChange={(valueString) => setTaskForm(prev => ({ 
+                      onValueChange={(details) => setTaskForm(prev => ({ 
                         ...prev, 
-                        reward: parseInt(valueString) || 0 
+                        reward: parseInt(details.value) || 0 
                       }))}
                       min={1}
                       max={100}
                     >
-                      <NumberInputField />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </FormControl>
+                      <NumberInput.Input />
+                      <NumberInput.Control>
+                        <NumberInput.IncrementTrigger />
+                        <NumberInput.DecrementTrigger />
+                      </NumberInput.Control>
+                    </NumberInput.Root>
+                  </Field.Root>
 
-                  <FormControl isRequired>
-                    <FormLabel>Max Completions</FormLabel>
-                    <NumberInput
+                  <Field.Root required>
+                    <Field.Label>Max Completions</Field.Label>
+                    <NumberInput.Root
                       value={taskForm.maxCompletions}
-                      onChange={(valueString) => setTaskForm(prev => ({ 
+                      onValueChange={(details) => setTaskForm(prev => ({ 
                         ...prev, 
-                        maxCompletions: parseInt(valueString) || 0 
+                        maxCompletions: parseInt(details.value) || 0 
                       }))}
                       min={1}
                     >
-                      <NumberInputField />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </FormControl>
+                      <NumberInput.Input />
+                      <NumberInput.Control>
+                        <NumberInput.IncrementTrigger />
+                        <NumberInput.DecrementTrigger />
+                      </NumberInput.Control>
+                    </NumberInput.Root>
+                  </Field.Root>
                 </HStack>
 
-                <FormControl>
-                  <FormLabel>External Link</FormLabel>
+                <Field.Root>
+                  <Field.Label>External Link</Field.Label>
                   <Input
                     value={taskForm.externalLink}
                     onChange={(e) => setTaskForm(prev => ({ ...prev, externalLink: e.target.value }))}
                     placeholder="https://twitter.com/sabiride"
                   />
-                </FormControl>
+                </Field.Root>
 
-                <FormControl>
-                  <FormLabel>Verification Method</FormLabel>
+                <Field.Root>
+                  <Field.Label>Verification Method</Field.Label>
                   <Select
                     value={taskForm.verificationMethod}
                     onChange={(e) => setTaskForm(prev => ({ ...prev, verificationMethod: e.target.value }))}
@@ -564,27 +555,31 @@ const TaskManager = () => {
                     <option value="api">API Verification</option>
                     <option value="automatic">Automatic</option>
                   </Select>
-                </FormControl>
+                </Field.Root>
 
-                <FormControl>
-                  <FormLabel>Instructions for Users</FormLabel>
+                <Field.Root>
+                  <Field.Label>Instructions for Users</Field.Label>
                   <Textarea
                     value={taskForm.instructions}
                     onChange={(e) => setTaskForm(prev => ({ ...prev, instructions: e.target.value }))}
                     placeholder="Detailed instructions for completing the task"
                     rows={3}
                   />
-                </FormControl>
+                </Field.Root>
 
-                <FormControl>
-                  <FormLabel>Active Status</FormLabel>
-                  <Switch
-                    isChecked={taskForm.isActive}
-                    onChange={(e) => setTaskForm(prev => ({ ...prev, isActive: e.target.checked }))}
-                  />
-                </FormControl>
+                <Field.Root>
+                  <Field.Label>Active Status</Field.Label>
+                  <Switch.Root
+                    checked={taskForm.isActive}
+                    onCheckedChange={(details) => setTaskForm(prev => ({ ...prev, isActive: details.checked }))}
+                  >
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                  </Switch.Root>
+                </Field.Root>
 
-                <HStack w="full" spacing={4} pt={4}>
+                <HStack w="full" gap={4} pt={4}>
                   <Button variant="outline" onClick={onClose} flex={1}>
                     Cancel
                   </Button>
@@ -601,38 +596,44 @@ const TaskManager = () => {
                 </HStack>
               </VStack>
             </form>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+              </Dialog.Body>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        isOpen={isDeleteOpen}
-        leastDestructiveRef={cancelRef}
-        onClose={onDeleteClose}
+      <Dialog.Root 
+        open={isDeleteOpen} 
+        onOpenChange={(e) => e.open ? null : onDeleteClose()}
+        role="alertdialog"
+        initialFocusEl={() => cancelRef.current}
       >
-        <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Delete Task
-            </AlertDialogHeader>
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header fontSize="lg" fontWeight="bold">
+                Delete Task
+              </Dialog.Header>
 
-            <AlertDialogBody>
-              Are you sure you want to delete "{selectedTask?.title}"? 
-              This action cannot be undone.
-            </AlertDialogBody>
+              <Dialog.Body>
+                Are you sure you want to delete "{selectedTask?.title}"? 
+                This action cannot be undone.
+              </Dialog.Body>
 
-            <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onDeleteClose}>
-                Cancel
-              </Button>
-              <Button colorScheme="red" onClick={handleDeleteTask} ml={3}>
-                Delete
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
+              <Dialog.Footer>
+                <Button ref={cancelRef} onClick={onDeleteClose}>
+                  Cancel
+                </Button>
+                <Button colorPalette="red" onClick={handleDeleteTask} ml={3}>
+                  Delete
+                </Button>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </VStack>
   );
 };
