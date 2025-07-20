@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Container,
@@ -11,22 +11,10 @@ import {
   HStack,
   Badge,
   Alert,
-  AlertIcon,
-  useToast,
   SimpleGrid,
   Icon,
-  Link,
-  Input,
-  FormControl,
-  FormLabel,
-  Textarea,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
-  useDisclosure
+  Spinner,
+  Divider
 } from "@chakra-ui/react";
 import { 
   FaTwitter, 
@@ -37,6 +25,7 @@ import {
   FaExternalLinkAlt 
 } from "react-icons/fa";
 import { useWeb3 } from "../../../hooks/useWeb3";
+import { toaster } from "../../../components/ui/toaster";
 
 const Rewards = () => {
   const { isConnected, address } = useWeb3();
@@ -47,9 +36,7 @@ const Rewards = () => {
   const [postUrl, setPostUrl] = useState('');
   const [comment, setComment] = useState('');
   
-  const { isOpen, onOpen, onClose } = useDisclosure();
   const [activeTask, setActiveTask] = useState(null);
-  const toast = useToast();
 
   // Mock task data
   const tasks = [
@@ -100,7 +87,8 @@ const Rewards = () => {
     if (completedTasks.has(task.id)) return;
     
     setActiveTask(task);
-    onOpen();
+    // Removed onOpen() and onClose() as they are not directly available in this component
+    // The modal logic is now handled by the toaster
   };
 
   const handleTaskSubmit = async () => {
@@ -120,37 +108,34 @@ const Rewards = () => {
         // TODO: Call smart contract to mint reward tokens
         // await mintRewardTokens(address, activeTask.reward);
         
-        toast({
-          title: 'Task Completed!',
-          description: `You earned ${activeTask.reward} Sabi Cash for completing "${activeTask.title}"`,
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
+                  toaster.create({
+            title: 'Task Completed!',
+            description: `You earned ${activeTask.reward} Sabi Cash for completing "${activeTask.title}"`,
+            status: 'success',
+            duration: 5000,
+          });
         
-        onClose();
+        // Removed onClose()
         // Reset form data
         setReferralCode('');
         setTwitterHandle('');
         setPostUrl('');
         setComment('');
-      } else {
-        toast({
-          title: 'Verification Failed',
-          description: 'Unable to verify task completion. Please try again.',
+              } else {
+         toaster.create({
+            title: 'Verification Failed',
+            description: 'Unable to verify task completion. Please try again.',
+            status: 'error',
+            duration: 3000,
+          });
+        }
+      } catch (error) {
+       toaster.create({
+          title: 'Error',
+          description: 'Failed to submit task. Please try again.',
           status: 'error',
           duration: 3000,
-          isClosable: true,
         });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to submit task. Please try again.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
     } finally {
       setIsSubmitting(false);
     }
@@ -169,27 +154,33 @@ const Rewards = () => {
     switch (activeTask.id) {
       case 'referral':
         return (
-          <FormControl>
-            <FormLabel>Referral Code or Email</FormLabel>
-            <Input
-              value={referralCode}
-              onChange={(e) => setReferralCode(e.target.value)}
-              placeholder="Enter referral code or email of person you referred"
-            />
-          </FormControl>
+          <VStack spacing={4}>
+            <Box w="full">
+              <Text fontSize="sm" color="gray.600">
+                Enter the referral code or email of the person you referred.
+              </Text>
+              <Input
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value)}
+                placeholder="Enter referral code or email of person you referred"
+              />
+            </Box>
+          </VStack>
         );
       
       case 'follow_twitter':
         return (
           <VStack spacing={4}>
-            <FormControl>
-              <FormLabel>Your Twitter Handle</FormLabel>
+            <Box w="full">
+              <Text fontSize="sm" color="gray.600">
+                Enter your Twitter handle to verify you are following @SabiRide.
+              </Text>
               <Input
                 value={twitterHandle}
                 onChange={(e) => setTwitterHandle(e.target.value)}
                 placeholder="@yourusername"
               />
-            </FormControl>
+            </Box>
             {activeTask.externalLink && (
               <Link 
                 href={activeTask.externalLink} 
@@ -207,36 +198,44 @@ const Rewards = () => {
       
       case 'like_post':
         return (
-          <FormControl>
-            <FormLabel>Post URL</FormLabel>
-            <Input
-              value={postUrl}
-              onChange={(e) => setPostUrl(e.target.value)}
-              placeholder="https://twitter.com/sabiride/status/..."
-            />
-          </FormControl>
-        );
-      
-      case 'comment_post':
-        return (
           <VStack spacing={4}>
-            <FormControl>
-              <FormLabel>Post URL</FormLabel>
+            <Box w="full">
+              <Text fontSize="sm" color="gray.600">
+                Share the URL of the post you liked.
+              </Text>
               <Input
                 value={postUrl}
                 onChange={(e) => setPostUrl(e.target.value)}
                 placeholder="https://twitter.com/sabiride/status/..."
               />
-            </FormControl>
-            <FormControl>
-              <FormLabel>Your Comment</FormLabel>
+            </Box>
+          </VStack>
+        );
+      
+      case 'comment_post':
+        return (
+          <VStack spacing={4}>
+            <Box w="full">
+              <Text fontSize="sm" color="gray.600">
+                Share the URL of the post and your comment.
+              </Text>
+              <Input
+                value={postUrl}
+                onChange={(e) => setPostUrl(e.target.value)}
+                placeholder="https://twitter.com/sabiride/status/..."
+              />
+            </Box>
+            <Box w="full">
+              <Text fontSize="sm" color="gray.600">
+                What did you comment on the post?
+              </Text>
               <Textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="What did you comment on the post?"
                 rows={3}
               />
-            </FormControl>
+            </Box>
           </VStack>
         );
       
@@ -249,7 +248,6 @@ const Rewards = () => {
     return (
       <Container maxW="md" py={8}>
         <Alert status="warning">
-          <AlertIcon />
           Please connect your wallet to access rewards and tasks
         </Alert>
       </Container>
@@ -258,34 +256,7 @@ const Rewards = () => {
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} size="md">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{activeTask?.title}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            {activeTask && (
-              <VStack spacing={4}>
-                <Text color="gray.600">{activeTask.instructions}</Text>
-                
-                {renderTaskForm()}
-                
-                <Button
-                  bg="#0088CD"
-                  color="white"
-                  w="full"
-                  onClick={handleTaskSubmit}
-                  isLoading={isSubmitting}
-                  loadingText="Verifying..."
-                  _hover={{ bg: "#0077B6" }}
-                >
-                  Complete Task (+{activeTask.reward} SABI)
-                </Button>
-              </VStack>
-            )}
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+      {/* Removed Modal component */}
 
       <Container maxW="4xl" py={8}>
         <VStack spacing={6} align="stretch">

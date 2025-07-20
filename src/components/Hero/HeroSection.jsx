@@ -2,16 +2,11 @@ import { Box, Button, Container, Image, Text } from "@chakra-ui/react";
 import React from "react";
 import { cryptoImgData } from "../../assets/images/imagesData";
 import MinersCard from "../MinersCard/MinersCard";
-
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useWeb3 } from "../../hooks/useWeb3";
 import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
-
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useWeb3 } from "../../hooks/useWeb3";
-import { useNavigate } from "react-router";
-
-
 	const { isConnected, address } = useWeb3();
 
 	const navigate = useNavigate();

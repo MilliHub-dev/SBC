@@ -11,15 +11,15 @@ import {
   HStack,
   Badge,
   Alert,
-  AlertIcon,
-  useToast,
   SimpleGrid,
-  Divider,
-  Progress,
-  Icon
+  Separator,
+  Input,
+  Select,
+  Spinner
 } from "@chakra-ui/react";
 import { FaClock, FaCoins, FaGift, FaPlay, FaPause } from "react-icons/fa6";
 import { useWeb3 } from "../../../hooks/useWeb3";
+import { toaster } from "../../../components/ui/toaster";
 
 const Staking = () => {
   const {
@@ -36,8 +36,6 @@ const Staking = () => {
   const [isClaiming, setIsClaiming] = useState(false);
   const [lastClaimTime, setLastClaimTime] = useState(null);
   const [nextClaimTime, setNextClaimTime] = useState(null);
-
-  const toast = useToast();
 
   // Mock staking data - in real app this would come from contract
   const [stakingData, setStakingData] = useState({
@@ -61,16 +59,15 @@ const Staking = () => {
     
     if (!plan) return;
 
-    if (plan.deposit > parseFloat(sabiBalance)) {
-      toast({
-        title: 'Insufficient Balance',
-        description: `You need ${plan.deposit} Sabi Cash to stake in ${plan.name}`,
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
+          if (plan.deposit > parseFloat(sabiBalance)) {
+       toaster.create({
+          title: 'Insufficient Balance',
+          description: `You need ${plan.deposit} Sabi Cash to stake in ${plan.name}`,
+          status: 'error',
+          duration: 3000,
+        });
+        return;
+      }
 
     setIsStaking(true);
     try {
@@ -83,21 +80,19 @@ const Staking = () => {
         canClaim: plan.id === 0, // Free plan can claim immediately
       });
       
-      toast({
-        title: 'Staking Successful',
-        description: `Successfully staked ${plan.deposit} Sabi Cash in ${plan.name}`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-    } catch (error) {
-      toast({
-        title: 'Staking Failed',
-        description: error.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+              toaster.create({
+          title: 'Staking Successful',
+          description: `Successfully staked ${plan.deposit} Sabi Cash in ${plan.name}`,
+          status: 'success',
+          duration: 5000,
+        });
+          } catch (error) {
+       toaster.create({
+          title: 'Staking Failed',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+        });
     } finally {
       setIsStaking(false);
     }
@@ -124,21 +119,19 @@ const Staking = () => {
         }));
       }
       
-      toast({
-        title: 'Rewards Claimed',
-        description: 'Successfully claimed your rewards',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-    } catch (error) {
-      toast({
-        title: 'Claim Failed',
-        description: error.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+              toaster.create({
+          title: 'Rewards Claimed',
+          description: 'Successfully claimed your rewards',
+          status: 'success',
+          duration: 3000,
+        });
+          } catch (error) {
+       toaster.create({
+          title: 'Claim Failed',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+        });
     } finally {
       setIsClaiming(false);
     }
@@ -168,7 +161,6 @@ const Staking = () => {
     return (
       <Container maxW="md" py={8}>
         <Alert status="warning">
-          <AlertIcon />
           Please connect your wallet to access staking features
         </Alert>
       </Container>
@@ -263,32 +255,32 @@ const Staking = () => {
                     </Text>
                   </Box>
 
-                  <Divider />
+                  <Separator />
 
-                  <VStack spacing={3} align="stretch">
-                    <HStack>
-                      <Icon as={FaCoins} color="green.500" />
-                      <Text fontSize="sm">
-                        <strong>{plan.dailyReward} SABI</strong> per day
-                      </Text>
-                    </HStack>
-                    
-                    <HStack>
-                      <Icon as={FaClock} color="blue.500" />
-                      <Text fontSize="sm">
-                        Duration: <strong>{plan.duration} day{plan.duration > 1 ? 's' : ''}</strong>
-                      </Text>
-                    </HStack>
+                                      <VStack spacing={3} align="stretch">
+                      <HStack>
+                        <Box as={FaCoins} color="green.500" />
+                        <Text fontSize="sm">
+                          <strong>{plan.dailyReward} SABI</strong> per day
+                        </Text>
+                      </HStack>
+                      
+                      <HStack>
+                        <Box as={FaClock} color="blue.500" />
+                        <Text fontSize="sm">
+                          Duration: <strong>{plan.duration} day{plan.duration > 1 ? 's' : ''}</strong>
+                        </Text>
+                      </HStack>
 
-                    <HStack>
-                      <Icon as={plan.autoTrigger ? FaPlay : FaPause} color={plan.autoTrigger ? "green.500" : "orange.500"} />
-                      <Text fontSize="sm">
-                        {plan.autoTrigger ? 'Auto claim' : 'Manual claim'}
-                      </Text>
+                      <HStack>
+                        <Box as={plan.autoTrigger ? FaPlay : FaPause} color={plan.autoTrigger ? "green.500" : "orange.500"} />
+                        <Text fontSize="sm">
+                          {plan.autoTrigger ? 'Auto claim' : 'Manual claim'}
+                        </Text>
                     </HStack>
                   </VStack>
 
-                  <Divider />
+                  <Separator />
 
                   <VStack spacing={2}>
                     <Text fontSize="sm" color="gray.600" textAlign="center">
