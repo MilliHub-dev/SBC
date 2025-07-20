@@ -6,22 +6,20 @@ import {
   Text,
   Button,
   Input,
-  FormControl,
-  FormLabel,
+  Field,
   Alert,
-  AlertIcon,
   Card,
   CardBody,
   VStack,
   HStack,
   Divider,
   Badge,
-  useToast,
   Spinner,
   useDisclosure
 } from "@chakra-ui/react";
 import { useWeb3 } from "../../../hooks/useWeb3";
 import LoginModal from "../../../components/Login/LoginModal";
+import { toaster } from "../../../components/ui/toaster";
 
 const ConvertTokens = () => {
   const {
@@ -37,28 +35,25 @@ const ConvertTokens = () => {
 
   const [pointsToConvert, setPointsToConvert] = useState('');
   const [isConverting, setIsConverting] = useState(false);
-  const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const handleConvertPoints = async () => {
     if (!pointsToConvert || pointsToConvert < MIN_POINT_CONVERSION) {
-      toast({
+      toaster.create({
         title: 'Invalid Amount',
         description: `Minimum ${MIN_POINT_CONVERSION} points required for conversion`,
         status: 'error',
         duration: 3000,
-        isClosable: true,
       });
       return;
     }
 
     if (pointsToConvert > userPoints) {
-      toast({
+      toaster.create({
         title: 'Insufficient Points',
         description: 'You don\'t have enough points for this conversion',
         status: 'error',
         duration: 3000,
-        isClosable: true,
       });
       return;
     }
@@ -66,21 +61,19 @@ const ConvertTokens = () => {
     setIsConverting(true);
     try {
       await convertPointsToSabi(parseInt(pointsToConvert));
-      toast({
+      toaster.create({
         title: 'Conversion Successful',
         description: `Successfully converted ${pointsToConvert} points to ${pointsToConvert * POINT_TO_SABI_RATE} Sabi Cash`,
         status: 'success',
         duration: 5000,
-        isClosable: true,
       });
       setPointsToConvert('');
     } catch (error) {
-      toast({
+      toaster.create({
         title: 'Conversion Failed',
         description: error.message,
         status: 'error',
         duration: 5000,
-        isClosable: true,
       });
     } finally {
       setIsConverting(false);
@@ -95,7 +88,6 @@ const ConvertTokens = () => {
     return (
       <Container maxW="md" py={8}>
         <Alert status="warning">
-          <AlertIcon />
           Please connect your wallet to convert points
         </Alert>
       </Container>
@@ -116,7 +108,6 @@ const ConvertTokens = () => {
 
           {!isLoggedIn && (
             <Alert status="info">
-              <AlertIcon />
               <Box>
                 <Text fontWeight="bold">Login Required</Text>
                 <Text>Please login to your Sabi Ride account to access your points</Text>
@@ -157,8 +148,8 @@ const ConvertTokens = () => {
               <Card>
                 <CardBody>
                   <VStack spacing={4}>
-                    <FormControl>
-                      <FormLabel>Points to Convert</FormLabel>
+                    <Field>
+                      <Field.Label>Points to Convert</Field.Label>
                       <Input
                         type="number"
                         placeholder={`Minimum ${MIN_POINT_CONVERSION} points`}
@@ -167,10 +158,10 @@ const ConvertTokens = () => {
                         min={MIN_POINT_CONVERSION}
                         max={userPoints}
                       />
-                      <Text fontSize="sm" color="gray.600" mt={1}>
+                      <Field.HelperText>
                         {pointsToConvert && `= ${pointsToConvert * POINT_TO_SABI_RATE} Sabi Cash`}
-                      </Text>
-                    </FormControl>
+                      </Field.HelperText>
+                    </Field>
 
                     <HStack spacing={4} w="full">
                       <Button
