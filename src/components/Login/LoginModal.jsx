@@ -1,22 +1,20 @@
 import React, { useState } from 'react';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
+  DialogRoot,
+  DialogContent,
+  DialogHeader,
+  DialogBody,
+  DialogCloseTrigger,
+  DialogTitle,
   Button,
   Input,
-  FormControl,
-  FormLabel,
+  Field,
   VStack,
   Text,
-  Alert,
-  AlertIcon,
-  useToast
+  Alert
 } from '@chakra-ui/react';
 import { useWeb3 } from '../../hooks/useWeb3';
+import { toaster } from '../ui/toaster';
 
 const LoginModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
@@ -26,11 +24,7 @@ const LoginModal = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // const { loginToSabiRide, isConnected } = useWeb3();
-
   const { loginToSabiRide, isConnected } = useWeb3();
-
-  const toast = useToast();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -40,127 +34,94 @@ const LoginModal = ({ isOpen, onClose }) => {
     }));
   };
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-
-    if (!isConnected) {
-      setError('Please connect your wallet first');
-      return;
-    }
-
-
-    if (!formData.email || !formData.password) {
-      setError('Please fill in all fields');
-      return;
-    }
-
     setIsLoading(true);
     setError('');
 
     try {
+      if (!isConnected) {
+        setError('Please connect your wallet first');
+        return;
+      }
 
-      // Mock login for now
-
-      await loginToSabiRide(formData);
-
-      toast({
-        title: 'Login Successful',
-        description: 'You can now access your Sabi Ride points and features',
+      // Call the web3 login function
+      await loginToSabiRide(formData.email, formData.password);
+      
+      toaster.create({
+        title: 'Login successful',
         status: 'success',
         duration: 3000,
-        isClosable: true,
       });
+      
       onClose();
-      setFormData({ email: '', password: '' });
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(err.message || 'Login failed');
+      toaster.create({
+        title: 'Login failed',
+        description: err.message || 'An error occurred during login',
+        status: 'error',
+        duration: 5000,
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleClose = () => {
-    setFormData({ email: '', password: '' });
-    setError('');
-    onClose();
-  };
-
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="md">
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Login to Sabi Ride</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody pb={6}>
-          <Text mb={4} fontSize="sm" color="gray.600">
-            Login to access your Sabi Ride points and convert them to Sabi Cash
-          </Text>
-          
-
-
-          {!isConnected && (
-            <Alert status="warning" mb={4}>
-              <AlertIcon />
-              Please connect your wallet first before logging in
-            </Alert>
-          )}
-
-
-          {error && (
-            <Alert status="error" mb={4}>
-              <AlertIcon />
-              {error}
-            </Alert>
-          )}
-
-          <form onSubmit={handleLogin}>
+    <DialogRoot open={isOpen} onOpenChange={(details) => !details.open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Login to SabiRide</DialogTitle>
+          <DialogCloseTrigger />
+        </DialogHeader>
+        <DialogBody>
+          <form onSubmit={handleSubmit}>
             <VStack spacing={4}>
-              <FormControl isRequired>
-                <FormLabel>Email</FormLabel>
+              {error && (
+                <Alert status="error">
+                  {error}
+                </Alert>
+              )}
+              
+              <Field.Root>
+                <Field.Label>Email</Field.Label>
                 <Input
-                  type="email"
                   name="email"
+                  type="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  placeholder="Enter your Sabi Ride email"
+                  placeholder="Enter your email"
+                  required
                 />
-              </FormControl>
+              </Field.Root>
 
-              <FormControl isRequired>
-                <FormLabel>Password</FormLabel>
+              <Field.Root>
+                <Field.Label>Password</Field.Label>
                 <Input
-                  type="password"
                   name="password"
+                  type="password"
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Enter your password"
+                  required
                 />
-              </FormControl>
+              </Field.Root>
 
               <Button
                 type="submit"
-                bg="#0088CD"
-                color="white"
-                width="full"
+                colorScheme="blue"
                 isLoading={isLoading}
                 loadingText="Logging in..."
-
-                isDisabled={!isConnected}
-
-                _hover={{ bg: "#0077B6" }}
+                width="full"
               >
                 Login
               </Button>
             </VStack>
           </form>
-
-          <Text mt={4} fontSize="xs" color="gray.500" textAlign="center">
-            Note: This connects your wallet address to your Sabi Ride account for points conversion
-          </Text>
-        </ModalBody>
-      </ModalContent>
-    </Modal>
+        </DialogBody>
+      </DialogContent>
+    </DialogRoot>
   );
 };
 

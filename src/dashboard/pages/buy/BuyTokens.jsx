@@ -15,16 +15,14 @@ import {
 	CardBody,
 	Select,
 	Alert,
-	AlertIcon,
-	useToast,
-	FormControl,
-	FormLabel,
+	Field,
 	Badge
 } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { FaArrowDown, FaChevronDown, FaChevronUp, FaEthereum } from "react-icons/fa6";
 import { IoMdRefresh } from "react-icons/io";
 import { useWeb3 } from "../../../hooks/useWeb3";
+import { toaster } from "../../../components/ui/toaster";
 
 const BuyTokens = () => {
 	const [isCollapsibleOpen, setIsCollapasibleOpen] = useState(null);
@@ -39,27 +37,24 @@ const BuyTokens = () => {
 		buySabiWithPolygon, 
 		buySabiWithUSDT 
 	} = useWeb3();
-	const toast = useToast();
 
 	const handleBuy = async () => {
 		if (!isConnected) {
-			toast({
+			toaster.create({
 				title: 'Wallet Not Connected',
 				description: 'Please connect your wallet first',
 				status: 'error',
 				duration: 3000,
-				isClosable: true,
 			});
 			return;
 		}
 
 		if (!amount || parseFloat(amount) <= 0) {
-			toast({
+			toaster.create({
 				title: 'Invalid Amount',
 				description: 'Please enter a valid amount',
 				status: 'error',
 				duration: 3000,
-				isClosable: true,
 			});
 			return;
 		}
@@ -68,31 +63,28 @@ const BuyTokens = () => {
 		try {
 			if (paymentMethod === 'polygon') {
 				await buySabiWithPolygon(amount);
-				toast({
+				toaster.create({
 					title: 'Purchase Successful',
 					description: `Successfully bought Sabi Cash with ${amount} ETH`,
 					status: 'success',
 					duration: 5000,
-					isClosable: true,
 				});
 			} else if (paymentMethod === 'usdt') {
 				await buySabiWithUSDT(amount);
-				toast({
+				toaster.create({
 					title: 'Purchase Successful',
 					description: `Successfully bought Sabi Cash with ${amount} USDT`,
 					status: 'success',
 					duration: 5000,
-					isClosable: true,
 				});
 			}
 			setAmount('');
 		} catch (error) {
-			toast({
+			toaster.create({
 				title: 'Purchase Failed',
 				description: error.message,
 				status: 'error',
 				duration: 5000,
-				isClosable: true,
 			});
 		} finally {
 			setIsLoading(false);
@@ -111,7 +103,7 @@ const BuyTokens = () => {
 
 				{!isConnected && (
 					<Alert status="warning">
-						<AlertIcon />
+						<Field.Icon as={FaEthereum} />
 						Please connect your wallet to buy Sabi Cash
 					</Alert>
 				)}
@@ -140,8 +132,8 @@ const BuyTokens = () => {
 						<Card>
 							<CardBody>
 								<VStack spacing={4}>
-									<FormControl>
-										<FormLabel>Payment Method</FormLabel>
+									<Field>
+										<Field.Label>Payment Method</Field.Label>
 										<Select 
 											value={paymentMethod} 
 											onChange={(e) => setPaymentMethod(e.target.value)}
@@ -149,12 +141,12 @@ const BuyTokens = () => {
 											<option value="polygon">Polygon (ETH)</option>
 											<option value="usdt">USDT</option>
 										</Select>
-									</FormControl>
+									</Field>
 
-									<FormControl>
-										<FormLabel>
+									<Field>
+										<Field.Label>
 											Amount {paymentMethod === 'polygon' ? '(ETH)' : '(USDT)'}
-										</FormLabel>
+										</Field.Label>
 										<Input
 											type="number"
 											step="0.001"
@@ -162,7 +154,7 @@ const BuyTokens = () => {
 											value={amount}
 											onChange={(e) => setAmount(e.target.value)}
 										/>
-									</FormControl>
+									</Field>
 
 									<Button
 										bg="#0088CD"
