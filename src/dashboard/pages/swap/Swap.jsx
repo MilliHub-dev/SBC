@@ -18,7 +18,7 @@ import {
   Divider,
   SimpleGrid
 } from "@chakra-ui/react";
-import { FaArrowsRotate, FaCoins, FaExchangeAlt } from "react-icons/fa6";
+import { FaArrowsRotate, FaCoins, FaArrowRightArrowLeft } from "react-icons/fa6";
 import { useWeb3 } from "../../../hooks/useWeb3";
 import { toaster } from "../../../components/ui/toaster";
 
@@ -121,7 +121,7 @@ const Swap = () => {
       <VStack spacing={6} align="stretch">
         <Box textAlign="center">
           <Heading size="lg" mb={2} color="white">
-            <Icon as={FaExchangeAlt} mr={3} color="#0088CD" />
+            <Icon as={FaArrowRightArrowLeft} mr={3} color="#0088CD" />
             Token Swap
           </Heading>
           <Text color="gray.400">
