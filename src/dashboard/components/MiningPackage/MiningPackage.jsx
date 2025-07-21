@@ -1,10 +1,55 @@
 import { Box, Button, Flex, Icon, Image, Text } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { BiInfoCircle } from "react-icons/bi";
-import { FaChevronUp } from "react-icons/fa6";
+import { FaChevronUp, FaChevronDown } from "react-icons/fa6";
+import { useWeb3 } from "../../../hooks/useWeb3";
 
-const MiningPackage = () => {
+const MiningPackage = ({ 
+  packageData = {
+    name: "Baby Chip",
+    price: 25,
+    apr: 24.16,
+    duration: 3,
+    hashpower: "0.9969 TH/s",
+    electricityCost: "$0.0698/kwh",
+    totalElectricityCost: "$2.82",
+    energyDiscount: "0.33%",
+    estimatedValue: 26.51,
+    retainedAmount: 21.81,
+    minedAmount: 4.70,
+    btcPrice: 105506.00
+  }
+}) => {
   const [showDetails, setShowDetails] = useState(false);
+  const [quantity, setQuantity] = useState(2);
+  const { buySabiWithPolygon, isConnected } = useWeb3();
+
+  const handleQuantityChange = (increment) => {
+    setQuantity(prev => Math.max(1, prev + increment));
+  };
+
+  const handleSelectPackage = async () => {
+    try {
+      if (!isConnected) {
+        alert('Please connect your wallet first');
+        return;
+      }
+      
+      const totalCost = packageData.price * quantity;
+      
+      // Convert price to ETH equivalent (assuming 1 ETH = $3000 for demo)
+      const ethAmount = totalCost / 3000;
+      
+      await buySabiWithPolygon(ethAmount);
+      alert(`Successfully purchased ${quantity} ${packageData.name} package(s)!`);
+    } catch (error) {
+      console.error('Purchase failed:', error);
+      alert('Purchase failed. Please try again.');
+    }
+  };
+
+  const totalPrice = packageData.price * quantity;
+  const totalEstimatedValue = packageData.estimatedValue * quantity;
 
   return (
     <Box
@@ -14,22 +59,39 @@ const MiningPackage = () => {
       gap={"4"}
       bg={"gray.800"}
       rounded={"md"}
+      border={"1px solid"}
+      borderColor={"gray.700"}
+      transition={"all 0.2s"}
+      _hover={{
+        borderColor: "#0088CD",
+        transform: "translateY(-2px)",
+        shadow: "lg"
+      }}
     >
       <Flex alignItems={"center"} justifyContent={"space-between"}>
-        <Text fontSize={20}>Baby Chip</Text>
-        <Image />
+        <Text fontSize={20} fontWeight={"bold"}>{packageData.name}</Text>
+        <Image 
+          src="/mining-chip.png" 
+          alt="Mining chip"
+          boxSize="40px"
+          fallback={<Box w="40px" h="40px" bg="gray.600" rounded="md" />}
+        />
       </Flex>
+      
       <Flex alignItems={"center"} justifyContent={"space-between"}>
         <Text color={"#0088CD"} fontWeight={"bold"} fontSize={30}>
-          $25
+          ${totalPrice}
         </Text>
-        <Box color={"gray.500"} fontSize={20}>
+        <Box color={"gray.500"} fontSize={20} display={"flex"}>
           <Button
             bg={"gray.900"}
             padding={"1.5rem 1rem"}
             rounded={0}
             border={"1px solid"}
             borderColor={"gray.800"}
+            onClick={() => handleQuantityChange(-1)}
+            isDisabled={quantity <= 1}
+            _hover={{ bg: "gray.700" }}
           >
             -
           </Button>
@@ -38,8 +100,10 @@ const MiningPackage = () => {
             bg={"gray.900"}
             padding={"1.5rem 1rem"}
             rounded={0}
+            minW={"60px"}
+            _hover={{ bg: "gray.700" }}
           >
-            2
+            {quantity}
           </Button>
           <Button
             bg={"gray.900"}
@@ -47,11 +111,14 @@ const MiningPackage = () => {
             rounded={0}
             border={"1px solid"}
             borderColor={"gray.800"}
+            onClick={() => handleQuantityChange(1)}
+            _hover={{ bg: "gray.700" }}
           >
             +
           </Button>
         </Box>
       </Flex>
+      
       <Flex
         alignItems={"center"}
         justifyContent={"space-between"}
@@ -61,9 +128,10 @@ const MiningPackage = () => {
       >
         <Text color={"gray.500"}>APR:</Text>
         <Text color={"#0088CD"} fontSize={25} fontWeight={"bold"}>
-          24.16%
+          {packageData.apr}%
         </Text>
       </Flex>
+      
       <Flex
         gap={2}
         bg={"gray.900"}
@@ -74,19 +142,20 @@ const MiningPackage = () => {
         color={"gray.500"}
       >
         <Flex alignItems={"center"} justifyContent={"space-between"}>
-          <Text>Total Est. Value After 3 Months:</Text>
-          <Icon size={"lg"}>
+          <Text>Total Est. Value After {packageData.duration} Months:</Text>
+          <Icon size={"lg"} color={"gray.400"}>
             <BiInfoCircle />
           </Icon>
         </Flex>
         <Text fontWeight={"bold"} fontSize={25} color={"#fff"}>
-          $26.51
+          ${totalEstimatedValue.toFixed(2)}
         </Text>
-        <Text>
-          (Includes: $21.81 from retained cBTC + $4.70 from mined BTC) (BTC =
-          $105,506.00 )
+        <Text fontSize={"sm"}>
+          (Includes: ${(packageData.retainedAmount * quantity).toFixed(2)} from retained cBTC + ${(packageData.minedAmount * quantity).toFixed(2)} from mined BTC) 
+          (BTC = ${packageData.btcPrice.toLocaleString()})
         </Text>
       </Flex>
+      
       <Button
         display={"flex"}
         alignItems={"center"}
@@ -95,12 +164,14 @@ const MiningPackage = () => {
         color={"gray.500"}
         bg={"gray.900"}
         onClick={() => setShowDetails(!showDetails)}
+        _hover={{ bg: "gray.700" }}
       >
         Package Details
         <Icon size={"sm"}>
-          <FaChevronUp width={5} height={5} />
+          {showDetails ? <FaChevronUp /> : <FaChevronDown />}
         </Icon>
       </Button>
+      
       <Box
         display={showDetails ? "flex" : "none"}
         flexDirection={"column"}
@@ -115,7 +186,7 @@ const MiningPackage = () => {
           justifyContent={"space-between"}
         >
           <Text>Mining Power:</Text>
-          <Text>0.9969 TH/s</Text>
+          <Text fontWeight={"bold"}>{packageData.hashpower}</Text>
         </Box>
         <Box
           display={"flex"}
@@ -123,15 +194,15 @@ const MiningPackage = () => {
           justifyContent={"space-between"}
         >
           <Text>Duration:</Text>
-          <Text>3 Months</Text>
+          <Text fontWeight={"bold"}>{packageData.duration} Months</Text>
         </Box>
         <Box
           display={"flex"}
           alignItems={"center"}
           justifyContent={"space-between"}
         >
-          <Text>Elextricity Cost:</Text>
-          <Text>$0.0698/kwh</Text>
+          <Text>Electricity Cost:</Text>
+          <Text fontWeight={"bold"}>{packageData.electricityCost}</Text>
         </Box>
         <Box
           display={"flex"}
@@ -139,7 +210,7 @@ const MiningPackage = () => {
           justifyContent={"space-between"}
         >
           <Text>Total Electricity Cost:</Text>
-          <Text>$2.82</Text>
+          <Text fontWeight={"bold"}>{packageData.totalElectricityCost}</Text>
         </Box>
         <Box
           display={"flex"}
@@ -147,11 +218,19 @@ const MiningPackage = () => {
           justifyContent={"space-between"}
         >
           <Text>Energy Discount:</Text>
-          <Text>0.33%</Text>
+          <Text fontWeight={"bold"} color={"green.400"}>{packageData.energyDiscount}</Text>
         </Box>
       </Box>
-      <Button padding={"1.5rem 1rem"} bg={"#0088CD"} color={"#fff"}>
-        Select 25% Package
+      
+      <Button 
+        padding={"1.5rem 1rem"} 
+        bg={"#0088CD"} 
+        color={"#fff"}
+        _hover={{ bg: "#0077B3" }}
+        onClick={handleSelectPackage}
+        isDisabled={!isConnected}
+      >
+        {isConnected ? `Select ${packageData.price}% Package` : "Connect Wallet to Purchase"}
       </Button>
     </Box>
   );
