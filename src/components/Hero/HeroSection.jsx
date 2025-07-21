@@ -49,6 +49,7 @@ const HeroSection = () => {
 				</div>
 				
 				<div className="px-6 flex items-center font-medium gap-4 md:gap-10 flex-col md:flex-row">
+
 					{!isConnected ? (
 						<>
 							<ConnectButton />
@@ -61,6 +62,7 @@ const HeroSection = () => {
 						</>
 					) : (
 						<>
+
 							<div className="flex items-center gap-4 flex-col md:flex-row">
 								<span className="text-sm text-muted-foreground">
 									Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
@@ -77,7 +79,7 @@ const HeroSection = () => {
 						</>
 					)}
 				</div>
-				
+
 				<MinersCard />
 			</div>
 		</div>
