@@ -1,14 +1,13 @@
-import { Box, Button, Container, Image, Text } from "@chakra-ui/react";
 import React from "react";
 import { cryptoImgData } from "../../assets/images/imagesData";
 import MinersCard from "../MinersCard/MinersCard";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useWeb3 } from "../../hooks/useWeb3";
 import { useNavigate } from "react-router-dom";
+import { Button } from "../ui/button";
 
 const HeroSection = () => {
 	const { isConnected, address } = useWeb3();
-
 	const navigate = useNavigate();
 
 	const handleDashboardClick = () => {
@@ -16,121 +15,74 @@ const HeroSection = () => {
 	};
 
 	return (
-		<Container mt={5}>
-			<Box
-				display={"flex"}
-				flexDirection={"column"}
-				justifyContent={"center"}
-				alignItems={"center"}
-				gap={10}
-			>
-				<Box
-					w={{ base: "100%", md: "50%" }}
-					display={"flex"}
-					flexDirection={"column"}
-					alignItems={"center"}
-					gap={-5}
-					fontSize={{ base: "40px", md: "50px" }}
-					fontWeight={"bold"}
-					textAlign={"center"}
-				>
-					<Text as={"h1"} fontSize={{ base: 30, md: 40 }}>
+		<div className="container mx-auto px-4 mt-5">
+			<div className="flex flex-col justify-center items-center gap-10">
+				<div className="w-full md:w-1/2 flex flex-col items-center text-center space-y-4">
+					<h1 className="text-3xl md:text-4xl font-bold">
 						Welcome to Sabi Cash
-					</Text>
-					<Text as={"h1"} fontSize={{ base: 30, md: 40 }}>
-						{" "}
+					</h1>
+					<h1 className="text-3xl md:text-4xl font-bold">
 						The Future of Mobility and Rewards.
-					</Text>
-					<Text
-						as={"h1"}
-						fontSize={{ base: 40, md: 50 }}
-						color={"#0088CD"}
-					>
+					</h1>
+					<h1 className="text-4xl md:text-5xl font-bold text-brand">
 						Ride Earn Repeat
-					</Text>
-					<Text
-						as={"p"}
-						mb={"10px"}
-						fontSize={{ base: "15px", md: "20px" }}
-						fontWeight={"500"}
-					>
+					</h1>
+					<p className="text-base md:text-xl font-medium mb-4 text-muted-foreground">
 						Sabi Cash is the official crypto token powering the Sabi Ride
-						ecosystem. Whether you’re a passenger or a driver, you earn
+						ecosystem. Whether you're a passenger or a driver, you earn
 						rewards for every ride and activity. Get rewarded for moving
 						the world.
-					</Text>
-				</Box>
-				<Box
-					display={"flex"}
-					justifyContent={"center"}
-					alignItems={"center"}
-					flexWrap={"wrap"}
-					gap={3}
-				>
+					</p>
+				</div>
+				
+				<div className="flex justify-center items-center flex-wrap gap-3">
 					{cryptoImgData.map((images, index) => {
 						return (
-							<Image
-								h={{ base: "50px", md: "60px" }}
+							<img
+								className="h-12 md:h-16 object-contain"
 								key={index}
 								src={images.img}
 								alt={images.title}
-								objectFit={"contain"}
 							/>
 						);
 					})}
-				</Box>
-				<Box
-					paddingInline={"1.4rem"}
-					fontSize={{ base: ".8rem", md: "1.5rem" }}
-					display={"flex"}
-					alignItems={"center"}
-					fontWeight={"500"}
-					gap={{ base: 3, md: 10 }}
-					flexDirection={{ base: "column", md: "row" }}
-				>
-
+				</div>
+				
+				<div className="px-6 flex items-center font-medium gap-4 md:gap-10 flex-col md:flex-row">
 
 					{!isConnected ? (
 						<>
 							<ConnectButton />
 							<Button
-								padding={{ base: "1.6rem 1.4rem", md: "1.9rem 1.7rem" }}
-								bg={"gray.800"}
-								color={"#fff"}
-								rounded={"lg"}
+								className="py-6 px-6"
+								variant="secondary"
 							>
 								Join Community
 							</Button>
 						</>
 					) : (
 						<>
-							<Box 
-								display="flex" 
-								alignItems="center" 
-								gap={4}
-								flexDirection={{ base: "column", md: "row" }}
-							>
-								<Text fontSize="sm" color="gray.600">
+
+							<div className="flex items-center gap-4 flex-col md:flex-row">
+								<span className="text-sm text-muted-foreground">
 									Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
-								</Text>
+								</span>
 								<Button
-									padding={{ base: "1.6rem 1.4rem", md: "1.9rem 1.7rem" }}
-									bg={"#0088CD"}
-									color={"#fff"}
-									rounded={"lg"}
+									className="py-6 px-6"
+									variant="brand"
 									onClick={handleDashboardClick}
 								>
 									Go to Dashboard
 								</Button>
 								<ConnectButton />
-							</Box>
+							</div>
 						</>
 					)}
+				</div>
 
-				</Box>
 				<MinersCard />
-			</Box>
-		</Container>
+			</div>
+		</div>
 	);
 };
 

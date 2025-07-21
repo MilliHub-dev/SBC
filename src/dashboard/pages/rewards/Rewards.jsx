@@ -14,7 +14,9 @@ import {
   SimpleGrid,
   Icon,
   Spinner,
-  Divider
+  Input,
+  Textarea,
+  Link
 } from "@chakra-ui/react";
 import { 
   FaTwitter, 

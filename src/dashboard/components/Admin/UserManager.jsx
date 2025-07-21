@@ -42,13 +42,7 @@ import {
   MenuTrigger,
   MenuContent,
   MenuItem,
-  Portal,
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogContent,
-  AlertDialogOverlay
+  Portal
 } from "@chakra-ui/react";
 import {
   FaSearch,

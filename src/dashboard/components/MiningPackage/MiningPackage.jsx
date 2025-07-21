@@ -79,9 +79,9 @@ const MiningPackage = ({
       </Flex>
       
       <Flex alignItems={"center"} justifyContent={"space-between"}>
-        <Text color={"#0088CD"} fontWeight={"bold"} fontSize={30}>
-          ${totalPrice}
-        </Text>
+              <Text color={"#0088CD"} fontWeight={"bold"} fontSize={30}>
+        {totalPrice === 0 ? "FREE" : `${totalPrice} SABI`}
+      </Text>
         <Box color={"gray.500"} fontSize={20} display={"flex"}>
           <Button
             bg={"gray.900"}
@@ -148,11 +148,11 @@ const MiningPackage = ({
           </Icon>
         </Flex>
         <Text fontWeight={"bold"} fontSize={25} color={"#fff"}>
-          ${totalEstimatedValue.toFixed(2)}
+          {totalEstimatedValue.toFixed(2)} SABI
         </Text>
         <Text fontSize={"sm"}>
-          (Includes: ${(packageData.retainedAmount * quantity).toFixed(2)} from retained cBTC + ${(packageData.minedAmount * quantity).toFixed(2)} from mined BTC) 
-          (BTC = ${packageData.btcPrice.toLocaleString()})
+          (Includes: {(packageData.retainedAmount * quantity).toFixed(2)} SABI retained + {(packageData.minedAmount * quantity).toFixed(2)} SABI mined) 
+          {packageData.description && <Text as="span" color="#0088CD"> • {packageData.description}</Text>}
         </Text>
       </Flex>
       
@@ -194,7 +194,7 @@ const MiningPackage = ({
           justifyContent={"space-between"}
         >
           <Text>Duration:</Text>
-          <Text fontWeight={"bold"}>{packageData.duration} Months</Text>
+          <Text fontWeight={"bold"}>{packageData.duration} {packageData.duration === 24 ? 'Hours' : 'Days'}</Text>
         </Box>
         <Box
           display={"flex"}
@@ -230,7 +230,10 @@ const MiningPackage = ({
         onClick={handleSelectPackage}
         isDisabled={!isConnected}
       >
-        {isConnected ? `Select ${packageData.price}% Package` : "Connect Wallet to Purchase"}
+        {isConnected ? 
+          (packageData.price === 0 ? "Start Free Mining" : `Purchase Mining Plan`) : 
+          "Connect Wallet to Purchase"
+        }
       </Button>
     </Box>
   );

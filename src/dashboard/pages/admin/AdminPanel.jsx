@@ -18,20 +18,13 @@ import {
   StatLabel,
   StatValueText,
   StatHelpText,
-
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
   TabsRoot,
   TabsList,
   TabsTrigger,
   TabsContent,
   Spinner
 } from "@chakra-ui/react";
-import { FaUsers, FaListCheck, FaCoins, FaChartLine, FaGear, FaDatabase } from "react-icons/fa6";
+import { FaUsers, FaListCheck, FaCoins, FaChartLine, FaGear, FaDatabase, FaPlus } from "react-icons/fa6";
 import { useWeb3 } from "../../../hooks/useWeb3";
 import { toaster } from "../../../components/ui/toaster";
 import TaskManager from "../../components/Admin/TaskManager";

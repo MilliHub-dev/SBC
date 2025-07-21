@@ -1,87 +1,133 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 
-/* 1. Use a more-intuitive box-sizing model */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  scroll-behavior: smooth;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* 2. Remove default margin */
-* {
-  margin: 0;
-  padding: 0;
-}
+@layer base {
+  :root {
+    --background: 210 40% 2%;
+    --foreground: 0 0% 95%;
+    --card: 210 40% 4%;
+    --card-foreground: 0 0% 95%;
+    --popover: 210 40% 4%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 197 100% 40%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 40% 8%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 210 40% 8%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 210 40% 12%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 210 40% 12%;
+    --input: 210 40% 12%;
+    --ring: 197 100% 40%;
+    --radius: 0.5rem;
+  }
 
-/* 3. Enable keyword animations */
-@media (prefers-reduced-motion: no-preference) {
-  html {
-    interpolate-size: allow-keywords;
+  .dark {
+    --background: 210 40% 2%;
+    --foreground: 0 0% 95%;
+    --card: 210 40% 4%;
+    --card-foreground: 0 0% 95%;
+    --popover: 210 40% 4%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 197 100% 40%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 40% 8%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 210 40% 8%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 210 40% 12%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 210 40% 12%;
+    --input: 210 40% 12%;
+    --ring: 197 100% 40%;
   }
 }
 
-.check {
-  background-color: red;
-}
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased overflow-x-hidden;
+    font-family: "Inter", sans-serif;
+    line-height: 1.5;
+  }
 
-body {
-  /* 4. Add accessible line-height */
-  line-height: 1.5;
-  background-color: "#1A1A1A" !important;
-  /* 5. Improve text rendering */
-  -webkit-font-smoothing: antialiased;
-  font-family: "Inter", sans-serif;
-  overflow-x: hidden;
-}
+  /* Custom scrollbar for dark theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
 
-/* 6. Improve media defaults */
-img,
-picture,
-video,
-canvas,
-svg {
-  display: block;
-  max-width: 100%;
-}
 
-/* 7. Inherit fonts for form controls */
-input,
-button,
-textarea,
-select {
-  font: inherit;
-  color: inherit;
-}
+  ::-webkit-scrollbar-track {
+    @apply bg-secondary;
+  }
 
-/* 8. Avoid text overflows */
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  overflow-wrap: break-word;
-}
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground rounded;
+  }
 
-/* 9. Improve line wrapping */
-p {
-  text-wrap: pretty;
-}
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  text-wrap: balance;
-}
 
-/*
-  10. Create a root stacking context
-*/
-#root,
-#__next {
-  isolation: isolate;
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-accent-foreground;
+  }
+
+  /* Improve media defaults */
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
+    @apply block max-w-full;
+  }
+
+  /* Form controls */
+  input,
+  button,
+  textarea,
+  select {
+    @apply font-inherit;
+  }
+
+  /* Text wrapping */
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    overflow-wrap: break-word;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+  
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    text-wrap: balance;
+  }
+
+  #root,
+  #__next {
+    @apply isolate bg-background text-foreground min-h-screen;
+  }
 }
