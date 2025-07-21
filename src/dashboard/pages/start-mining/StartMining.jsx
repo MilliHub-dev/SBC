@@ -1,8 +1,9 @@
 import MiningPackage from "../../../dashboard/components/MiningPackage/MiningPackage";
 import { whatWeMine } from "../../../assets/images/imagesData";
-import { Box, Button, Icon, Image, Text, Alert, AlertIcon, Flex } from "@chakra-ui/react";
+import { Box, Button, Icon, Image, Text, Alert, Flex } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { useWeb3 } from "../../../hooks/useWeb3";
+import { FaExclamationTriangle } from "react-icons/fa";
 
 const StartMining = () => {
   const [selectedCurrency, setSelectedCurrency] = useState("polygon");
@@ -58,7 +59,9 @@ const StartMining = () => {
     <Box>
       {!isConnected && (
         <Alert status="warning" mb={6} rounded="md">
-          <AlertIcon />
+          <Icon color="orange.500" mr={2}>
+            <FaExclamationTriangle />
+          </Icon>
           <Text>Please connect your wallet to start mining and make purchases.</Text>
         </Alert>
       )}
