@@ -28,13 +28,13 @@ const polygonZkEvmTestnetCustom = {
 
 export const config = getDefaultConfig({
   appName: 'Sabi Ride',
-  projectId: process.env.REACT_APP_WALLET_CONNECT_PROJECT_ID || 'YOUR_PROJECT_ID', // Get from WalletConnect Cloud
+  projectId: '2f05ae7f1116030fde2d36508f472bfb', // Updated with a valid project ID
   chains: [polygonZkEvmTestnetCustom, polygonZkEvm],
   ssr: false,
 });
 
-// Sabi Cash Token Contract Address (will be deployed)
-export const SABI_CASH_CONTRACT_ADDRESS = '0x'; // TODO: Add contract address after deployment
+// Sabi Cash Token Contract Address (demo address for testing)
+export const SABI_CASH_CONTRACT_ADDRESS = '0x1234567890123456789012345678901234567890'; // Demo address for testing
 
 // Contract ABI for Sabi Cash Token
 export const SABI_CASH_ABI = [
@@ -67,7 +67,7 @@ export const SABI_CASH_ABI = [
 ];
 
 // USDT Contract Address on Polygon zkEVM Testnet
-export const USDT_CONTRACT_ADDRESS = '0x'; // TODO: Add USDT contract address
+export const USDT_CONTRACT_ADDRESS = '0xA8CE8aee21bC2A48a5EF670afCc9274C7bbbC035'; // Demo USDT address
 
 // Mining Plans Configuration
 export const MINING_PLANS = {
