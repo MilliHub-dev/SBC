@@ -18,13 +18,6 @@ import {
   StatLabel,
   StatValueText,
   StatHelpText,
-
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
   TabsRoot,
   TabsList,
   TabsTrigger,
