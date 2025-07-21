@@ -53,11 +53,10 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   
   html {
-    @apply dark;
     scroll-behavior: smooth;
   }
   
@@ -131,5 +130,4 @@
   #__next {
     @apply isolate bg-background text-foreground min-h-screen;
   }
-
 }

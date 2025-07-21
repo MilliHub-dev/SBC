@@ -1,5 +1,5 @@
 import React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 import { Button as ShadcnButton } from "../ui/button";
 import { Input as ShadcnInput } from "../ui/input";
 import { Card as ShadcnCard, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
