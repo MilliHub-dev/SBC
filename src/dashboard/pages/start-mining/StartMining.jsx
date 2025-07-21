@@ -9,49 +9,52 @@ const StartMining = () => {
   const [selectedCurrency, setSelectedCurrency] = useState("polygon");
   const { isConnected, address } = useWeb3();
 
-  // Different mining packages with varying specifications
+  // Updated mining packages as requested: Free, 100 Sabi Cash, 1000 Sabi Cash
   const miningPackages = [
     {
-      name: "Baby Chip",
-      price: 25,
-      apr: 24.16,
-      duration: 3,
-      hashpower: "0.9969 TH/s",
-      electricityCost: "$0.0698/kwh",
-      totalElectricityCost: "$2.82",
-      energyDiscount: "0.33%",
-      estimatedValue: 26.51,
-      retainedAmount: 21.81,
-      minedAmount: 4.70,
-      btcPrice: 105506.00
+      name: "Free Plan",
+      price: 0,
+      apr: 5.0,
+      duration: 24, // 24 hours
+      hashpower: "0.1 TH/s",
+      electricityCost: "$0.00/kwh",
+      totalElectricityCost: "$0.00",
+      energyDiscount: "0%",
+      estimatedValue: 0.5,
+      retainedAmount: 0.5,
+      minedAmount: 0.5,
+      btcPrice: 105506.00,
+      description: "Try mining for free! Limited daily rewards."
     },
     {
-      name: "Standard Chip",
-      price: 50,
+      name: "Standard Mining",
+      price: 100,
       apr: 26.34,
-      duration: 3,
-      hashpower: "2.1547 TH/s",
+      duration: 30, // 30 days
+      hashpower: "2.5 TH/s",
       electricityCost: "$0.0685/kwh",
       totalElectricityCost: "$5.89",
       energyDiscount: "0.65%",
-      estimatedValue: 55.42,
-      retainedAmount: 45.67,
-      minedAmount: 9.75,
-      btcPrice: 105506.00
+      estimatedValue: 126.34,
+      retainedAmount: 105.67,
+      minedAmount: 26.34,
+      btcPrice: 105506.00,
+      description: "Deposit 100 Sabi Cash for 30 days of mining with good returns."
     },
     {
-      name: "Pro Chip",
-      price: 100,
-      apr: 28.92,
-      duration: 3,
-      hashpower: "4.7829 TH/s",
-      electricityCost: "$0.0672/kwh",
-      totalElectricityCost: "$11.23",
-      energyDiscount: "1.25%",
-      estimatedValue: 118.94,
-      retainedAmount: 98.45,
-      minedAmount: 20.49,
-      btcPrice: 105506.00
+      name: "Pro Mining",
+      price: 1000,
+      apr: 35.5,
+      duration: 30, // 30 days
+      hashpower: "15.8 TH/s",
+      electricityCost: "$0.0550/kwh",
+      totalElectricityCost: "$45.23",
+      energyDiscount: "2.5%",
+      estimatedValue: 1355.0,
+      retainedAmount: 1155.0,
+      minedAmount: 355.0,
+      btcPrice: 105506.00,
+      description: "Deposit 1000 Sabi Cash for maximum mining power and highest returns."
     }
   ];
 

@@ -28,12 +28,44 @@
 body {
   /* 4. Add accessible line-height */
   line-height: 1.5;
-  background-color: "#1A1A1A" !important;
+  background-color: #0A0A0B !important;
+  color: #FFFFFF !important;
   /* 5. Improve text rendering */
   -webkit-font-smoothing: antialiased;
   font-family: "Inter", sans-serif;
   overflow-x: hidden;
 }
+
+html {
+  background-color: #0A0A0B !important;
+  color-scheme: dark;
+}
+
+/* Force dark mode on all components */
+.chakra-ui-dark {
+  background-color: #0A0A0B !important;
+  color: #FFFFFF !important;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1A1A1D;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4A5568;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #718096;
+}
+
+/* Override any light theme remnants */
 
 /* 6. Improve media defaults */
 img,
@@ -84,4 +116,7 @@ h6 {
 #root,
 #__next {
   isolation: isolate;
+  background-color: #0A0A0B !important;
+  color: #FFFFFF !important;
+  min-height: 100vh;
 }

@@ -9,14 +9,8 @@ import {
   Text,
   Input,
   Field,
-  Dialog,
-  Portal,
-  CloseButton,
-  useDisclosure,
   Badge,
-  Icon,
   Switch,
-  NumberInput,
   Heading,
   SimpleGrid,
   Stat,
@@ -24,13 +18,13 @@ import {
   StatValueText,
   StatHelpText,
   Progress,
-  TableRoot,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableColumnHeader,
-  TableCell,
-  TableScrollArea,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  TableContainer,
   Textarea,
   Select
 } from "@chakra-ui/react";
@@ -38,8 +32,6 @@ import {
   FaCoins,
   FaEdit,
   FaTrash,
-  FaPlay,
-  FaPause,
   FaPlus,
   FaUsers,
   FaChartLine,
@@ -52,9 +44,8 @@ const MiningPlanManager = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [planStats, setPlanStats] = useState({});
-
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const { isOpen: isCreateOpen, onOpen: onCreateOpen, onClose: onCreateClose } = useDisclosure();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
 
   // Plan form state
   const [planForm, setPlanForm] = useState({
@@ -127,24 +118,6 @@ const MiningPlanManager = () => {
         totalRewardsDistributed: 12780,
         createdAt: '2024-01-01',
         updatedAt: '2024-01-12'
-      },
-      {
-        id: 4,
-        name: 'VIP Staking',
-        type: 'STAKING',
-        deposit: 5000,
-        dailyReward: 900,
-        duration: 60,
-        autoTrigger: true,
-        isActive: false,
-        description: 'Exclusive VIP 60-day staking program',
-        maxParticipants: 100,
-        currentParticipants: 12,
-        minStakeAmount: 5000,
-        lockPeriod: 60,
-        totalRewardsDistributed: 4560,
-        createdAt: '2024-01-05',
-        updatedAt: '2024-01-18'
       }
     ];
 
@@ -176,22 +149,22 @@ const MiningPlanManager = () => {
 
       setPlans(prev => [...prev, newPlan]);
       
-             toaster.create({
-         title: 'Plan Created',
-         description: `${planForm.name} has been created successfully`,
-         status: 'success',
-         duration: 3000,
-       });
+      toaster.create({
+        title: 'Plan Created',
+        description: `${planForm.name} has been created successfully`,
+        status: 'success',
+        duration: 3000,
+      });
 
       resetForm();
-      onCreateClose();
+      setShowCreateForm(false);
     } catch (error) {
-             toaster.create({
-         title: 'Error',
-         description: 'Failed to create plan. Please try again.',
-         status: 'error',
-         duration: 3000,
-       });
+      toaster.create({
+        title: 'Error',
+        description: 'Failed to create plan. Please try again.',
+        status: 'error',
+        duration: 3000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -213,21 +186,21 @@ const MiningPlanManager = () => {
           : plan
       ));
 
-             toaster.create({
-         title: 'Plan Updated',
-         description: `${planForm.name} has been updated successfully`,
-         status: 'success',
-         duration: 3000,
-       });
+      toaster.create({
+        title: 'Plan Updated',
+        description: `${planForm.name} has been updated successfully`,
+        status: 'success',
+        duration: 3000,
+      });
 
-      onClose();
+      setShowEditForm(false);
     } catch (error) {
-             toaster.create({
-         title: 'Error',
-         description: 'Failed to update plan. Please try again.',
-         status: 'error',
-         duration: 3000,
-       });
+      toaster.create({
+        title: 'Error',
+        description: 'Failed to update plan. Please try again.',
+        status: 'error',
+        duration: 3000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -246,42 +219,42 @@ const MiningPlanManager = () => {
       ));
 
       const plan = plans.find(p => p.id === planId);
-             toaster.create({
-         title: 'Plan Status Updated',
-         description: `${plan.name} has been ${plan.isActive ? 'deactivated' : 'activated'}`,
-         status: 'info',
-         duration: 3000,
-       });
+      toaster.create({
+        title: 'Plan Status Updated',
+        description: `${plan.name} has been ${plan.isActive ? 'deactivated' : 'activated'}`,
+        status: 'info',
+        duration: 3000,
+      });
     } catch (error) {
-             toaster.create({
-         title: 'Error',
-         description: 'Failed to update plan status',
-         status: 'error',
-         duration: 3000,
-       });
+      toaster.create({
+        title: 'Error',
+        description: 'Failed to update plan status',
+        status: 'error',
+        duration: 3000,
+      });
     }
   };
 
   const handleDeletePlan = async (planId) => {
     try {
       setPlans(prev => prev.filter(plan => plan.id !== planId));
-             toaster.create({
-         title: 'Plan Deleted',
-         description: 'Mining plan has been deleted successfully',
-         status: 'info',
-         duration: 3000,
-       });
+      toaster.create({
+        title: 'Plan Deleted',
+        description: 'Mining plan has been deleted successfully',
+        status: 'info',
+        duration: 3000,
+      });
     } catch (error) {
-             toaster.create({
-         title: 'Error',
-         description: 'Failed to delete plan',
-         status: 'error',
-         duration: 3000,
-       });
+      toaster.create({
+        title: 'Error',
+        description: 'Failed to delete plan',
+        status: 'error',
+        duration: 3000,
+      });
     }
   };
 
-  const openEditModal = (plan) => {
+  const openEditForm = (plan) => {
     setSelectedPlan(plan);
     setPlanForm({
       name: plan.name,
@@ -296,7 +269,7 @@ const MiningPlanManager = () => {
       minStakeAmount: plan.minStakeAmount,
       lockPeriod: plan.lockPeriod
     });
-    onOpen();
+    setShowEditForm(true);
   };
 
   const resetForm = () => {
@@ -329,46 +302,232 @@ const MiningPlanManager = () => {
     return (((dailyReward * duration) / deposit) * 100).toFixed(2);
   };
 
+  const PlanForm = ({ onSubmit, onCancel, isEdit = false }) => (
+    <Card>
+      <CardBody>
+        <form onSubmit={onSubmit}>
+          <VStack spacing={4}>
+            <Heading size="md" color="white">
+              {isEdit ? 'Edit Mining Plan' : 'Create New Mining Plan'}
+            </Heading>
+
+            <HStack w="full" spacing={4}>
+              <Field.Root required>
+                <Field.Label>Plan Name</Field.Label>
+                <Input
+                  value={planForm.name}
+                  onChange={(e) => setPlanForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter plan name"
+                  bg="gray.800"
+                  color="white"
+                />
+              </Field.Root>
+
+              <Field.Root required>
+                <Field.Label>Plan Type</Field.Label>
+                <Select
+                  value={planForm.type}
+                  onChange={(e) => setPlanForm(prev => ({ ...prev, type: e.target.value }))}
+                  bg="gray.800"
+                  color="white"
+                >
+                  <option value="MINING" style={{backgroundColor: '#2D3748'}}>Mining</option>
+                  <option value="STAKING" style={{backgroundColor: '#2D3748'}}>Staking</option>
+                </Select>
+              </Field.Root>
+            </HStack>
+
+            <Field.Root required>
+              <Field.Label>Description</Field.Label>
+              <Textarea
+                value={planForm.description}
+                onChange={(e) => setPlanForm(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Enter plan description"
+                rows={3}
+                bg="gray.800"
+                color="white"
+              />
+            </Field.Root>
+
+            <HStack w="full" spacing={4}>
+              <Field.Root required>
+                <Field.Label>Deposit Amount (SABI)</Field.Label>
+                <Input
+                  type="number"
+                  value={planForm.deposit}
+                  onChange={(e) => setPlanForm(prev => ({ 
+                    ...prev, 
+                    deposit: parseInt(e.target.value) || 0 
+                  }))}
+                  min={0}
+                  placeholder="0"
+                  bg="gray.800"
+                  color="white"
+                />
+              </Field.Root>
+
+              <Field.Root required>
+                <Field.Label>Daily Reward (SABI)</Field.Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={planForm.dailyReward}
+                  onChange={(e) => setPlanForm(prev => ({ 
+                    ...prev, 
+                    dailyReward: parseFloat(e.target.value) || 0 
+                  }))}
+                  min={0}
+                  placeholder="0.0"
+                  bg="gray.800"
+                  color="white"
+                />
+              </Field.Root>
+            </HStack>
+
+            <HStack w="full" spacing={4}>
+              <Field.Root required>
+                <Field.Label>Duration (Days)</Field.Label>
+                <Input
+                  type="number"
+                  value={planForm.duration}
+                  onChange={(e) => setPlanForm(prev => ({ 
+                    ...prev, 
+                    duration: parseInt(e.target.value) || 1 
+                  }))}
+                  min={1}
+                  placeholder="1"
+                  bg="gray.800"
+                  color="white"
+                />
+              </Field.Root>
+
+              <Field.Root>
+                <Field.Label>Max Participants</Field.Label>
+                <Input
+                  type="number"
+                  value={planForm.maxParticipants}
+                  onChange={(e) => setPlanForm(prev => ({ 
+                    ...prev, 
+                    maxParticipants: parseInt(e.target.value) || 1000 
+                  }))}
+                  min={1}
+                  placeholder="1000"
+                  bg="gray.800"
+                  color="white"
+                />
+              </Field.Root>
+            </HStack>
+
+            <HStack w="full" spacing={4}>
+              <VStack align="start">
+                <Text fontSize="sm" color="gray.300">Auto Trigger</Text>
+                <Switch
+                  isChecked={planForm.autoTrigger}
+                  onChange={(e) => setPlanForm(prev => ({ 
+                    ...prev, 
+                    autoTrigger: e.target.checked 
+                  }))}
+                />
+              </VStack>
+
+              <VStack align="start">
+                <Text fontSize="sm" color="gray.300">Active Status</Text>
+                <Switch
+                  isChecked={planForm.isActive}
+                  onChange={(e) => setPlanForm(prev => ({ 
+                    ...prev, 
+                    isActive: e.target.checked 
+                  }))}
+                />
+              </VStack>
+            </HStack>
+
+            <HStack w="full" spacing={4} pt={4}>
+              <Button variant="outline" onClick={onCancel} flex={1}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                bg="#0088CD"
+                color="white"
+                isLoading={isLoading}
+                flex={1}
+                _hover={{ bg: "#0077B6" }}
+              >
+                {isEdit ? 'Update Plan' : 'Create Plan'}
+              </Button>
+            </HStack>
+          </VStack>
+        </form>
+      </CardBody>
+    </Card>
+  );
+
+  if (showCreateForm) {
+    return (
+      <PlanForm 
+        onSubmit={handleCreatePlan} 
+        onCancel={() => {
+          setShowCreateForm(false);
+          resetForm();
+        }} 
+      />
+    );
+  }
+
+  if (showEditForm) {
+    return (
+      <PlanForm 
+        onSubmit={handleUpdatePlan} 
+        onCancel={() => {
+          setShowEditForm(false);
+          resetForm();
+        }}
+        isEdit={true}
+      />
+    );
+  }
+
   return (
     <VStack spacing={6} align="stretch">
       {/* Mining Plan Statistics */}
       <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
-        <Card>
+        <Card bg="gray.900" borderColor="gray.700">
           <CardBody>
             <Stat>
-              <StatLabel>Total Plans</StatLabel>
-              <StatValueText>{planStats.totalPlans}</StatValueText>
-              <StatHelpText>All mining plans</StatHelpText>
+              <StatLabel color="gray.400">Total Plans</StatLabel>
+              <StatValueText color="white">{planStats.totalPlans}</StatValueText>
+              <StatHelpText color="gray.500">All mining plans</StatHelpText>
             </Stat>
           </CardBody>
         </Card>
 
-        <Card>
+        <Card bg="gray.900" borderColor="gray.700">
           <CardBody>
             <Stat>
-              <StatLabel>Active Plans</StatLabel>
-              <StatValueText>{planStats.activePlans}</StatValueText>
-              <StatHelpText>Currently running</StatHelpText>
+              <StatLabel color="gray.400">Active Plans</StatLabel>
+              <StatValueText color="white">{planStats.activePlans}</StatValueText>
+              <StatHelpText color="gray.500">Currently running</StatHelpText>
             </Stat>
           </CardBody>
         </Card>
 
-        <Card>
+        <Card bg="gray.900" borderColor="gray.700">
           <CardBody>
             <Stat>
-              <StatLabel>Total Participants</StatLabel>
-              <StatValueText>{planStats.totalParticipants}</StatValueText>
-              <StatHelpText>Across all plans</StatHelpText>
+              <StatLabel color="gray.400">Total Participants</StatLabel>
+              <StatValueText color="white">{planStats.totalParticipants}</StatValueText>
+              <StatHelpText color="gray.500">Across all plans</StatHelpText>
             </Stat>
           </CardBody>
         </Card>
 
-        <Card>
+        <Card bg="gray.900" borderColor="gray.700">
           <CardBody>
             <Stat>
-              <StatLabel>Rewards Distributed</StatLabel>
-              <StatValueText>{planStats.totalRewardsDistributed}</StatValueText>
-              <StatHelpText>Total SABI</StatHelpText>
+              <StatLabel color="gray.400">Rewards Distributed</StatLabel>
+              <StatValueText color="white">{planStats.totalRewardsDistributed}</StatValueText>
+              <StatHelpText color="gray.500">Total SABI</StatHelpText>
             </Stat>
           </CardBody>
         </Card>
@@ -376,14 +535,14 @@ const MiningPlanManager = () => {
 
       {/* Header with Create Button */}
       <HStack justify="space-between">
-        <Heading size="md">Mining Plan Management</Heading>
+        <Heading size="md" color="white">Mining Plan Management</Heading>
         <Button
           leftIcon={<FaPlus />}
           bg="#0088CD"
           color="white"
           onClick={() => {
             resetForm();
-            onCreateOpen();
+            setShowCreateForm(true);
           }}
           _hover={{ bg: "#0077B6" }}
         >
@@ -392,20 +551,20 @@ const MiningPlanManager = () => {
       </HStack>
 
       {/* Plans Table */}
-      <Card>
+      <Card bg="gray.900" borderColor="gray.700">
         <CardBody>
           <TableContainer>
             <Table variant="simple">
               <Thead>
                 <Tr>
-                  <Th>Plan Details</Th>
-                  <Th>Type</Th>
-                  <Th>Deposit/Reward</Th>
-                  <Th>Duration</Th>
-                  <Th>Participants</Th>
-                  <Th>APY/ROI</Th>
-                  <Th>Status</Th>
-                  <Th>Actions</Th>
+                  <Th color="gray.400">Plan Details</Th>
+                  <Th color="gray.400">Type</Th>
+                  <Th color="gray.400">Deposit/Reward</Th>
+                  <Th color="gray.400">Duration</Th>
+                  <Th color="gray.400">Participants</Th>
+                  <Th color="gray.400">APY/ROI</Th>
+                  <Th color="gray.400">Status</Th>
+                  <Th color="gray.400">Actions</Th>
                 </Tr>
               </Thead>
               <Tbody>
@@ -413,8 +572,8 @@ const MiningPlanManager = () => {
                   <Tr key={plan.id}>
                     <Td>
                       <Box>
-                        <Text fontWeight="bold">{plan.name}</Text>
-                        <Text fontSize="sm" color="gray.600">
+                        <Text fontWeight="bold" color="white">{plan.name}</Text>
+                        <Text fontSize="sm" color="gray.400">
                           {plan.description}
                         </Text>
                       </Box>
@@ -426,17 +585,17 @@ const MiningPlanManager = () => {
                     </Td>
                     <Td>
                       <VStack spacing={1} align="start">
-                        <Text fontSize="sm">
+                        <Text fontSize="sm" color="white">
                           Deposit: {plan.deposit} SABI
                         </Text>
-                        <Text fontSize="sm">
+                        <Text fontSize="sm" color="white">
                           Daily: {plan.dailyReward} SABI
                         </Text>
                       </VStack>
                     </Td>
                     <Td>
                       <VStack spacing={1} align="start">
-                        <Text fontSize="sm">{plan.duration} days</Text>
+                        <Text fontSize="sm" color="white">{plan.duration} days</Text>
                         {plan.autoTrigger && (
                           <Badge size="sm" colorScheme="green">Auto</Badge>
                         )}
@@ -444,7 +603,7 @@ const MiningPlanManager = () => {
                     </Td>
                     <Td>
                       <VStack spacing={1} align="start">
-                        <Text fontSize="sm">
+                        <Text fontSize="sm" color="white">
                           {plan.currentParticipants} / {plan.maxParticipants}
                         </Text>
                         <Progress
@@ -457,10 +616,10 @@ const MiningPlanManager = () => {
                     </Td>
                     <Td>
                       <VStack spacing={1} align="start">
-                        <Text fontSize="sm">
+                        <Text fontSize="sm" color="white">
                           APY: {calculateAPY(plan.dailyReward, plan.deposit)}%
                         </Text>
-                        <Text fontSize="sm">
+                        <Text fontSize="sm" color="white">
                           ROI: {calculateROI(plan.dailyReward, plan.duration, plan.deposit)}%
                         </Text>
                       </VStack>
@@ -483,7 +642,7 @@ const MiningPlanManager = () => {
                           size="sm"
                           leftIcon={<FaEdit />}
                           colorScheme="blue"
-                          onClick={() => openEditModal(plan)}
+                          onClick={() => openEditForm(plan)}
                         >
                           Edit
                         </Button>
@@ -505,348 +664,6 @@ const MiningPlanManager = () => {
           </TableContainer>
         </CardBody>
       </Card>
-
-      {/* Create Plan Modal */}
-      <Dialog.Root open={isCreateOpen} onOpenChange={(e) => !e.open && onCreateClose()} size="xl">
-        <Portal>
-          <Dialog.Backdrop />
-          <Dialog.Positioner>
-            <Dialog.Content>
-              <Dialog.Header>
-                <Dialog.Title>Create New Mining Plan</Dialog.Title>
-              </Dialog.Header>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton size="sm" />
-              </Dialog.CloseTrigger>
-              <Dialog.Body pb={6}>
-            <form onSubmit={handleCreatePlan}>
-              <VStack spacing={4}>
-                <HStack w="full" spacing={4}>
-                  <Field.Root required>
-                    <Field.Label>Plan Name</Field.Label>
-                    <Input
-                      value={planForm.name}
-                      onChange={(e) => setPlanForm(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Enter plan name"
-                    />
-                  </Field.Root>
-
-                  <Field.Root required>
-                    <Field.Label>Plan Type</Field.Label>
-                    <Select
-                      value={planForm.type}
-                      onChange={(e) => setPlanForm(prev => ({ ...prev, type: e.target.value }))}
-                    >
-                      <option value="MINING">Mining</option>
-                      <option value="STAKING">Staking</option>
-                    </Select>
-                  </Field.Root>
-                </HStack>
-
-                <Field.Root required>
-                  <Field.Label>Description</Field.Label>
-                  <Textarea
-                    value={planForm.description}
-                    onChange={(e) => setPlanForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Enter plan description"
-                    rows={3}
-                  />
-                </Field.Root>
-
-                <HStack w="full" spacing={4}>
-                  <Field.Root required>
-                    <Field.Label>Deposit Amount (SABI)</Field.Label>
-                    <NumberInput.Root
-                      value={planForm.deposit}
-                      onChange={(valueString) => setPlanForm(prev => ({ 
-                        ...prev, 
-                        deposit: parseInt(valueString) || 0 
-                      }))}
-                      min={0}
-                    >
-                      <NumberInput.Input />
-                      <NumberInput.Control>
-                        <NumberInput.IncrementTrigger />
-                        <NumberInput.DecrementTrigger />
-                      </NumberInput.Control>
-                    </NumberInput.Root>
-                  </Field.Root>
-
-                  <Field.Root required>
-                    <Field.Label>Daily Reward (SABI)</Field.Label>
-                    <NumberInput.Root
-                      value={planForm.dailyReward}
-                      onChange={(valueString) => setPlanForm(prev => ({ 
-                        ...prev, 
-                        dailyReward: parseFloat(valueString) || 0 
-                      }))}
-                      min={0}
-                      step={0.1}
-                    >
-                      <NumberInput.Input />
-                      <NumberInput.Control>
-                        <NumberInput.IncrementTrigger />
-                        <NumberInput.DecrementTrigger />
-                      </NumberInput.Control>
-                    </NumberInput.Root>
-                  </Field.Root>
-                </HStack>
-
-                <HStack w="full" spacing={4}>
-                  <Field.Root required>
-                    <Field.Label>Duration (Days)</Field.Label>
-                    <NumberInput.Root
-                      value={planForm.duration}
-                      onChange={(valueString) => setPlanForm(prev => ({ 
-                        ...prev, 
-                        duration: parseInt(valueString) || 1 
-                      }))}
-                      min={1}
-                    >
-                      <NumberInput.Input />
-                      <NumberInput.Control>
-                        <NumberInput.IncrementTrigger />
-                        <NumberInput.DecrementTrigger />
-                      </NumberInput.Control>
-                    </NumberInput.Root>
-                  </Field.Root>
-
-                  <Field.Root>
-                    <Field.Label>Max Participants</Field.Label>
-                    <NumberInput.Root
-                      value={planForm.maxParticipants}
-                      onChange={(valueString) => setPlanForm(prev => ({ 
-                        ...prev, 
-                        maxParticipants: parseInt(valueString) || 1000 
-                      }))}
-                      min={1}
-                    >
-                      <NumberInput.Input />
-                      <NumberInput.Control>
-                        <NumberInput.IncrementTrigger />
-                        <NumberInput.DecrementTrigger />
-                      </NumberInput.Control>
-                    </NumberInput.Root>
-                  </Field.Root>
-                </HStack>
-
-                <HStack w="full" spacing={4}>
-                  <Field.Root>
-                    <Field.Label>Auto Trigger</Field.Label>
-                    <Switch
-                      isChecked={planForm.autoTrigger}
-                      onChange={(e) => setPlanForm(prev => ({ 
-                        ...prev, 
-                        autoTrigger: e.target.checked 
-                      }))}
-                    />
-                  </Field.Root>
-
-                  <Field.Root>
-                    <Field.Label>Active Status</Field.Label>
-                    <Switch
-                      isChecked={planForm.isActive}
-                      onChange={(e) => setPlanForm(prev => ({ 
-                        ...prev, 
-                        isActive: e.target.checked 
-                      }))}
-                    />
-                  </Field.Root>
-                </HStack>
-
-                <HStack w="full" spacing={4} pt={4}>
-                  <Button variant="outline" onClick={onCreateClose} flex={1}>
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    bg="#0088CD"
-                    color="white"
-                    isLoading={isLoading}
-                    flex={1}
-                    _hover={{ bg: "#0077B6" }}
-                  >
-                    Create Plan
-                  </Button>
-                </HStack>
-              </VStack>
-            </form>
-              </Dialog.Body>
-            </Dialog.Content>
-          </Dialog.Positioner>
-        </Portal>
-      </Dialog.Root>
-
-      {/* Edit Plan Modal */}
-      <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="xl">
-        <Portal>
-          <Dialog.Backdrop />
-          <Dialog.Positioner>
-            <Dialog.Content>
-              <Dialog.Header>
-                <Dialog.Title>Edit Mining Plan</Dialog.Title>
-              </Dialog.Header>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton size="sm" />
-              </Dialog.CloseTrigger>
-              <Dialog.Body pb={6}>
-            <form onSubmit={handleUpdatePlan}>
-              <VStack spacing={4}>
-                <HStack w="full" spacing={4}>
-                  <Field.Root required>
-                    <Field.Label>Plan Name</Field.Label>
-                    <Input
-                      value={planForm.name}
-                      onChange={(e) => setPlanForm(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Enter plan name"
-                    />
-                  </Field.Root>
-
-                  <Field.Root required>
-                    <Field.Label>Plan Type</Field.Label>
-                    <Select
-                      value={planForm.type}
-                      onChange={(e) => setPlanForm(prev => ({ ...prev, type: e.target.value }))}
-                    >
-                      <option value="MINING">Mining</option>
-                      <option value="STAKING">Staking</option>
-                    </Select>
-                  </Field.Root>
-                </HStack>
-
-                <Field.Root required>
-                  <Field.Label>Description</Field.Label>
-                  <Textarea
-                    value={planForm.description}
-                    onChange={(e) => setPlanForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Enter plan description"
-                    rows={3}
-                  />
-                </Field.Root>
-
-                <HStack w="full" spacing={4}>
-                  <Field.Root required>
-                    <Field.Label>Deposit Amount (SABI)</Field.Label>
-                    <NumberInput.Root
-                      value={planForm.deposit}
-                      onChange={(valueString) => setPlanForm(prev => ({ 
-                        ...prev, 
-                        deposit: parseInt(valueString) || 0 
-                      }))}
-                      min={0}
-                    >
-                      <NumberInput.Input />
-                      <NumberInput.Control>
-                        <NumberInput.IncrementTrigger />
-                        <NumberInput.DecrementTrigger />
-                      </NumberInput.Control>
-                    </NumberInput.Root>
-                  </Field.Root>
-
-                  <Field.Root required>
-                    <Field.Label>Daily Reward (SABI)</Field.Label>
-                    <NumberInput.Root
-                      value={planForm.dailyReward}
-                      onChange={(valueString) => setPlanForm(prev => ({ 
-                        ...prev, 
-                        dailyReward: parseFloat(valueString) || 0 
-                      }))}
-                      min={0}
-                      step={0.1}
-                    >
-                      <NumberInput.Input />
-                      <NumberInput.Control>
-                        <NumberInput.IncrementTrigger />
-                        <NumberInput.DecrementTrigger />
-                      </NumberInput.Control>
-                    </NumberInput.Root>
-                  </Field.Root>
-                </HStack>
-
-                <HStack w="full" spacing={4}>
-                  <Field.Root required>
-                    <Field.Label>Duration (Days)</Field.Label>
-                    <NumberInput.Root
-                      value={planForm.duration}
-                      onChange={(valueString) => setPlanForm(prev => ({ 
-                        ...prev, 
-                        duration: parseInt(valueString) || 1 
-                      }))}
-                      min={1}
-                    >
-                      <NumberInput.Input />
-                      <NumberInput.Control>
-                        <NumberInput.IncrementTrigger />
-                        <NumberInput.DecrementTrigger />
-                      </NumberInput.Control>
-                    </NumberInput.Root>
-                  </Field.Root>
-
-                  <Field.Root>
-                    <Field.Label>Max Participants</Field.Label>
-                    <NumberInput.Root
-                      value={planForm.maxParticipants}
-                      onChange={(valueString) => setPlanForm(prev => ({ 
-                        ...prev, 
-                        maxParticipants: parseInt(valueString) || 1000 
-                      }))}
-                      min={1}
-                    >
-                      <NumberInput.Input />
-                      <NumberInput.Control>
-                        <NumberInput.IncrementTrigger />
-                        <NumberInput.DecrementTrigger />
-                      </NumberInput.Control>
-                    </NumberInput.Root>
-                  </Field.Root>
-                </HStack>
-
-                <HStack w="full" spacing={4}>
-                  <Field.Root>
-                    <Field.Label>Auto Trigger</Field.Label>
-                    <Switch
-                      isChecked={planForm.autoTrigger}
-                      onChange={(e) => setPlanForm(prev => ({ 
-                        ...prev, 
-                        autoTrigger: e.target.checked 
-                      }))}
-                    />
-                  </Field.Root>
-
-                  <Field.Root>
-                    <Field.Label>Active Status</Field.Label>
-                    <Switch
-                      isChecked={planForm.isActive}
-                      onChange={(e) => setPlanForm(prev => ({ 
-                        ...prev, 
-                        isActive: e.target.checked 
-                      }))}
-                    />
-                  </Field.Root>
-                </HStack>
-
-                <HStack w="full" spacing={4} pt={4}>
-                  <Button variant="outline" onClick={onClose} flex={1}>
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    bg="#0088CD"
-                    color="white"
-                    isLoading={isLoading}
-                    flex={1}
-                    _hover={{ bg: "#0077B6" }}
-                  >
-                    Update Plan
-                  </Button>
-                </HStack>
-              </VStack>
-            </form>
-              </Dialog.Body>
-            </Dialog.Content>
-          </Dialog.Positioner>
-        </Portal>
-      </Dialog.Root>
     </VStack>
   );
 };
