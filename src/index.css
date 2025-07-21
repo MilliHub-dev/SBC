@@ -72,6 +72,7 @@
     width: 8px;
   }
 
+
   ::-webkit-scrollbar-track {
     @apply bg-secondary;
   }
@@ -79,6 +80,7 @@
   ::-webkit-scrollbar-thumb {
     @apply bg-muted-foreground rounded;
   }
+
 
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-accent-foreground;
@@ -129,4 +131,5 @@
   #__next {
     @apply isolate bg-background text-foreground min-h-screen;
   }
+
 }
