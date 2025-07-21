@@ -4,7 +4,6 @@ import {
 	Icon,
 	Input,
 	Text,
-	Collapsible,
 	IconButton,
 	Image,
 	Container,
@@ -25,7 +24,6 @@ import { useWeb3 } from "../../../hooks/useWeb3";
 import { toaster } from "../../../components/ui/toaster";
 
 const BuyTokens = () => {
-	const [isCollapsibleOpen, setIsCollapasibleOpen] = useState(null);
 	const [paymentMethod, setPaymentMethod] = useState('polygon');
 	const [amount, setAmount] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
