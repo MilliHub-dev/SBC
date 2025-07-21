@@ -15,7 +15,6 @@ import {
   Field,
   Badge,
   Icon,
-  Divider,
   SimpleGrid
 } from "@chakra-ui/react";
 import { FaArrowsRotate, FaCoins, FaArrowRightArrowLeft } from "react-icons/fa6";

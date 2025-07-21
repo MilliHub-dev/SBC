@@ -34,8 +34,7 @@ import {
   Textarea,
   Alert,
   AlertIndicator,
-  Code,
-  Divider
+  Code
 } from "@chakra-ui/react";
 import {
   FaCog,

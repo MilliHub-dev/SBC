@@ -14,7 +14,6 @@ import {
   SimpleGrid,
   Icon,
   Spinner,
-  Divider,
   Input,
   Textarea,
   Link
