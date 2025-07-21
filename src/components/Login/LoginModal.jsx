@@ -18,7 +18,7 @@ import {
 } from '@chakra-ui/react';
 import { useWeb3 } from '../../hooks/useWeb3';
 import { toaster } from '../ui/toaster';
-import { FaInfoCircle } from 'react-icons/fa';
+import { FaInfoCircle, FaExclamationTriangle } from 'react-icons/fa';
 
 const LoginModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
@@ -119,12 +119,18 @@ const LoginModal = ({ isOpen, onClose }) => {
 
             {error && (
               <Alert status="error" rounded="md">
+                <Icon color="red.500" mr={2}>
+                  <FaExclamationTriangle />
+                </Icon>
                 {error}
               </Alert>
             )}
 
             {!isConnected && (
               <Alert status="warning" rounded="md">
+                <Icon color="orange.500" mr={2}>
+                  <FaExclamationTriangle />
+                </Icon>
                 Please connect your wallet before logging in
               </Alert>
             )}
