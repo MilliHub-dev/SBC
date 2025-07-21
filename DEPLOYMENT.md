@@ -35,30 +35,7 @@ Ensure your backend API at `dev.sabirideweb.com.ng` is:
 
 ## Deployment Options
 
-### Deploy to Vercel (Recommended)
-
-1. **Install Vercel CLI**
-   ```bash
-   npm install -g vercel
-   ```
-
-2. **Build the project**
-   ```bash
-   npm install
-   npm run build
-   ```
-
-3. **Deploy**
-   ```bash
-   vercel --prod
-   ```
-
-4. **Set Environment Variables in Vercel Dashboard**
-   - Go to your project settings
-   - Add the required environment variables
-   - Redeploy if needed
-
-### Deploy to Netlify
+### Deploy to Netlify (Recommended)
 
 1. **Build the project**
    ```bash
@@ -85,6 +62,9 @@ The app can be deployed to any static hosting platform that supports SPAs:
 - Firebase Hosting
 - AWS S3 + CloudFront
 - DigitalOcean App Platform
+- Railway
+- Render
+- Surge.sh
 
 ## Post-deployment Configuration
 

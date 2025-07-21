@@ -18,13 +18,8 @@ import {
   StatValueText,
   StatHelpText,
   Progress,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer,
+
+
   Textarea,
   Select
 } from "@chakra-ui/react";
@@ -550,120 +545,100 @@ const MiningPlanManager = () => {
         </Button>
       </HStack>
 
-      {/* Plans Table */}
-      <Card bg="gray.900" borderColor="gray.700">
-        <CardBody>
-          <TableContainer>
-            <Table variant="simple">
-              <Thead>
-                <Tr>
-                  <Th color="gray.400">Plan Details</Th>
-                  <Th color="gray.400">Type</Th>
-                  <Th color="gray.400">Deposit/Reward</Th>
-                  <Th color="gray.400">Duration</Th>
-                  <Th color="gray.400">Participants</Th>
-                  <Th color="gray.400">APY/ROI</Th>
-                  <Th color="gray.400">Status</Th>
-                  <Th color="gray.400">Actions</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {plans.map((plan) => (
-                  <Tr key={plan.id}>
-                    <Td>
-                      <Box>
-                        <Text fontWeight="bold" color="white">{plan.name}</Text>
-                        <Text fontSize="sm" color="gray.400">
-                          {plan.description}
-                        </Text>
-                      </Box>
-                    </Td>
-                    <Td>
-                      <Badge colorScheme={getTypeColor(plan.type)}>
-                        {plan.type}
-                      </Badge>
-                    </Td>
-                    <Td>
-                      <VStack spacing={1} align="start">
-                        <Text fontSize="sm" color="white">
-                          Deposit: {plan.deposit} SABI
-                        </Text>
-                        <Text fontSize="sm" color="white">
-                          Daily: {plan.dailyReward} SABI
-                        </Text>
-                      </VStack>
-                    </Td>
-                    <Td>
-                      <VStack spacing={1} align="start">
-                        <Text fontSize="sm" color="white">{plan.duration} days</Text>
-                        {plan.autoTrigger && (
-                          <Badge size="sm" colorScheme="green">Auto</Badge>
-                        )}
-                      </VStack>
-                    </Td>
-                    <Td>
-                      <VStack spacing={1} align="start">
-                        <Text fontSize="sm" color="white">
-                          {plan.currentParticipants} / {plan.maxParticipants}
-                        </Text>
-                        <Progress
-                          value={(plan.currentParticipants / plan.maxParticipants) * 100}
-                          size="sm"
-                          colorScheme="blue"
-                          w="80px"
-                        />
-                      </VStack>
-                    </Td>
-                    <Td>
-                      <VStack spacing={1} align="start">
-                        <Text fontSize="sm" color="white">
-                          APY: {calculateAPY(plan.dailyReward, plan.deposit)}%
-                        </Text>
-                        <Text fontSize="sm" color="white">
-                          ROI: {calculateROI(plan.dailyReward, plan.duration, plan.deposit)}%
-                        </Text>
-                      </VStack>
-                    </Td>
-                    <Td>
+              {/* Plans List */}
+        <VStack spacing={4}>
+          {plans.map((plan) => (
+            <Card key={plan.id} bg="gray.900" borderColor="gray.700" w="full">
+              <CardBody>
+                <VStack spacing={4}>
+                  <HStack justify="space-between" w="full">
+                    <VStack align="start" spacing={1}>
                       <HStack>
+                        <Text fontWeight="bold" color="white" fontSize="lg">{plan.name}</Text>
+                        <Badge colorScheme={getTypeColor(plan.type)}>
+                          {plan.type}
+                        </Badge>
                         <Badge colorScheme={getStatusColor(plan.isActive)}>
                           {plan.isActive ? 'Active' : 'Inactive'}
                         </Badge>
-                        <Switch
-                          isChecked={plan.isActive}
-                          onChange={() => handleTogglePlan(plan.id)}
-                          size="sm"
-                        />
                       </HStack>
-                    </Td>
-                    <Td>
-                      <HStack spacing={2}>
-                        <Button
-                          size="sm"
-                          leftIcon={<FaEdit />}
-                          colorScheme="blue"
-                          onClick={() => openEditForm(plan)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          leftIcon={<FaTrash />}
-                          colorScheme="red"
-                          onClick={() => handleDeletePlan(plan.id)}
-                          isDisabled={plan.currentParticipants > 0}
-                        >
-                          Delete
-                        </Button>
-                      </HStack>
-                    </Td>
-                  </Tr>
-                ))}
-              </Tbody>
-            </Table>
-          </TableContainer>
-        </CardBody>
-      </Card>
+                      <Text fontSize="sm" color="gray.400">
+                        {plan.description}
+                      </Text>
+                    </VStack>
+                    <HStack spacing={2}>
+                      <Switch
+                        isChecked={plan.isActive}
+                        onChange={() => handleTogglePlan(plan.id)}
+                        size="sm"
+                      />
+                      <Button
+                        size="sm"
+                        leftIcon={<FaEdit />}
+                        colorScheme="blue"
+                        onClick={() => openEditForm(plan)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        leftIcon={<FaTrash />}
+                        colorScheme="red"
+                        onClick={() => handleDeletePlan(plan.id)}
+                        isDisabled={plan.currentParticipants > 0}
+                      >
+                        Delete
+                      </Button>
+                    </HStack>
+                  </HStack>
+
+                  <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4} w="full">
+                    <VStack align="start" spacing={1}>
+                      <Text fontSize="xs" color="gray.500" fontWeight="bold">DEPOSIT/REWARD</Text>
+                      <Text fontSize="sm" color="white">
+                        Deposit: {plan.deposit} SABI
+                      </Text>
+                      <Text fontSize="sm" color="white">
+                        Daily: {plan.dailyReward} SABI
+                      </Text>
+                    </VStack>
+
+                    <VStack align="start" spacing={1}>
+                      <Text fontSize="xs" color="gray.500" fontWeight="bold">DURATION</Text>
+                      <Text fontSize="sm" color="white">{plan.duration} days</Text>
+                      {plan.autoTrigger && (
+                        <Badge size="sm" colorScheme="green">Auto</Badge>
+                      )}
+                    </VStack>
+
+                    <VStack align="start" spacing={1}>
+                      <Text fontSize="xs" color="gray.500" fontWeight="bold">PARTICIPANTS</Text>
+                      <Text fontSize="sm" color="white">
+                        {plan.currentParticipants} / {plan.maxParticipants}
+                      </Text>
+                      <Progress
+                        value={(plan.currentParticipants / plan.maxParticipants) * 100}
+                        size="sm"
+                        colorScheme="blue"
+                        w="120px"
+                      />
+                    </VStack>
+
+                    <VStack align="start" spacing={1}>
+                      <Text fontSize="xs" color="gray.500" fontWeight="bold">APY/ROI</Text>
+                      <Text fontSize="sm" color="white">
+                        APY: {calculateAPY(plan.dailyReward, plan.deposit)}%
+                      </Text>
+                      <Text fontSize="sm" color="white">
+                        ROI: {calculateROI(plan.dailyReward, plan.duration, plan.deposit)}%
+                      </Text>
+                    </VStack>
+                  </SimpleGrid>
+                </VStack>
+              </CardBody>
+            </Card>
+          ))}
+        </VStack>
     </VStack>
   );
 };
