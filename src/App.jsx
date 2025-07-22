@@ -1,4 +1,3 @@
-import { Container } from "@chakra-ui/react";
 import React from "react";
 import Navbar from "./components/Navbar/Navbar";
 import HeroSection from "./components/Hero/HeroSection";
@@ -9,13 +8,13 @@ import Footer from "./components/Footer/Footer";
 
 const App = () => {
 	return (
-		<Container paddingInline={"1.4rem"}>
+		<div className="max-w-7xl mx-auto px-6">
 			<HeroSection />
 			<FAQ />
 			<Team />
 			<AboutSabiRide />
 			<Footer />
-		</Container>
+		</div>
 	);
 };
 
