@@ -3,143 +3,148 @@
 @import "tailwindcss";
 
 @theme {
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f3f4f6;
-  --color-gray-200: #e5e7eb;
-  --color-gray-300: #d1d5db;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #6b7280;
-  --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1f2937;
-  --color-gray-900: #111827;
-  --color-gray-950: #030712;
+	--color-gray-50: #f9fafb;
+	--color-gray-100: #f3f4f6;
+	--color-gray-200: #e5e7eb;
+	--color-gray-300: #d1d5db;
+	--color-gray-400: #9ca3af;
+	--color-gray-500: #6b7280;
+	--color-gray-600: #4b5563;
+	--color-gray-700: #374151;
+	--color-gray-800: #1f2937;
+	--color-gray-900: #111827;
+	--color-gray-950: #030712;
 }
 
 @layer base {
-  :root {
-    --background: 210 40% 2%;
-    --foreground: 0 0% 95%;
-    --card: 210 40% 4%;
-    --card-foreground: 0 0% 95%;
-    --popover: 210 40% 4%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 197 100% 40%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 210 40% 8%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 210 40% 8%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 210 40% 12%;
-    --accent-foreground: 0 0% 95%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 210 40% 12%;
-    --input: 210 40% 12%;
-    --ring: 197 100% 40%;
-    --radius: 0.5rem;
-  }
+	:root {
+		--background: 210 40% 2%;
+		--foreground: 0 0% 95%;
+		--card: 210 40% 4%;
+		--card-foreground: 0 0% 95%;
+		--popover: 210 40% 4%;
+		--popover-foreground: 0 0% 95%;
+		--primary: 197 100% 40%;
+		--primary-foreground: 0 0% 98%;
+		--secondary: 210 40% 8%;
+		--secondary-foreground: 0 0% 95%;
+		--muted: 210 40% 8%;
+		--muted-foreground: 0 0% 65%;
+		--accent: 210 40% 12%;
+		--accent-foreground: 0 0% 95%;
+		--destructive: 0 84% 60%;
+		--destructive-foreground: 0 0% 98%;
+		--border: 210 40% 12%;
+		--input: 210 40% 12%;
+		--ring: 197 100% 40%;
+		--radius: 0.5rem;
+	}
 
-  .dark {
-    --background: 210 40% 2%;
-    --foreground: 0 0% 95%;
-    --card: 210 40% 4%;
-    --card-foreground: 0 0% 95%;
-    --popover: 210 40% 4%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 197 100% 40%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 210 40% 8%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 210 40% 8%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 210 40% 12%;
-    --accent-foreground: 0 0% 95%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 210 40% 12%;
-    --input: 210 40% 12%;
-    --ring: 197 100% 40%;
-  }
+	.dark {
+		--background: 210 40% 2%;
+		--foreground: 0 0% 95%;
+		--card: 210 40% 4%;
+		--card-foreground: 0 0% 95%;
+		--popover: 210 40% 4%;
+		--popover-foreground: 0 0% 95%;
+		--primary: 197 100% 40%;
+		--primary-foreground: 0 0% 98%;
+		--secondary: 210 40% 8%;
+		--secondary-foreground: 0 0% 95%;
+		--muted: 210 40% 8%;
+		--muted-foreground: 0 0% 65%;
+		--accent: 210 40% 12%;
+		--accent-foreground: 0 0% 95%;
+		--destructive: 0 84% 60%;
+		--destructive-foreground: 0 0% 98%;
+		--border: 210 40% 12%;
+		--input: 210 40% 12%;
+		--ring: 197 100% 40%;
+	}
+}
+
+button[data-testid="rk-connect-button"] {
+	width: inherit !important;
+	text-wrap: nowrap;
+	background-color: #3b82f6 !important;
 }
 
 @layer base {
-  * {
-    border-color: hsl(var(--border));
-  }
-  
-  html {
-    scroll-behavior: smooth;
-  }
-  
-  body {
-    @apply bg-gray-900 text-white font-sans antialiased overflow-x-hidden;
-    font-family: "Inter", sans-serif;
-    line-height: 1.5;
-  }
+	* {
+		border-color: hsl(var(--border));
+	}
 
-  /* Custom scrollbar for dark theme */
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
+	html {
+		scroll-behavior: smooth;
+		height: 100%;
+	}
 
+	body {
+		@apply bg-gray-900 text-white font-sans antialiased overflow-x-hidden;
+		font-family: "Inter", sans-serif;
+		line-height: 1.5;
+	}
 
-  ::-webkit-scrollbar-track {
-    @apply bg-gray-800;
-  }
+	/* Custom scrollbar for dark theme */
+	::-webkit-scrollbar {
+		width: 8px;
+	}
 
-  ::-webkit-scrollbar-thumb {
-    @apply bg-gray-600 rounded;
-  }
+	::-webkit-scrollbar-track {
+		@apply bg-gray-800;
+	}
 
+	::-webkit-scrollbar-thumb {
+		@apply bg-gray-600 rounded;
+	}
 
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-500;
-  }
+	::-webkit-scrollbar-thumb:hover {
+		@apply bg-gray-500;
+	}
 
-  /* Improve media defaults */
-  img,
-  picture,
-  video,
-  canvas,
-  svg {
-    @apply block max-w-full;
-  }
+	/* Improve media defaults */
+	img,
+	picture,
+	video,
+	canvas,
+	svg {
+		@apply block max-w-full;
+	}
 
-  /* Form controls */
-  input,
-  button,
-  textarea,
-  select {
-    font-family: inherit;
-  }
+	/* Form controls */
+	input,
+	button,
+	textarea,
+	select {
+		font-family: inherit;
+	}
 
-  /* Text wrapping */
-  p,
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    overflow-wrap: break-word;
-  }
+	/* Text wrapping */
+	p,
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		overflow-wrap: break-word;
+	}
 
-  p {
-    text-wrap: pretty;
-  }
-  
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    text-wrap: balance;
-  }
+	p {
+		text-wrap: pretty;
+	}
 
-  #root,
-  #__next {
-    @apply isolate bg-gray-900 text-white min-h-screen;
-  }
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		text-wrap: balance;
+	}
+
+	#root,
+	#__next {
+		@apply isolate bg-gray-900 text-white min-h-screen;
+	}
 }

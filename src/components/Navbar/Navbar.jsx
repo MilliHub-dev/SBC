@@ -2,32 +2,27 @@ import React from "react";
 import {
 	Box,
 	Button,
-	Container,
 	Icon,
 	Image,
 	Link as ChakraLink,
 	Text,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import { LuMoon, LuSun } from "react-icons/lu";
 import { CiMenuKebab } from "react-icons/ci";
-// import { useColorMode, useColorModeValue } from "../ui/color-mode";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { FaCircleUser } from "react-icons/fa6";
 
 const Navbar = ({ setIsOpenNavbar }) => {
-	// const { colorMode, toggleColorMode } = useColorMode();
 	return (
 		<Box
 			as={"nav"}
 			display={"flex"}
 			alignItems={"center"}
-			justifyContent={{ base: "center", md: "center" }}
-			gap={10}
-			// background={"red"}
-			padding={"3rem 1rem"}
-			//   height={"100px"}
+			justifyContent={{ base: `space-between`, md: `space-around` }}
+			padding={"3rem 0rem"}
 			fontSize={{ md: 18, base: 16 }}
 		>
-			<Box mt={2}>
+			<Box mt={0}>
 				<Link href="#">
 					<Image
 						src="./Sabi-Cash.png"
@@ -38,69 +33,78 @@ const Navbar = ({ setIsOpenNavbar }) => {
 				</Link>
 			</Box>
 			<Box
+				mt={2}
 				display={{ base: "none", md: "flex" }}
-				gap={3}
+				gap={6}
 				alignItems={"center"}
-				bg={"gray.800"}
-				padding={".3rem 1rem"}
+				justifyContent={`space-between`}
 				rounded={"sm"}
 			>
-				<Link href="#">Comparison</Link>
-				<Link href="#">FAQ</Link>
-				<Link href="#">About</Link>
-				<Link href="#">Socials</Link>
+				<ChakraLink
+					href="#"
+					outline={`none`}
+					color={`#fff`}
+					textDecoration={`none`}
+					_hover={{ color: `#0088c6` }}
+				>
+					Comparison
+				</ChakraLink>
+				<ChakraLink
+					href="#faq"
+					outline={`none`}
+					color={`#fff`}
+					textDecoration={`none`}
+					_hover={{ color: `#0088c6` }}
+				>
+					FAQ
+				</ChakraLink>
+				<ChakraLink
+					href="#about"
+					outline={`none`}
+					color={`#fff`}
+					textDecoration={`none`}
+					_hover={{ color: `#0088c6` }}
+				>
+					About
+				</ChakraLink>
+				<ChakraLink
+					href="#"
+					outline={`none`}
+					color={`#fff`}
+					textDecoration={`none`}
+					_hover={{ color: `#0088c6` }}
+				>
+					Socials
+				</ChakraLink>
 			</Box>
-			<Box display={"flex"} alignItems={"center"} gap={8}>
+			<Box display={"flex"} alignItems={"center"} gap={3}>
 				<ChakraLink
 					as={Link}
-					bg={{ base: "#0088CD", md: "transparent" }}
-					rounded={"sm"}
-					padding={".3rem 1rem"}
+					bg={{ base: "#0088CD" }}
+					rounded={"lg"}
+					color={`#fff`}
+					padding={".46rem 1.2rem"}
+					fontSize={18}
 					to="/dashboard/start-mining"
+					fontWeight={`600`}
 				>
-					Dashboard
+					<FaCircleUser />
+					<Text display={{ base: `none`, md: `block` }}>Dashboard</Text>
 				</ChakraLink>
-				<Box
-					display={{ base: "none", md: "flex" }}
-					alignItems={"center"}
-					gap={3}
-				>
-					<ChakraLink
-						href="#"
-						bg={"#0088CD"}
-						rounded={"sm"}
-						padding={".3rem 1rem"}
-					>
-						Docs
-					</ChakraLink>
-					<ChakraLink
-						href="#"
-						bg={"#0088CD"}
-						rounded={"sm"}
-						padding={".3rem 1rem"}
-					>
-						Help
-					</ChakraLink>
+				<Box display={{ base: `none`, md: `block` }} fontWeight={200}>
+					<ConnectButton />
 				</Box>
-				{/* <Button
-          padding={".3rem 1rem"}
-          onClick={toggleColorMode}
-          bg={useColorModeValue("gray.300", "gray.700")}
-          variant={"ghost"}
-        >
-          {colorMode === "light" ? <LuMoon /> : <LuSun size={20} />}
-        </Button> */}
+				<Button
+					onClick={() => setIsOpenNavbar(true)}
+					bg={"blackAlpha.700"}
+					color={"#fff"}
+					display={{ base: "flex", md: "none" }}
+				>
+					<Icon size={"lg"}>
+						<CiMenuKebab />
+					</Icon>
+				</Button>
 			</Box>
-			<Button
-				onClick={() => setIsOpenNavbar(true)}
-				bg={"blackAlpha.700"}
-				color={"#fff"}
-				display={{ base: "flex", md: "none" }}
-			>
-				<Icon size={"lg"}>
-					<CiMenuKebab />
-				</Icon>
-			</Button>
 		</Box>
 	);
 };

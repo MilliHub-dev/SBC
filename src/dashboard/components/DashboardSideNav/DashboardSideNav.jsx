@@ -134,13 +134,20 @@ const DashboardSideNav = ({ sidebarWidth, isExpanded, onToggleSidebar }) => {
 						justifyContent={"center"}
 						textDecoration={"none"}
 						fontSize={14}
+						color={"#fff"}
+						fontWeight={"600"}
 					>
 						Docs
 					</ChakraLink>
 				</Box>
 
 				<Box pb={10} alignSelf={"center"}>
-					<ChakraLink href="#" outline={"none"} textDecoration={"none"}>
+					<ChakraLink
+						href="#"
+						outline={"none"}
+						textDecoration={"none"}
+						color={"#fff"}
+					>
 						<Icon size={"lg"}>
 							<RiQuestionLine />
 						</Icon>
@@ -149,6 +156,7 @@ const DashboardSideNav = ({ sidebarWidth, isExpanded, onToggleSidebar }) => {
 							opacity={isExpanded ? 1 : 0}
 							transition={"opacity .3s ease"}
 							width={isExpanded ? "auto" : "0"}
+							fontWeight={"600"}
 						>
 							Help
 						</Text>

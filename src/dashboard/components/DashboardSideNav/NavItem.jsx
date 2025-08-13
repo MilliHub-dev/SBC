@@ -28,6 +28,7 @@ const NavItem = ({ item, isExpanded, isActive }) => {
 					display={"flex"}
 					justifyContent={"center"}
 					ml={isExpanded ? 0 : 4}
+					color={"#fff"}
 				>
 					<IconComponent size={21} />
 				</Box>
@@ -38,6 +39,8 @@ const NavItem = ({ item, isExpanded, isActive }) => {
 					textTransform={"capitalize"}
 					transition={"opacity .3s ease"}
 					width={isExpanded ? "auto" : "0"}
+					color={"#fff"}
+					fontWeight={"500"}
 				>
 					{item.name}
 				</Text>

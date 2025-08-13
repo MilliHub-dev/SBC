@@ -21,7 +21,7 @@ const DashboardLayout = () => {
 	};
 
 	return (
-		<Container bg={"#000"} fluid>
+		<Container bg={"#000"} height={"100%"} fluid>
 			{/* Backdrop Feature */}
 			<Box
 				position="fixed"
@@ -56,10 +56,16 @@ const DashboardLayout = () => {
 				display={"flex"}
 				justifyContent={"center"}
 				transition={"margin-left .3s ease"}
-				minH={"calc(100vh - 60px)"}
-				height={"100vh"}
+				minH={"calc(100vh)"}
+				height={"100%"}
 			>
-				<Container fluid w={{ base: "100%", md: "85%" }} py={16} px={8}>
+				<Container
+					// fluid
+					// w={{ base: "100%", md: "85%" }}
+					bg={"#000"}
+					height={"100%"}
+					py={16}
+				>
 					<Outlet />
 				</Container>
 			</Box>
