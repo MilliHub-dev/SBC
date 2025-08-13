@@ -5,8 +5,12 @@ import { Box, Container } from "@chakra-ui/react";
 import { Outlet } from "react-router-dom";
 import "../../index.css";
 import { useState } from "react";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 
 const DashboardLayout = () => {
+	useScrollToTop();
+
+	// State to manage sidebar width and expansion
 	const [sidebarWidth, setSidebarWidth] = useState(80);
 	const [isExpanded, setIsExpanded] = useState(false);
 
