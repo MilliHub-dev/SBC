@@ -1,12 +1,12 @@
 // API Configuration for Sabi Ride
 export const API_CONFIG = {
-  BASE_URL: 'https://dev.sabirideweb.com.ng',
+  BASE_URL: 'https://tmp.sabirideweb.com.ng',
   ENDPOINTS: {
     // Authentication endpoints
-    LOGIN: '/api/auth/login',
+    LOGIN: '/api/v1/users/login/sabi-passenger',
     REGISTER: '/api/auth/register',
     LOGOUT: '/api/auth/logout',
-    VERIFY_TOKEN: '/api/auth/verify',
+    VERIFY_TOKEN: '/auth/token/verify',
     
     // User points and rewards endpoints
     GET_USER_POINTS: '/api/user/points',

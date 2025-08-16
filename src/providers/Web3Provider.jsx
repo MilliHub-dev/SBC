@@ -21,7 +21,7 @@ const Web3Provider = ({ children }) => {
           })}
           appInfo={{
             appName: 'Sabi Ride',
-            learnMoreUrl: 'https://sabiride.com',
+            learnMoreUrl: 'https://sabiride.net',
           }}
         >
           {children}

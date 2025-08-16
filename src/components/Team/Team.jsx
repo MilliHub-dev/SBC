@@ -9,26 +9,7 @@ import {
 import React from "react";
 
 const teamData = [
-  {
-    name: "Dr Mili",
-    img: "./demoMember.png",
-    title: "CEO",
-  },
-  {
-    name: "Rose",
-    img: "./demoMember.png",
-    title: "HR",
-  },
-  {
-    name: "Ridwan",
-    img: "./demoMember.png",
-    title: "Frontend Developer",
-  },
-  {
-    name: "Ridwan",
-    img: "./demoMember.png",
-    title: "Frontend Developer",
-  },
+  
 ];
 
 const Team = () => {
@@ -41,7 +22,7 @@ const Team = () => {
     >
       <Box w={{ base: "full", md: "80%" }}>
         <Text fontSize={"25px"} color={"#fff"} fontWeight={"400"} mb={"16px"}>
-          Team
+          
         </Text>
         <Grid
           w={"full"}

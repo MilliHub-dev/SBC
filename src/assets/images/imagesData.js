@@ -50,18 +50,12 @@ export const partnersImg = [
 		title: "bitmain",
 		img: bitmain,
 	},
-	{
-		title: "kadena",
-		img: kadena,
-	},
+	
 	{
 		title: "bitdeer",
 		img: bitdeer,
 	},
-	{
-		title: "mim",
-		img: mim,
-	},
+
 	{
 		title: "canaan",
 		img: canaan,

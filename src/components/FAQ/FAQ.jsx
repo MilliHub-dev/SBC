@@ -71,17 +71,17 @@ const items = [
 	{
 		value: "a",
 		title: "What is Sabi Cash",
-		text: "          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nemo at, earum necessitatibus distinctio voluptatibus voluptates.",
+		text: "          Sabi Cash is the official cryptocurrency for the Sabi-Ride ecosystem. You can earn it through ride-to-earn rewards, referrals, and completing in-app tasks, and spend it to pay for rides or participate in staking and airdrops.",
 	},
 	{
 		value: "b",
-		title: "What is Sabi Cash",
-		text: "          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nemo at, earum necessitatibus distinctio voluptatibus voluptates.",
+		title: "How can I earn Sabi Cash?",
+		text: "          You can earn Sabi Cash by Taking trips on Sabi-Ride (earn based on distance), Referring new drivers or passengers, Completing promotional tasks like following our social media or downloading the app",
 	},
 	{
 		value: "c",
-		title: "What is Sabi Cash",
-		text: "          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Nemo at, earum necessitatibus distinctio voluptatibus voluptates.",
+		title: "How do I use my Sabi Cash?",
+		text: "          You can use your Sabi Cash to pay for rides on Sabi-Ride, stake it in our dApp to earn rewards, participate in token presales, or swap it for other cryptocurrencies via our integrated exchange.",
 	},
 ];
 

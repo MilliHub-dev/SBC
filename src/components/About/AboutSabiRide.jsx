@@ -48,15 +48,41 @@ const AboutSabiRide = () => {
 				<Box display={"grid"} gap={5} mt={10}>
 					<CustomCard
 						icon={<FaDiscord />}
-						buttonTitle={"Join Discord"}
+						buttonTitle={
+							<a
+								href="https://discord.gg/ZvpTZXBC"
+								target="_blank"
+								rel="noopener noreferrer"
+								style={{ textDecoration: "none" }}
+							>
+								Join Discord
+							</a>
+						}
 						cardQuestion={"Join our Discord community"}
-						cardText={"Stay updated on our discord"}
+						cardText={
+							<>
+								Stay updated on our discord.
+							</>
+						}
 					/>
 					<CustomCard
 						icon={<FaTwitter />}
-						buttonTitle={"Follow us"}
+						buttonTitle={
+							<a
+								href="https://x.com/SabiRide"
+								target="_blank"
+								rel="noopener noreferrer"
+								style={{ textDecoration: "none" }}
+							>
+								Follow us
+							</a>
+						}
 						cardQuestion={"Follow us on X"}
-						cardText={"Don't miss any updates on X."}
+						cardText={
+							<>
+								Don't miss any updates on X.
+							</>
+						}
 					/>
 				</Box>
 			</Box>
