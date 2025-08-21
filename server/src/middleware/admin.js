@@ -1,4 +1,6 @@
-export function requireAdmin(req, res, next) {
+import { requireAuth, requireAdmin as requireAdminRole } from './auth.js';
+
+export function requireAdminKey(req, res, next) {
   const key = req.headers['x-admin-key'];
   if (!process.env.ADMIN_API_KEY) {
     return res.status(500).json({ success: false, error: 'ADMIN_KEY_NOT_CONFIGURED' });
@@ -8,5 +10,8 @@ export function requireAdmin(req, res, next) {
   }
   next();
 }
+
+// Use JWT-based admin authentication
+export const requireAdmin = [requireAuth, requireAdminRole];
 
 
