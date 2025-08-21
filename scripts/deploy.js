@@ -10,7 +10,7 @@ async function main() {
 
   // USDT token address on Polygon zkEVM Testnet
   // TODO: Replace with actual USDT contract address when available
-  const USDT_ADDRESS = "0x0000000000000000000000000000000000000000"; // Placeholder
+  const USDT_ADDRESS = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"; // Placeholder
   
   // Deploy SabiCash contract
   console.log("\n📦 Deploying SabiCash contract...");
@@ -36,7 +36,7 @@ async function main() {
   console.log("📛 Token Name:", name);
   console.log("🏷️  Token Symbol:", symbol);
   console.log("🔢 Decimals:", decimals.toString());
-  console.log("📊 Max Supply:", ethers.utils.formatEther(maxSupply), "SABI");
+  console.log("📊 Max Supply:", ethers.utils.formatEther(maxSupply), "SBC");
 
   // Display mining plans
   console.log("\n⛏️  Mining Plans Configuration:");
@@ -44,8 +44,8 @@ async function main() {
   for (let i = 0; i < plans.length; i++) {
     const plan = await sabiCash.miningPlans(i);
     console.log(`${plans[i]} Plan:`);
-    console.log(`  - Deposit: ${ethers.utils.formatEther(plan.deposit)} SABI`);
-    console.log(`  - Daily Reward: ${ethers.utils.formatEther(plan.dailyReward)} SABI`);
+    console.log(`  - Deposit: ${ethers.utils.formatEther(plan.deposit)} SBC`);
+    console.log(`  - Daily Reward: ${ethers.utils.formatEther(plan.dailyReward)} SBC`);
     console.log(`  - Duration: ${plan.duration} days`);
     console.log(`  - Auto Trigger: ${plan.autoTrigger}`);
   }
@@ -54,8 +54,8 @@ async function main() {
   console.log("\n💱 Conversion Rates:");
   const ethRate = await sabiCash.ethToSabiRate();
   const usdtRate = await sabiCash.usdtToSabiRate();
-  console.log(`ETH to SABI: 1 ETH = ${ethRate} SABI`);
-  console.log(`USDT to SABI: 1 USDT = ${usdtRate} SABI`);
+  console.log(`ETH to SBC: 1 ETH = ${ethRate} SBC`);
+  console.log(`USDT to SBC: 1 USDT = ${usdtRate} SBC`);
 
   // Save deployment info
   const deploymentInfo = {

@@ -15,11 +15,11 @@ contract SabiCash is ERC20, Ownable, ReentrancyGuard {
     
     // Token configuration
     uint8 private constant DECIMALS = 18;
-    uint256 public constant MAX_SUPPLY = 1000000000 * 10**DECIMALS; // 1 billion tokens
+    uint256 public constant MAX_SUPPLY = 10000000000 * 10**DECIMALS; // 1 billion tokens
     
     // Pricing configuration (can be updated by owner)
-    uint256 public ethToSabiRate = 1000; // 1 ETH = 1000 SABI
-    uint256 public usdtToSabiRate = 1; // 1 USDT = 1 SABI
+    uint256 public ethToSbcRate = 100000; // 1 ETH = 100000 SBC
+    uint256 public usdtToSbcRate = 0.4; // 1 USDT = 0.4 SBC
     
     // USDT token contract (Polygon zkEVM Testnet)
     IERC20 public usdtToken;
@@ -29,7 +29,7 @@ contract SabiCash is ERC20, Ownable, ReentrancyGuard {
     
     struct MiningPlan {
         uint256 deposit;       // Required deposit amount
-        uint256 dailyReward;   // Daily reward in SABI (scaled by 1e18)
+        uint256 dailyReward;   // Daily reward in SBC (scaled by 1e18)
         uint256 duration;      // Duration in days
         bool autoTrigger;      // Auto claim rewards
     }
@@ -61,8 +61,8 @@ contract SabiCash is ERC20, Ownable, ReentrancyGuard {
     mapping(address => bool) public authorizedMinters;
     
     // Events
-    event TokensPurchasedWithETH(address indexed buyer, uint256 ethAmount, uint256 sabiAmount);
-    event TokensPurchasedWithUSDT(address indexed buyer, uint256 usdtAmount, uint256 sabiAmount);
+    event TokensPurchasedWithETH(address indexed buyer, uint256 ethAmount, uint256 sbcAmount);
+    event TokensPurchasedWithUSDT(address indexed buyer, uint256 usdtAmount, uint256 sbcAmount);
     event Staked(address indexed user, PlanType planType, uint256 amount);
     event StakingRewardsClaimed(address indexed user, uint256 amount);
     event MiningRewardsClaimed(address indexed user, uint256 amount);
@@ -72,7 +72,7 @@ contract SabiCash is ERC20, Ownable, ReentrancyGuard {
     constructor(
         address _usdtToken,
         address initialOwner
-    ) ERC20("Sabi Cash", "SABI") {
+    ) ERC20("Sabi Cash", "SBC") {
         usdtToken = IERC20(_usdtToken);
         
         // Initialize mining plans
@@ -117,12 +117,12 @@ contract SabiCash is ERC20, Ownable, ReentrancyGuard {
     function buyWithPolygon() external payable nonReentrant {
         require(msg.value > 0, "ETH amount must be greater than 0");
         
-        uint256 sabiAmount = msg.value * ethToSabiRate;
-        require(totalSupply() + sabiAmount <= MAX_SUPPLY, "Exceeds maximum supply");
+        uint256 sbcAmount = msg.value * ethToSbcRate;
+        require(totalSupply() + sbcAmount <= MAX_SUPPLY, "Exceeds maximum supply");
         
-        _mint(msg.sender, sabiAmount);
+        _mint(msg.sender, sbcAmount);
         
-        emit TokensPurchasedWithETH(msg.sender, msg.value, sabiAmount);
+        emit TokensPurchasedWithETH(msg.sender, msg.value, sbcAmount);
     }
     
     /**
@@ -131,15 +131,15 @@ contract SabiCash is ERC20, Ownable, ReentrancyGuard {
     function buyWithUSDT(uint256 usdtAmount) external nonReentrant {
         require(usdtAmount > 0, "USDT amount must be greater than 0");
         
-        uint256 sabiAmount = usdtAmount * usdtToSabiRate;
-        require(totalSupply() + sabiAmount <= MAX_SUPPLY, "Exceeds maximum supply");
+        uint256 sbcAmount = usdtAmount * usdtToSbcRate;
+        require(totalSupply() + sbcAmount <= MAX_SUPPLY, "Exceeds maximum supply");
         
         // Transfer USDT from user to contract
         require(usdtToken.transferFrom(msg.sender, address(this), usdtAmount), "USDT transfer failed");
         
-        _mint(msg.sender, sabiAmount);
+        _mint(msg.sender, sbcAmount);
         
-        emit TokensPurchasedWithUSDT(msg.sender, usdtAmount, sabiAmount);
+        emit TokensPurchasedWithUSDT(msg.sender, usdtAmount, sbcAmount);
     }
     
     /**
@@ -314,8 +314,8 @@ contract SabiCash is ERC20, Ownable, ReentrancyGuard {
      * @dev Update conversion rates (only owner)
      */
     function updateRates(uint256 newEthRate, uint256 newUsdtRate) external onlyOwner {
-        ethToSabiRate = newEthRate;
-        usdtToSabiRate = newUsdtRate;
+        ethToSbcRate = newEthRate;
+        usdtToSbcRate = newUsdtRate;
         
         emit RatesUpdated(newEthRate, newUsdtRate);
     }

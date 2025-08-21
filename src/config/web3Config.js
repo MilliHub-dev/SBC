@@ -33,10 +33,10 @@ export const config = getDefaultConfig({
   ssr: false,
 });
 
-// Sabi Cash Token Contract Address (demo address for testing)
-export const SABI_CASH_CONTRACT_ADDRESS = '0x1234567890123456789012345678901234567890'; // Demo address for testing
+// Sabi Cash Token Contract Address (ThirdWeb deployed)
+export const SABI_CASH_CONTRACT_ADDRESS = '0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983'; // ThirdWeb deployed contract
 
-// Contract ABI for Sabi Cash Token
+// Contract ABI for Sabi Cash Token (ThirdWeb Standard + Custom)
 export const SABI_CASH_ABI = [
   // ERC20 Standard Functions
   'function name() view returns (string)',
@@ -49,9 +49,13 @@ export const SABI_CASH_ABI = [
   'function approve(address spender, uint256 amount) returns (bool)',
   'function transferFrom(address from, address to, uint256 amount) returns (bool)',
   
-  // Custom Sabi Cash Functions
-  'function mint(address to, uint256 amount) returns (bool)',
-  'function burn(uint256 amount) returns (bool)',
+  // ThirdWeb Extensions
+  'function owner() view returns (address)',
+  'function mintTo(address to, uint256 amount)',
+  'function burn(uint256 amount)',
+  'function burnFrom(address account, uint256 amount)',
+  
+  // Custom Sabi Cash Functions (if implemented)
   'function buyWithPolygon() payable returns (bool)',
   'function buyWithUSDT(uint256 amount) returns (bool)',
   'function stake(uint256 amount, uint256 plan) returns (bool)',
@@ -62,12 +66,26 @@ export const SABI_CASH_ABI = [
   // Events
   'event Transfer(address indexed from, address indexed to, uint256 value)',
   'event Approval(address indexed owner, address indexed spender, uint256 value)',
-  'event Staked(address indexed user, uint256 amount, uint256 plan)',
-  'event RewardsClaimed(address indexed user, uint256 amount)',
+  'event TokensMinted(address indexed to, uint256 amount)',
+  'event TokensBurned(address indexed from, uint256 amount)',
 ];
 
 // USDT Contract Address on Polygon zkEVM Testnet
 export const USDT_CONTRACT_ADDRESS = '0xA8CE8aee21bC2A48a5EF670afCc9274C7bbbC035'; // Demo USDT address
+
+// Sabi Ride API Configuration
+export const SABI_RIDE_API_CONFIG = {
+  BASE_URL: 'https://tmp.sabirideweb.com.ng/api/v1',
+  ENDPOINTS: {
+    LOGIN: '/auth/login',
+    DRIVER_PROFILE: '/users/me/sabi-rider',
+    PASSENGER_PROFILE: '/users/me/sabi-passenger',
+    POINTS_BALANCE: '/points/balance',
+    POINTS_HISTORY: '/points/history',
+    POINTS_CONVERT: '/points/convert',
+    TRIPS_COMPLETE: '/trips/complete',
+  }
+};
 
 // Mining Plans Configuration
 export const MINING_PLANS = {

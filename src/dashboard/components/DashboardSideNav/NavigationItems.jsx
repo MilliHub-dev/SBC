@@ -16,24 +16,24 @@ const navigationItems = [
 		icon: LuWallet,
 		description: "Purchase cryptocurrency",
 	},
-	{
-		name: "Swap",
-		path: "/dashboard/swap-tokens",
-		icon: LuArrowLeftRight,
-		description: "Exchange tokens",
-	},
+	//{
+		//name: "Swap",
+		//path: "/dashboard/swap-tokens",
+		//icon: LuArrowLeftRight,
+		//description: "Exchange tokens",
+	//},
 	{
 		name: "convert",
 		path: "/dashboard/convert-tokens",
 		icon: LuRefreshCw,
 		description: "Convert between currencies",
 	},
-	{
-		name: "staking",
-		path: "/dashboard/staking",
-		icon: PiPiggyBank,
-		description: "Earn rewards by staking",
-	},
+	//{
+		//name: "staking",
+		//path: "/dashboard/staking",
+		//icon: PiPiggyBank,
+		//description: "Earn rewards by staking",
+	//},
 	{
 		name: "Mine",
 		path: "/dashboard/start-mining",

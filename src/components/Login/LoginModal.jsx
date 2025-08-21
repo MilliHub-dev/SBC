@@ -11,11 +11,14 @@ import {
 	Flex,
 	Icon,
 	Portal,
+	Tabs,
+	HStack,
 } from "@chakra-ui/react";
 import { useWeb3 } from "../../hooks/useWeb3";
 import { toaster } from "../ui/toaster";
-import { FaInfoCircle, FaExclamationTriangle } from "react-icons/fa";
+import { FaInfoCircle, FaExclamationTriangle, FaUser, FaCar } from "react-icons/fa";
 import AlertNotification from "@/dashboard/components/AlertNotification/AlertNotification";
+import { authAPI } from "../../config/apiConfig";
 
 // isOpen, onClose,
 const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
@@ -25,8 +28,9 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 	});
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
+	const [userType, setUserType] = useState("passenger"); // 'passenger' or 'driver'
 
-	const { loginToSabiRide, isConnected } = useWeb3();
+	const { loginToSabiRide, isConnected, address } = useWeb3();
 
 	const handleInputChange = (e) => {
 		const { name, value } = e.target;
@@ -38,7 +42,7 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 
 	const handleDemoLogin = () => {
 		setFormData({
-			email: "demo@sabicash.com",
+			email: userType === "driver" ? "driver@sabiride.com" : "passenger@sabiride.com",
 			password: "demo123",
 		});
 	};
@@ -49,22 +53,83 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 		setError("");
 
 		try {
-			if (!isConnected) {
-				setError("Please connect your wallet first");
-				return;
+			const credentials = {
+				email: formData.email,
+				password: formData.password,
+				walletAddress: address || null,
+			};
+
+			let response;
+			try {
+				// Use existing Sabi Ride login endpoint
+				response = await authAPI.login(credentials);
+				
+				// After successful login, get user profile based on type
+				if (response.success || response.token) {
+					let profileResponse;
+					try {
+						if (userType === "driver") {
+							profileResponse = await authAPI.getDriverProfile();
+						} else {
+							profileResponse = await authAPI.getPassengerProfile();
+						}
+						
+						// Merge profile data with login response
+						response = {
+							...response,
+							user: profileResponse,
+							userType: userType,
+							points: profileResponse.total_points || 0,
+						};
+					} catch (profileError) {
+						console.warn("Could not fetch profile, using basic login data:", profileError);
+						// Continue with basic login data
+						response.userType = userType;
+					}
+				}
+			} catch (apiError) {
+				// Fallback to demo mode for development
+				if (process.env.NODE_ENV === 'development') {
+					response = {
+						success: true,
+						token: `demo_jwt_token_${userType}`,
+						points: userType === 'driver' ? 2500 : 1250,
+						user: {
+							id: userType === 'driver' ? 'driver_001' : 'passenger_001',
+							email: formData.email,
+							name: `Demo ${userType.charAt(0).toUpperCase() + userType.slice(1)}`,
+							userType: userType,
+						},
+					};
+				} else {
+					throw apiError;
+				}
 			}
 
-			// Call the web3 login function
-			await loginToSabiRide(formData.email, formData.password);
+			if (response.success || response.token) {
+				// Store auth data
+				localStorage.setItem("authToken", response.token);
+				localStorage.setItem("userType", userType);
+				localStorage.setItem("userPoints", response.points || 0);
+				localStorage.setItem("userEmail", formData.email);
+				localStorage.setItem("userId", response.user?.id || response.id);
 
-			toaster.create({
-				title: "Login successful",
-				description: "Welcome to SabiCash! You can now start mining.",
-				type: "success",
-				duration: 3000,
-			});
+				// Also call the existing web3 login function for compatibility
+				try {
+					await loginToSabiRide(formData.email, formData.password);
+				} catch (web3Error) {
+					console.warn("Web3 login compatibility issue:", web3Error);
+				}
 
-			setOpenLoginModal(false);
+				toaster.create({
+					title: "Login successful",
+					description: `Welcome ${userType}! You have ${response.points || 0} points.`,
+					type: "success",
+					duration: 3000,
+				});
+
+				setOpenLoginModal(false);
+			}
 		} catch (err) {
 			setError(err.message || "Login failed");
 			toaster.create({
@@ -92,12 +157,41 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 					<Dialog.Content mx={4}>
 						<Dialog.Header>
 							<Dialog.Title color={`#000`}>
-								Login to SabiCash
+								Login to Sabi Ride
 							</Dialog.Title>
 							<Dialog.CloseTrigger />
 						</Dialog.Header>
 						<Dialog.Body>
 							<VStack gap={4}>
+								{/* User Type Selection */}
+								<Box w="full">
+									<Text fontSize="sm" fontWeight="bold" color="gray.700" mb={2}>
+										Login as:
+									</Text>
+									<HStack gap={2} w="full">
+										<Button
+											flex={1}
+											size="sm"
+											variant={userType === "passenger" ? "solid" : "outline"}
+											colorPalette={userType === "passenger" ? "blue" : "gray"}
+											onClick={() => setUserType("passenger")}
+											leftIcon={<FaUser />}
+										>
+											Passenger
+										</Button>
+										<Button
+											flex={1}
+											size="sm"
+											variant={userType === "driver" ? "solid" : "outline"}
+											colorPalette={userType === "driver" ? "blue" : "gray"}
+											onClick={() => setUserType("driver")}
+											leftIcon={<FaCar />}
+										>
+											Driver
+										</Button>
+									</HStack>
+								</Box>
+
 								{/* Demo credentials info */}
 								<Box
 									w="full"
@@ -120,11 +214,11 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 										</Text>
 									</Flex>
 									<Text fontSize="xs" color="blue.600" mb={2}>
-										Use these credentials to test the application:
+										Demo credentials for {userType}:
 									</Text>
 									<Box fontSize="xs" color="blue.600">
 										<Text>
-											<strong>Email:</strong> demo@sabicash.com
+											<strong>Email:</strong> {userType}@sabiride.com
 										</Text>
 										<Text>
 											<strong>Password:</strong> demo123
@@ -140,6 +234,25 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 										Use Demo Credentials
 									</Button>
 								</Box>
+
+								{/* Wallet Connection Status */}
+								{address && (
+									<Box
+										w="full"
+										p={3}
+										bg="green.50"
+										border="1px solid"
+										borderColor="green.200"
+										rounded="md"
+									>
+										<Text fontSize="xs" color="green.600" mb={1}>
+											Connected Wallet:
+										</Text>
+										<Text fontSize="sm" color="green.700" fontFamily="mono">
+											{address.slice(0, 6)}...{address.slice(-4)}
+										</Text>
+									</Box>
+								)}
 								{error && (
 									<>
 										{/* <Alert status="error" rounded="md">
