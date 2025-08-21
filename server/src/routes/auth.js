@@ -8,43 +8,124 @@ import { authLimiter } from '../middleware/rateLimit.js';
 
 export const router = Router();
 
-// Register new user
-router.post('/register', authLimiter, validateRegister, async (req, res) => {
+// Registration disabled - users must exist in Sabi Ride system
+router.post('/register', (req, res) => {
+  res.status(403).json({
+    success: false,
+    error: 'REGISTRATION_DISABLED',
+    message: 'Registration is disabled. Please use your existing Sabi Ride account to login.'
+  });
+});
+
+// Login with Sabi Ride token (primary method)
+router.post('/login', authLimiter, async (req, res) => {
   try {
-    const { email, password, username, firstName, lastName, userType, walletAddress, phoneNumber } = req.body;
+    const { sabiRideToken, walletAddress } = req.body;
 
-    // Check if user already exists
-    const existingUser = await query(
-      'SELECT id FROM users WHERE email = $1 OR username = $2',
-      [email, username]
-    );
-
-    if (existingUser.rowCount > 0) {
-      return res.status(409).json({
+    if (!sabiRideToken) {
+      return res.status(400).json({
         success: false,
-        error: 'USER_EXISTS',
-        message: 'User with this email or username already exists'
+        error: 'SABI_RIDE_TOKEN_REQUIRED',
+        message: 'Sabi Ride authentication token is required'
       });
     }
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 12);
-    const userId = uuidv4();
+    // Here you would verify the Sabi Ride token with their API
+    // For now, we'll simulate this - replace with actual Sabi Ride API call
+    let sabiRideUserData;
+    try {
+      // TODO: Replace with actual Sabi Ride API call
+      // const response = await fetch(`${process.env.SABI_RIDE_API_URL}/auth/verify`, {
+      //   headers: { Authorization: `Bearer ${sabiRideToken}` }
+      // });
+      // sabiRideUserData = await response.json();
+      
+      // Simulated response for development
+      sabiRideUserData = {
+        id: 'sabi_user_123',
+        email: 'user@sabiride.com',
+        username: 'sabiuser',
+        first_name: 'John',
+        last_name: 'Doe',
+        user_type: 'passenger', // or 'driver'
+        total_points: 1500,
+        is_verified: true
+      };
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        error: 'INVALID_SABI_RIDE_TOKEN',
+        message: 'Invalid Sabi Ride token'
+      });
+    }
 
-    // Create user
-    const result = await query(
-      `INSERT INTO users (id, email, password_hash, username, first_name, last_name, phone_number, user_type, wallet_address, total_points, sabi_cash_balance, is_active, is_verified)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0, 0, true, false)
-       RETURNING id, email, username, first_name, last_name, user_type, wallet_address, total_points, sabi_cash_balance, is_verified, created_at`,
-      [userId, email, passwordHash, username, firstName || null, lastName || null, phoneNumber || null, userType, walletAddress || null]
+    // Check if user exists in our system
+    let userResult = await query(
+      'SELECT id, email, username, first_name, last_name, user_type, wallet_address, total_points, sabi_cash_balance, is_active, is_verified, driver_status FROM users WHERE email = $1',
+      [sabiRideUserData.email]
     );
 
-    const user = result.rows[0];
-    const { accessToken, refreshToken } = generateTokens({ userId: user.id, email: user.email, userType: user.user_type });
+    let user;
+    if (userResult.rowCount === 0) {
+      // Create new user from Sabi Ride data
+      const userId = uuidv4();
+      const insertResult = await query(
+        `INSERT INTO users (id, email, username, first_name, last_name, user_type, wallet_address, total_points, sabi_cash_balance, is_active, is_verified, external_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, true, $9, $10)
+         RETURNING id, email, username, first_name, last_name, user_type, wallet_address, total_points, sabi_cash_balance, is_active, is_verified, driver_status`,
+        [
+          userId, 
+          sabiRideUserData.email, 
+          sabiRideUserData.username, 
+          sabiRideUserData.first_name, 
+          sabiRideUserData.last_name, 
+          sabiRideUserData.user_type, 
+          walletAddress || null, 
+          sabiRideUserData.total_points || 0, 
+          sabiRideUserData.is_verified || false, 
+          sabiRideUserData.id
+        ]
+      );
+      user = insertResult.rows[0];
+    } else {
+      user = userResult.rows[0];
+      
+      // Update user data from Sabi Ride (sync points, verification status, etc.)
+      await query(
+        `UPDATE users SET 
+           total_points = $1, 
+           is_verified = $2, 
+           wallet_address = COALESCE($3, wallet_address),
+           last_login = NOW(),
+           updated_at = NOW()
+         WHERE id = $4`,
+        [sabiRideUserData.total_points || user.total_points, sabiRideUserData.is_verified, walletAddress, user.id]
+      );
+      
+      // Update local user object
+      user.total_points = sabiRideUserData.total_points || user.total_points;
+      user.is_verified = sabiRideUserData.is_verified;
+      if (walletAddress) user.wallet_address = walletAddress;
+    }
 
-    res.status(201).json({
+    // Check if user is active
+    if (!user.is_active) {
+      return res.status(401).json({
+        success: false,
+        error: 'ACCOUNT_DISABLED',
+        message: 'Account has been disabled'
+      });
+    }
+
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokens({
+      userId: user.id,
+      email: user.email,
+      userType: user.user_type
+    });
+
+    res.json({
       success: true,
-      message: 'User registered successfully',
       token: accessToken,
       refresh_token: refreshToken,
       user: {
@@ -55,23 +136,24 @@ router.post('/register', authLimiter, validateRegister, async (req, res) => {
         last_name: user.last_name,
         user_type: user.user_type,
         wallet_address: user.wallet_address,
-        is_verified: user.is_verified
+        is_verified: user.is_verified,
+        driver_status: user.driver_status
       },
       points: user.total_points,
       sabi_cash_balance: parseFloat(user.sabi_cash_balance)
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Login error:', error);
     res.status(500).json({
       success: false,
-      error: 'REGISTRATION_FAILED',
-      message: 'Failed to register user'
+      error: 'LOGIN_FAILED',
+      message: 'Login failed'
     });
   }
 });
 
-// Login user (compatible with Sabi Ride)
-router.post('/login', authLimiter, validateLogin, async (req, res) => {
+// Legacy login with email/password (for testing only)
+router.post('/login-legacy', authLimiter, validateLogin, async (req, res) => {
   try {
     const { email, password, walletAddress } = req.body;
 
@@ -145,7 +227,7 @@ router.post('/login', authLimiter, validateLogin, async (req, res) => {
       sabi_cash_balance: parseFloat(user.sabi_cash_balance)
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Legacy login error:', error);
     res.status(500).json({
       success: false,
       error: 'LOGIN_FAILED',

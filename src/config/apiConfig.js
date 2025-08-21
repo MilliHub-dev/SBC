@@ -1,66 +1,82 @@
-// API Configuration for Sabi Ride Backend Integration
-const API_BASE_URL = process.env.VITE_API_BASE_URL || 'https://tmp.sabirideweb.com.ng/api/v1';
+// API Configuration for SabiCash Backend
+const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:8787/api';
+const SABI_RIDE_API_URL = process.env.VITE_SABI_RIDE_API_URL || 'https://tmp.sabirideweb.com.ng/api/v1';
 
 export const API_ENDPOINTS = {
-  // Authentication - Using existing Sabi Ride endpoints
+  // Authentication - SabiCash backend with Sabi Ride integration
   AUTH: {
-    LOGIN_DRIVER: `${API_BASE_URL}/auth/login`, // Use existing Sabi Ride login
-    LOGIN_PASSENGER: `${API_BASE_URL}/auth/login`, // Use existing Sabi Ride login
+    LOGIN: `${API_BASE_URL}/auth/login`, // Login with Sabi Ride token
+    LOGIN_LEGACY: `${API_BASE_URL}/auth/login-legacy`, // For testing with email/password
     LOGOUT: `${API_BASE_URL}/auth/logout`,
     REFRESH_TOKEN: `${API_BASE_URL}/auth/refresh`,
-    // User profile endpoints for existing users
-    DRIVER_PROFILE: `${API_BASE_URL}/users/me/sabi-rider`,
-    PASSENGER_PROFILE: `${API_BASE_URL}/users/me/sabi-passenger`,
+    ME: `${API_BASE_URL}/auth/me`,
+    UPDATE_WALLET: `${API_BASE_URL}/auth/wallet`,
   },
 
-  // User Management
-  USERS: {
-    PROFILE: `${API_BASE_URL}/users/profile/`,
-    POINTS: `${API_BASE_URL}/users/points/`,
-    POINTS_HISTORY: `${API_BASE_URL}/users/points/history/`,
-    UPDATE_WALLET: `${API_BASE_URL}/users/update-wallet/`,
+  // Sabi Ride API endpoints (for getting user token)
+  SABI_RIDE: {
+    LOGIN_DRIVER: `${SABI_RIDE_API_URL}/auth/login`,
+    LOGIN_PASSENGER: `${SABI_RIDE_API_URL}/auth/login`,
+    DRIVER_PROFILE: `${SABI_RIDE_API_URL}/users/me/sabi-rider`,
+    PASSENGER_PROFILE: `${SABI_RIDE_API_URL}/users/me/sabi-passenger`,
   },
 
-  // Points System - Using existing Sabi Ride points endpoints
+  // Points System
   POINTS: {
-    CONVERT: `${API_BASE_URL}/points/convert`,
     BALANCE: `${API_BASE_URL}/points/balance`,
     HISTORY: `${API_BASE_URL}/points/history`,
+    CONVERT: `${API_BASE_URL}/points/convert`,
     VALIDATE_CONVERSION: `${API_BASE_URL}/points/validate-conversion`,
-    // Trip completion for earning points
-    COMPLETE_TRIP: `${API_BASE_URL}/trips/complete`,
-  },
-
-  // Trips
-  TRIPS: {
-    LIST: `${API_BASE_URL}/trips/`,
-    COMPLETE: (tripId) => `${API_BASE_URL}/trips/${tripId}/complete/`,
-    DETAILS: (tripId) => `${API_BASE_URL}/trips/${tripId}/`,
+    CONVERSIONS: `${API_BASE_URL}/points/conversions`,
+    AWARD: `${API_BASE_URL}/points/award`,
   },
 
   // Tasks & Rewards
   TASKS: {
-    LIST: `${API_BASE_URL}/tasks/`,
-    COMPLETE: (taskId) => `${API_BASE_URL}/tasks/${taskId}/complete/`,
-    VERIFY: (taskId) => `${API_BASE_URL}/tasks/${taskId}/verify/`,
-    USER_TASKS: `${API_BASE_URL}/tasks/user/`,
+    LIST: `${API_BASE_URL}/tasks`,
+    CREATE: `${API_BASE_URL}/tasks`,
+    COMPLETE: (taskId) => `${API_BASE_URL}/tasks/${taskId}/complete`,
+    VERIFY: (taskId) => `${API_BASE_URL}/tasks/${taskId}/verify`,
+    USER_TASKS: `${API_BASE_URL}/tasks/user`,
+    PENDING: `${API_BASE_URL}/tasks/pending`,
   },
 
-  // Web3 Integration
-  WEB3: {
-    VERIFY_TRANSACTION: `${API_BASE_URL}/web3/verify-transaction/`,
-    LOG_TRANSACTION: `${API_BASE_URL}/web3/log-transaction/`,
-    SYNC_BALANCE: `${API_BASE_URL}/web3/sync-balance/`,
+  // Mining System
+  MINING: {
+    PLANS: `${API_BASE_URL}/mining/plans`,
+    STATUS: `${API_BASE_URL}/mining/status`,
+    STAKE: `${API_BASE_URL}/mining/stake`,
+    CLAIM_FREE: `${API_BASE_URL}/mining/claim-free`,
+    CLAIM_STAKE: (stakeId) => `${API_BASE_URL}/mining/claim/${stakeId}`,
+    UNSTAKE: (stakeId) => `${API_BASE_URL}/mining/unstake/${stakeId}`,
+    HISTORY: `${API_BASE_URL}/mining/history`,
+  },
+
+  // Web3 Transactions
+  TRANSACTIONS: {
+    LOG: `${API_BASE_URL}/transactions`,
+    UPDATE_STATUS: (txHash) => `${API_BASE_URL}/transactions/${txHash}/status`,
+    USER: `${API_BASE_URL}/transactions/user`,
+    GET: (txHash) => `${API_BASE_URL}/transactions/${txHash}`,
+    VERIFY: (txHash) => `${API_BASE_URL}/transactions/${txHash}/verify`,
   },
 
   // Admin
   ADMIN: {
-    USERS: `${API_BASE_URL}/admin/users/`,
-    TASKS: `${API_BASE_URL}/admin/tasks/`,
-    TRANSACTIONS: `${API_BASE_URL}/admin/transactions/`,
-    REWARDS: `${API_BASE_URL}/admin/rewards/`,
-    ANALYTICS: `${API_BASE_URL}/admin/analytics/`,
-    SEND_REWARD: `${API_BASE_URL}/admin/send-reward/`,
+    ANALYTICS: `${API_BASE_URL}/admin/analytics`,
+    USERS: `${API_BASE_URL}/admin/users`,
+    USER_DETAILS: (userId) => `${API_BASE_URL}/admin/users/${userId}`,
+    UPDATE_USER_STATUS: (userId) => `${API_BASE_URL}/admin/users/${userId}/status`,
+    SEND_REWARD: (userId) => `${API_BASE_URL}/admin/users/${userId}/reward`,
+    TRANSACTIONS: `${API_BASE_URL}/admin/transactions`,
+    CONFIG: `${API_BASE_URL}/admin/config`,
+  },
+
+  // Sessions (for Sabi Ride integration)
+  SESSIONS: {
+    CREATE: `${API_BASE_URL}/sessions`,
+    TOUCH: `${API_BASE_URL}/sessions/touch`,
+    DELETE: `${API_BASE_URL}/sessions`,
   },
 };
 
@@ -107,19 +123,33 @@ export const apiRequest = async (url, options = {}) => {
 
 // Specific API functions
 export const authAPI = {
-  // Use existing Sabi Ride login endpoint
-  login: (credentials) => apiRequest(API_ENDPOINTS.AUTH.LOGIN_DRIVER, {
+  // Login with Sabi Ride token
+  login: (sabiRideToken, walletAddress) => apiRequest(API_ENDPOINTS.AUTH.LOGIN, {
+    method: 'POST',
+    body: JSON.stringify({ sabiRideToken, walletAddress }),
+  }),
+
+  // Legacy login for testing
+  loginLegacy: (credentials) => apiRequest(API_ENDPOINTS.AUTH.LOGIN_LEGACY, {
     method: 'POST',
     body: JSON.stringify(credentials),
   }),
 
-  // Get user profile based on type
-  getDriverProfile: () => apiRequest(API_ENDPOINTS.AUTH.DRIVER_PROFILE, {
+  // Get current user profile
+  getProfile: () => apiRequest(API_ENDPOINTS.AUTH.ME, {
     method: 'GET',
   }),
 
-  getPassengerProfile: () => apiRequest(API_ENDPOINTS.AUTH.PASSENGER_PROFILE, {
-    method: 'GET',
+  // Update wallet address
+  updateWallet: (walletAddress) => apiRequest(API_ENDPOINTS.AUTH.UPDATE_WALLET, {
+    method: 'PUT',
+    body: JSON.stringify({ walletAddress }),
+  }),
+
+  // Refresh token
+  refreshToken: (refreshToken) => apiRequest(API_ENDPOINTS.AUTH.REFRESH_TOKEN, {
+    method: 'POST',
+    body: JSON.stringify({ refresh_token: refreshToken }),
   }),
 
   logout: () => apiRequest(API_ENDPOINTS.AUTH.LOGOUT, {
@@ -127,61 +157,185 @@ export const authAPI = {
   }),
 };
 
+// Sabi Ride API functions (for getting user token)
+export const sabiRideAPI = {
+  loginDriver: (credentials) => apiRequest(API_ENDPOINTS.SABI_RIDE.LOGIN_DRIVER, {
+    method: 'POST',
+    body: JSON.stringify(credentials),
+  }),
+
+  loginPassenger: (credentials) => apiRequest(API_ENDPOINTS.SABI_RIDE.LOGIN_PASSENGER, {
+    method: 'POST',
+    body: JSON.stringify(credentials),
+  }),
+
+  getDriverProfile: (token) => fetch(API_ENDPOINTS.SABI_RIDE.DRIVER_PROFILE, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(res => res.json()),
+
+  getPassengerProfile: (token) => fetch(API_ENDPOINTS.SABI_RIDE.PASSENGER_PROFILE, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(res => res.json()),
+};
+
 export const pointsAPI = {
   getBalance: () => apiRequest(API_ENDPOINTS.POINTS.BALANCE),
   
-  getHistory: () => apiRequest(API_ENDPOINTS.POINTS.HISTORY),
+  getHistory: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`${API_ENDPOINTS.POINTS.HISTORY}?${queryString}`);
+  },
   
-  convertPoints: (data) => apiRequest(API_ENDPOINTS.POINTS.CONVERT, {
+  convertPoints: (points, walletAddress) => apiRequest(API_ENDPOINTS.POINTS.CONVERT, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({ points, walletAddress }),
   }),
   
   validateConversion: (points, walletAddress) => apiRequest(API_ENDPOINTS.POINTS.VALIDATE_CONVERSION, {
     method: 'POST',
     body: JSON.stringify({ points, walletAddress }),
   }),
+
+  getConversions: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`${API_ENDPOINTS.POINTS.CONVERSIONS}?${queryString}`);
+  },
+
+  awardPoints: (points, pointsType, description, metadata = {}) => apiRequest(API_ENDPOINTS.POINTS.AWARD, {
+    method: 'POST',
+    body: JSON.stringify({ points, pointsType, description, metadata }),
+  }),
 };
 
 export const tasksAPI = {
-  getTasks: () => apiRequest(API_ENDPOINTS.TASKS.LIST),
+  getTasks: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`${API_ENDPOINTS.TASKS.LIST}?${queryString}`);
+  },
   
-  completeTask: (taskId, data) => apiRequest(API_ENDPOINTS.TASKS.COMPLETE(taskId), {
+  createTask: (taskData) => apiRequest(API_ENDPOINTS.TASKS.CREATE, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify(taskData),
   }),
   
-  getUserTasks: () => apiRequest(API_ENDPOINTS.TASKS.USER_TASKS),
+  completeTask: (taskId, verificationData = {}) => apiRequest(API_ENDPOINTS.TASKS.COMPLETE(taskId), {
+    method: 'POST',
+    body: JSON.stringify({ verificationData }),
+  }),
+
+  verifyTask: (taskId, completionId, approve, pointsAwarded, sabiCashAwarded, adminNotes) => 
+    apiRequest(API_ENDPOINTS.TASKS.VERIFY(taskId), {
+      method: 'POST',
+      body: JSON.stringify({ completionId, approve, pointsAwarded, sabiCashAwarded, adminNotes }),
+    }),
+  
+  getUserTasks: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`${API_ENDPOINTS.TASKS.USER_TASKS}?${queryString}`);
+  },
+
+  getPendingTasks: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`${API_ENDPOINTS.TASKS.PENDING}?${queryString}`);
+  },
 };
 
-export const web3API = {
-  verifyTransaction: (txHash, walletAddress) => apiRequest(API_ENDPOINTS.WEB3.VERIFY_TRANSACTION, {
+export const miningAPI = {
+  getPlans: () => apiRequest(API_ENDPOINTS.MINING.PLANS),
+
+  getStatus: () => apiRequest(API_ENDPOINTS.MINING.STATUS),
+
+  stake: (planType, amount, walletAddress) => apiRequest(API_ENDPOINTS.MINING.STAKE, {
     method: 'POST',
-    body: JSON.stringify({ txHash, walletAddress }),
+    body: JSON.stringify({ planType, amount, walletAddress }),
   }),
-  
-  logTransaction: (transactionData) => apiRequest(API_ENDPOINTS.WEB3.LOG_TRANSACTION, {
+
+  claimFree: (walletAddress) => apiRequest(API_ENDPOINTS.MINING.CLAIM_FREE, {
+    method: 'POST',
+    body: JSON.stringify({ walletAddress }),
+  }),
+
+  claimStake: (stakeId, walletAddress) => apiRequest(API_ENDPOINTS.MINING.CLAIM_STAKE(stakeId), {
+    method: 'POST',
+    body: JSON.stringify({ walletAddress }),
+  }),
+
+  unstake: (stakeId) => apiRequest(API_ENDPOINTS.MINING.UNSTAKE(stakeId), {
+    method: 'POST',
+  }),
+
+  getHistory: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`${API_ENDPOINTS.MINING.HISTORY}?${queryString}`);
+  },
+};
+
+export const transactionsAPI = {
+  log: (transactionData) => apiRequest(API_ENDPOINTS.TRANSACTIONS.LOG, {
     method: 'POST',
     body: JSON.stringify(transactionData),
   }),
-  
-  syncBalance: (walletAddress) => apiRequest(API_ENDPOINTS.WEB3.SYNC_BALANCE, {
+
+  updateStatus: (txHash, status, confirmations, blockNumber) => 
+    apiRequest(API_ENDPOINTS.TRANSACTIONS.UPDATE_STATUS(txHash), {
+      method: 'POST',
+      body: JSON.stringify({ status, confirmations, blockNumber }),
+    }),
+
+  getUserTransactions: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`${API_ENDPOINTS.TRANSACTIONS.USER}?${queryString}`);
+  },
+
+  getTransaction: (txHash) => apiRequest(API_ENDPOINTS.TRANSACTIONS.GET(txHash)),
+
+  verifyTransaction: (txHash, walletAddress) => apiRequest(API_ENDPOINTS.TRANSACTIONS.VERIFY(txHash), {
     method: 'POST',
     body: JSON.stringify({ walletAddress }),
   }),
 };
 
 export const adminAPI = {
-  getUsers: (filters = {}) => apiRequest(`${API_ENDPOINTS.ADMIN.USERS}?${new URLSearchParams(filters)}`),
-  
-  getTasks: () => apiRequest(API_ENDPOINTS.ADMIN.TASKS),
-  
-  getTransactions: (filters = {}) => apiRequest(`${API_ENDPOINTS.ADMIN.TRANSACTIONS}?${new URLSearchParams(filters)}`),
-  
   getAnalytics: () => apiRequest(API_ENDPOINTS.ADMIN.ANALYTICS),
   
-  sendReward: (userId, amount, type) => apiRequest(API_ENDPOINTS.ADMIN.SEND_REWARD, {
+  getUsers: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`${API_ENDPOINTS.ADMIN.USERS}?${queryString}`);
+  },
+
+  getUserDetails: (userId) => apiRequest(API_ENDPOINTS.ADMIN.USER_DETAILS(userId)),
+
+  updateUserStatus: (userId, isActive, isVerified) => apiRequest(API_ENDPOINTS.ADMIN.UPDATE_USER_STATUS(userId), {
+    method: 'PUT',
+    body: JSON.stringify({ isActive, isVerified }),
+  }),
+
+  sendReward: (userId, amount, type, reason) => apiRequest(API_ENDPOINTS.ADMIN.SEND_REWARD(userId), {
     method: 'POST',
-    body: JSON.stringify({ userId, amount, type }),
+    body: JSON.stringify({ amount, type, reason }),
+  }),
+  
+  getTransactions: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`${API_ENDPOINTS.ADMIN.TRANSACTIONS}?${queryString}`);
+  },
+
+  getConfig: () => apiRequest(API_ENDPOINTS.ADMIN.CONFIG),
+};
+
+export const sessionsAPI = {
+  create: (sessionData) => apiRequest(API_ENDPOINTS.SESSIONS.CREATE, {
+    method: 'POST',
+    body: JSON.stringify(sessionData),
+  }),
+
+  touch: (sessionToken) => apiRequest(API_ENDPOINTS.SESSIONS.TOUCH, {
+    method: 'POST',
+    body: JSON.stringify({ sessionToken }),
+  }),
+
+  delete: (sessionToken) => apiRequest(API_ENDPOINTS.SESSIONS.DELETE, {
+    method: 'DELETE',
+    body: JSON.stringify({ sessionToken }),
   }),
 };
