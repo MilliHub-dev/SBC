@@ -9,7 +9,7 @@ import {
   POINT_TO_SABI_RATE,
   MIN_POINT_CONVERSION 
 } from '../config/web3Config';
-import { authApi, pointsApi, walletApi } from '../config/apiConfig';
+import { authAPI, pointsAPI } from '../config/apiConfig';
 
 export const useWeb3 = () => {
   const { address, isConnected, isConnecting, isDisconnected } = useAccount();
@@ -99,7 +99,7 @@ export const useWeb3 = () => {
       }
 
       // Call backend API to validate points and clear them
-      const conversionData = await pointsApi.convertPoints(points);
+      const conversionData = await pointsAPI.convertPoints(points, address);
       
       if (!conversionData.success) {
         throw new Error(conversionData.message || 'Failed to validate points conversion');
@@ -206,17 +206,17 @@ export const useWeb3 = () => {
         };
       }
       
-      const data = await authApi.login(credentials);
+      const data = await authAPI.loginLegacy(credentials);
       
       // Store the auth token
       localStorage.setItem('sabiride_auth_token', data.token);
       setIsLoggedIn(true);
       setUserPoints(data.points || 0);
       
-      // Link wallet if not already linked
+      // Update wallet address if not already linked
       if (address && data.token) {
         try {
-          await walletApi.linkWallet(address, data.signature || '');
+          await authAPI.updateWallet(address);
         } catch (linkError) {
           console.warn('Wallet linking failed:', linkError);
           // Don't throw error for wallet linking failure
@@ -257,7 +257,7 @@ export const useWeb3 = () => {
         return;
       }
       
-      const data = await pointsApi.getUserPoints();
+      const data = await pointsAPI.getBalance();
       setUserPoints(data.points || 0);
     } catch (error) {
       console.error('Error fetching user points:', error);
@@ -281,7 +281,7 @@ export const useWeb3 = () => {
       }
       
       // Verify token with backend
-      authApi.verifyToken()
+      authAPI.getProfile()
         .then((data) => {
           setIsLoggedIn(true);
           setUserPoints(data.points || 0);
