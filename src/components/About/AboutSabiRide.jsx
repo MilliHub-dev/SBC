@@ -27,7 +27,7 @@ const AboutSabiRide = () => {
 				<Text as={"p"} color={"gray.500"} fontSize={"16px"}>
 					Sabi Cash ($SBC) is a utility token built on the Polygon zkEVM
 					blockchain that enables ride-to-earn, referrals, staking, and
-					payments within the Sabi-Ride platform. It’s designed to reward
+					payments within the Sabi Ride platform. It’s designed to reward
 					everyday transport activity while supporting a decentralized
 					financial future.
 				</Text>

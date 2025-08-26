@@ -310,7 +310,7 @@ const Rewards = () => {
 												fontSize="md"
 												p={2}
 											>
-												{getTotalEarned()} SABI
+												{getTotalEarned()} SBC
 											</Badge>
 										</HStack>
 									</VStack>
@@ -380,7 +380,7 @@ const Rewards = () => {
 														>
 															{isCompleted
 																? "✓ Done"
-																: `+${task.reward} SABI`}
+																: `+${task.reward} SBC`}
 														</Badge>
 													</HStack>
 

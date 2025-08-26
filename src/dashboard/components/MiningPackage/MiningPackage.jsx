@@ -75,7 +75,7 @@ const MiningPackage = ({
 					{packageData.name}
 				</Text>
 				<Image
-					src="/mining-chip.png"
+					src="start_mining.svg"
 					alt="Mining chip"
 					boxSize="40px"
 					fallback={<Box w="40px" h="40px" bg="gray.600" rounded="md" />}
@@ -84,43 +84,9 @@ const MiningPackage = ({
 
 			<Flex alignItems={"center"} justifyContent={"space-between"}>
 				<Text color={"#0088CD"} fontWeight={"bold"} fontSize={30}>
-					{totalPrice === 0 ? "FREE" : `${totalPrice} SABI`}
+					{totalPrice === 0 ? "FREE" : `${totalPrice} SBC`}
 				</Text>
-				<Box color={"gray.500"} fontSize={20} display={"flex"}>
-					<Button
-						bg={"gray.900"}
-						padding={"1.5rem 1rem"}
-						rounded={0}
-						border={"1px solid"}
-						borderColor={"gray.800"}
-						onClick={() => handleQuantityChange(-1)}
-						isDisabled={quantity <= 1}
-						_hover={{ bg: "gray.700" }}
-					>
-						-
-					</Button>
-					<Button
-						border={"0"}
-						bg={"gray.900"}
-						padding={"1.5rem 1rem"}
-						rounded={0}
-						minW={"60px"}
-						_hover={{ bg: "gray.700" }}
-					>
-						{quantity}
-					</Button>
-					<Button
-						bg={"gray.900"}
-						padding={"1.5rem 1rem"}
-						rounded={0}
-						border={"1px solid"}
-						borderColor={"gray.800"}
-						onClick={() => handleQuantityChange(1)}
-						_hover={{ bg: "gray.700" }}
-					>
-						+
-					</Button>
-				</Box>
+				
 			</Flex>
 
 			<Flex
@@ -154,12 +120,12 @@ const MiningPackage = ({
 					</Icon>
 				</Flex>
 				<Text fontWeight={"bold"} fontSize={25} color={"#fff"}>
-					{totalEstimatedValue.toFixed(2)} SABI
+					{totalEstimatedValue.toFixed(2)} SBC
 				</Text>
 				<Text fontSize={"sm"}>
 					(Includes: {(packageData.retainedAmount * quantity).toFixed(2)}{" "}
-					SABI retained + {(packageData.minedAmount * quantity).toFixed(2)}{" "}
-					SABI mined)
+					SBC retained + {(packageData.minedAmount * quantity).toFixed(2)}{" "}
+					SBC mined)
 					{packageData.description && (
 						<Text as="span" color="#0088CD">
 							{" "}
@@ -217,7 +183,7 @@ const MiningPackage = ({
 					alignItems={"center"}
 					justifyContent={"space-between"}
 				>
-					<Text>Electricity Cost:</Text>
+					<Text>Ride Cost:</Text>
 					<Text fontWeight={"bold"}>{packageData.electricityCost}</Text>
 				</Box>
 				<Box
@@ -225,7 +191,7 @@ const MiningPackage = ({
 					alignItems={"center"}
 					justifyContent={"space-between"}
 				>
-					<Text>Total Electricity Cost:</Text>
+					<Text>Total Ride Cost:</Text>
 					<Text fontWeight={"bold"}>
 						{packageData.totalElectricityCost}
 					</Text>

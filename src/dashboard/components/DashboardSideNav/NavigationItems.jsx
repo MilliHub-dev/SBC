@@ -16,12 +16,12 @@ const navigationItems = [
 		icon: LuWallet,
 		description: "Purchase cryptocurrency",
 	},
-	//{
-		//name: "Swap",
-		//path: "/dashboard/swap-tokens",
-		//icon: LuArrowLeftRight,
-		//description: "Exchange tokens",
-	//},
+	{
+		name: "Swap",
+		path: "/dashboard/swap-tokens",
+		icon: LuArrowLeftRight,
+		description: "Exchange tokens",
+	},
 	{
 		name: "convert",
 		path: "/dashboard/convert-tokens",
@@ -46,12 +46,12 @@ const navigationItems = [
 		icon: LuGift,
 		description: "View your rewards",
 	},
-	{
-		name: "admin",
-		path: "/dashboard/admin",
-		icon: LuShield,
-		description: "Admin panel",
-	},
+	//{
+		//name: "admin",
+		//path: "/dashboard/admin",
+		//icon: LuShield,
+		//description: "Admin panel",
+	//},
 ];
 
 export default navigationItems;

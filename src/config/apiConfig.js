@@ -1,6 +1,8 @@
+
 // API Configuration for SabiCash Backend
-const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:8787/api';
-const SABI_RIDE_API_URL = process.env.VITE_SABI_RIDE_API_URL || 'https://tmp.sabirideweb.com.ng/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787/api';
+const SABI_RIDE_API_URL = import.meta.env.VITE_SABI_RIDE_API_URL || 'https://tmp.sabirideweb.com.ng/api/v1';
+
 
 export const API_ENDPOINTS = {
   // Authentication - SabiCash backend with Sabi Ride integration
