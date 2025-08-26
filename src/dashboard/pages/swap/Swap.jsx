@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
 	Box,
 	Heading,
@@ -11,6 +11,7 @@ import {
 	Avatar,
 	Flex,
 	Container,
+	Spinner,
 } from "@chakra-ui/react";
 import {
 	FaArrowsRotate,
@@ -21,42 +22,99 @@ import { useWeb3 } from "../../../hooks/useWeb3";
 import { toaster } from "../../../components/ui/toaster";
 import AlertNotification from "@/dashboard/components/AlertNotification/AlertNotification";
 import SimpleHeading from "@/dashboard/components/SimpleHeading/SimpleHeading";
+import { uniswapService } from "../../../services/uniswapService";
+import { useSigner, useProvider } from "wagmi";
+import { UNISWAP_CONFIG, SABI_CASH_CONTRACT_ADDRESS, USDT_CONTRACT_ADDRESS } from "../../../config/web3Config";
 
 const Swap = () => {
-	const [fromToken, setFromToken] = useState("ETH");
+	const [fromToken, setFromToken] = useState("WETH");
 	const [toToken, setToToken] = useState("SABI");
 	const [fromAmount, setFromAmount] = useState("");
 	const [toAmount, setToAmount] = useState("");
 	const [isSwapping, setIsSwapping] = useState(false);
+	const [quote, setQuote] = useState(null);
+	const [loadingQuote, setLoadingQuote] = useState(false);
+	const [supportedTokens, setSupportedTokens] = useState([]);
 
-	const { isConnected, ethBalance, sabiBalance } = useWeb3();
+	const { isConnected, address, ethBalance, sabiBalance } = useWeb3();
+	const { data: signer } = useSigner();
+	const provider = useProvider();
 
-	// Exchange rates (demo values)
-	const exchangeRates = {
-		ETH_TO_SABI: 1500, // 1 ETH = 1500 SABI
-		SABI_TO_ETH: 0.000667, // 1 SABI = 0.000667 ETH
-		ETH_TO_USDT: 2800, // 1 ETH = 2800 USDT
-		USDT_TO_ETH: 0.000357, // 1 USDT = 0.000357 ETH
-		SABI_TO_USDT: 1.87, // 1 SABI = 1.87 USDT
-		USDT_TO_SABI: 0.535, // 1 USDT = 0.535 SABI
-	};
+	// Initialize Uniswap service
+	useEffect(() => {
+		const initializeUniswap = async () => {
+			if (!provider) return;
 
-	const tokens = [
-		{ symbol: "ETH", name: "Ethereum", balance: ethBalance },
-		{ symbol: "SABI", name: "Sabi Cash", balance: sabiBalance },
-		{ symbol: "USDT", name: "USD Tether", balance: "0.00" },
-	];
+			try {
+				await uniswapService.initialize(provider);
+				const tokens = uniswapService.getSupportedTokens();
+				setSupportedTokens(tokens);
+			} catch (error) {
+				console.error('Error initializing Uniswap:', error);
+				toaster.create({
+					title: "Initialization Error",
+					description: "Failed to initialize swap functionality",
+					type: "error",
+					duration: 5000,
+				});
+			}
+		};
 
-	const calculateExchange = (amount, from, to) => {
-		if (!amount || amount === "0") return "";
-		const rate = exchangeRates[`${from}_TO_${to}`];
-		return rate ? (parseFloat(amount) * rate).toFixed(6) : "";
-	};
+		initializeUniswap();
+	}, [provider]);
+
+	// Get quote when amounts change
+	useEffect(() => {
+		const getQuote = async () => {
+			if (!fromAmount || parseFloat(fromAmount) <= 0 || !fromToken || !toToken) {
+				setQuote(null);
+				setToAmount("");
+				return;
+			}
+
+			if (fromToken === toToken) {
+				setToAmount(fromAmount);
+				return;
+			}
+
+			setLoadingQuote(true);
+			try {
+				const fromTokenData = supportedTokens.find(t => t.symbol === fromToken);
+				const toTokenData = supportedTokens.find(t => t.symbol === toToken);
+
+				if (!fromTokenData || !toTokenData) {
+					throw new Error('Unsupported token pair');
+				}
+
+				const quoteResult = await uniswapService.getQuote(
+					fromTokenData.address,
+					toTokenData.address,
+					fromAmount
+				);
+
+				setQuote(quoteResult);
+				setToAmount(quoteResult.amountOut);
+			} catch (error) {
+				console.error('Error getting quote:', error);
+				setQuote(null);
+				setToAmount("");
+				toaster.create({
+					title: "Quote Error",
+					description: error.message,
+					type: "error",
+					duration: 3000,
+				});
+			} finally {
+				setLoadingQuote(false);
+			}
+		};
+
+		const debounceTimer = setTimeout(getQuote, 500);
+		return () => clearTimeout(debounceTimer);
+	}, [fromAmount, fromToken, toToken, supportedTokens]);
 
 	const handleFromAmountChange = (value) => {
 		setFromAmount(value);
-		const calculated = calculateExchange(value, fromToken, toToken);
-		setToAmount(calculated);
 	};
 
 	const handleSwapTokens = () => {
@@ -90,25 +148,55 @@ const Swap = () => {
 			return;
 		}
 
+		if (!quote) {
+			toaster.create({
+				title: "No Quote Available",
+				description: "Please wait for quote to load before swapping",
+				type: "error",
+				duration: 3000,
+			});
+			return;
+		}
+
+		if (!signer) {
+			toaster.create({
+				title: "Signer Not Available",
+				description: "Please ensure your wallet is properly connected",
+				type: "error",
+				duration: 3000,
+			});
+			return;
+		}
+
 		setIsSwapping(true);
 		try {
-			// Simulate swap transaction
-			await new Promise((resolve) => setTimeout(resolve, 2000));
+			const fromTokenData = supportedTokens.find(t => t.symbol === fromToken);
+			const toTokenData = supportedTokens.find(t => t.symbol === toToken);
+
+			const result = await uniswapService.executeSwap(
+				fromTokenData.address,
+				toTokenData.address,
+				fromAmount,
+				address,
+				signer
+			);
 
 			toaster.create({
 				title: "Swap Successful",
-				description: `Successfully swapped ${fromAmount} ${fromToken} for ${toAmount} ${toToken}`,
+				description: `Successfully swapped ${fromAmount} ${fromToken} for ${result.amountOut} ${toToken}`,
 				type: "success",
 				duration: 5000,
 			});
 
+			// Reset form
 			setFromAmount("");
 			setToAmount("");
-			// eslint-disable-next-line no-unused-vars
+			setQuote(null);
 		} catch (error) {
+			console.error('Swap error:', error);
 			toaster.create({
 				title: "Swap Failed",
-				description: "An error occurred during the swap",
+				description: error.message,
 				type: "error",
 				duration: 5000,
 			});
@@ -117,262 +205,283 @@ const Swap = () => {
 		}
 	};
 
+	const getTokenBalance = (tokenSymbol) => {
+		switch (tokenSymbol) {
+			case 'WETH':
+				return ethBalance;
+			case 'SABI':
+				return sabiBalance;
+			case 'USDT':
+				return '0.00'; // You might want to fetch this from a contract
+			default:
+				return '0.00';
+		}
+	};
+
+	const getTokenIcon = (tokenSymbol) => {
+		const iconMap = {
+			'WETH': '🔷',
+			'SABI': '💰',
+			'USDT': '💵',
+		};
+		return iconMap[tokenSymbol] || '🪙';
+	};
+
 	return (
 		<Container maxW="4xl" p={0}>
 			<VStack gap={10} align="stretch">
 				<SimpleHeading
 					icon={FaArrowRightArrowLeft}
 					headingTitle={"Token Swap"}
-					headingDesc={"Swap between different cryptocurrencies instantly"}
+					headingDesc={"Swap tokens instantly using Uniswap"}
 				/>
 
 				{!isConnected && (
 					<AlertNotification
-						status="warning"
-						alertMsg="Please connect your wallet to start swapping tokens"
+						status={"warning"}
+						alertMsg={"Please connect your wallet to swap tokens"}
 					/>
 				)}
 
-				{/* Token Balances */}
+				{isConnected && (
+					<>
+						{/* Token Balances */}
+						<Box
+							display="grid"
+							gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))"
+							gap={4}
+						>
+							{supportedTokens.map((token) => (
+								<Card.Root key={token.symbol} bg="gray.900" border="1px solid" borderColor="gray.700">
+									<Card.Body p={4}>
+										<HStack>
+											<Text fontSize="2xl">{getTokenIcon(token.symbol)}</Text>
+											<Box>
+												<Text fontWeight="bold" color="white">
+													{token.symbol}
+												</Text>
+												<Text fontSize="sm" color="gray.400">
+													{token.name}
+												</Text>
+												<Text fontSize="sm" color="blue.300">
+													Balance: {getTokenBalance(token.symbol)}
+												</Text>
+											</Box>
+										</HStack>
+									</Card.Body>
+								</Card.Root>
+							))}
+						</Box>
 
-				<Box mt={4}>
-					<Heading size="lg" fontSize={23} mb={4} color="white">
-						Your Balances
-					</Heading>
-					<Box
-						display={"grid"}
-						gridTemplateColumns={{ sm: "1fr", md: "1fr 1fr" }}
-						gap={2}
-					>
-						{tokens.map((token, index) => (
-							<HStack
-								key={token.symbol}
-								justify="space-between"
-								w="full"
-								bg={"gray.900"}
-								height={110}
-								padding={"0 20px"}
-								rounded={"md"}
-								gridColumn={index === 2 ? "1 / -1" : "auto"}
-							>
-								<Box display={"flex"} alignItems={"center"} gap={3}>
-									<Avatar.Root>
-										<Avatar.Fallback name={token.name} />
-										<Avatar.Image src="https://pngtree.com/freepng/vector-illustration-of-crytocurrency-ethereum_6326627.html" />
-									</Avatar.Root>
-									<Flex flexDir={"column"} gap={1}>
-										<Text fontWeight={600} fontSize={17}>
-											{token.name}
+						{/* Swap Interface */}
+						<Card.Root bg="gray.900" border="1px solid" borderColor="gray.700">
+							<Card.Body p={6}>
+								<VStack gap={6}>
+									{/* From Token */}
+									<Box w="full">
+										<Text mb={2} color="gray.300" fontSize="sm">
+											From
 										</Text>
-										<Text color={"gray.500"} fontSize={14}>
-											{token.symbol}
-										</Text>
-									</Flex>
-								</Box>
-								<Flex flexDir={"column"} gap={1}>
-									<Text fontWeight={600} fontSize={17}>
-										{token.balance} {token.symbol}
-									</Text>
-									<Text color={"gray.500"} fontSize={14}>
-										${999}
-									</Text>
-								</Flex>
-							</HStack>
-						))}
-					</Box>
-				</Box>
+										<Card.Root bg="gray.800" border="1px solid" borderColor="gray.600">
+											<Card.Body p={4}>
+												<HStack justify="space-between">
+													<VStack align="start" flex={1}>
+														<select
+															value={fromToken}
+															onChange={(e) => setFromToken(e.target.value)}
+															style={{
+																background: "transparent",
+																border: "none",
+																color: "white",
+																fontSize: "18px",
+																fontWeight: "bold",
+															}}
+														>
+															{supportedTokens.map((token) => (
+																<option
+																	key={token.symbol}
+																	value={token.symbol}
+																	style={{ background: "#1A202C" }}
+																>
+																	{token.symbol}
+																</option>
+															))}
+														</select>
+														<Text fontSize="sm" color="gray.400">
+															Balance: {getTokenBalance(fromToken)}
+														</Text>
+													</VStack>
+													<Input
+														type="number"
+														step="0.000001"
+														placeholder="0.0"
+														value={fromAmount}
+														onChange={(e) => handleFromAmountChange(e.target.value)}
+														textAlign="right"
+														fontSize="xl"
+														fontWeight="bold"
+														bg="transparent"
+														border="none"
+														color="white"
+														_focus={{ outline: "none" }}
+													/>
+												</HStack>
+											</Card.Body>
+										</Card.Root>
+									</Box>
 
-				{/* Swap Interface */}
-				<Card.Root bg="gray.900" borderColor="gray.700">
-					<Card.Body>
-						<VStack>
-							{/* From Token */}
-							<Box w="full">
-								<Text fontSize="sm" color="gray.400" mb={2}>
-									From
-								</Text>
-								<HStack gap={3}>
-									<select
-										value={fromToken}
-										onChange={(e) => setFromToken(e.target.value)}
-										style={{
-											width: "100%",
-											border: "1px solid",
-											borderColor: "#71717A",
-											padding: "12.5px 10px ",
-											borderRadius: "5px",
-											backgroundColor: "#18181B",
-											outline: "none",
-											fontSize: "15px",
-											color: "#fff",
-										}}
+									{/* Swap Button */}
+									<Button
+										onClick={handleSwapTokens}
+										bg="gray.700"
+										color="white"
+										rounded="full"
+										p={2}
+										minW="40px"
+										h="40px"
+										_hover={{ bg: "gray.600" }}
 									>
-										{tokens.map((token) => (
-											<option
-												key={token.symbol}
-												value={token.symbol}
-												style={{ backgroundColor: "#2D3748" }}
-											>
-												{token.symbol}
-											</option>
-										))}
-									</select>
-									<Input
-										type="number"
-										step="0.000001"
-										placeholder="0.0"
-										border="1px solid"
-										borderColor="#71717A"
-										padding="21.5px 10px "
-										value={fromAmount}
-										onChange={(e) =>
-											handleFromAmountChange(e.target.value)
+										<FaArrowsRotate />
+									</Button>
+
+									{/* To Token */}
+									<Box w="full">
+										<Text mb={2} color="gray.300" fontSize="sm">
+											To (estimated)
+										</Text>
+										<Card.Root bg="gray.800" border="1px solid" borderColor="gray.600">
+											<Card.Body p={4}>
+												<HStack justify="space-between">
+													<VStack align="start" flex={1}>
+														<select
+															value={toToken}
+															onChange={(e) => setToToken(e.target.value)}
+															style={{
+																background: "transparent",
+																border: "none",
+																color: "white",
+																fontSize: "18px",
+																fontWeight: "bold",
+															}}
+														>
+															{supportedTokens.map((token) => (
+																<option
+																	key={token.symbol}
+																	value={token.symbol}
+																	style={{ background: "#1A202C" }}
+																>
+																	{token.symbol}
+																</option>
+															))}
+														</select>
+														<Text fontSize="sm" color="gray.400">
+															Balance: {getTokenBalance(toToken)}
+														</Text>
+													</VStack>
+													<Box textAlign="right">
+														{loadingQuote ? (
+															<Spinner size="sm" />
+														) : (
+															<Text
+																fontSize="xl"
+																fontWeight="bold"
+																color="white"
+															>
+																{toAmount || "0.0"}
+															</Text>
+														)}
+													</Box>
+												</HStack>
+											</Card.Body>
+										</Card.Root>
+									</Box>
+
+									{/* Quote Information */}
+									{quote && (
+										<Box w="full" p={4} bg="blue.900" rounded="lg">
+											<VStack align="start" gap={2}>
+												<Text fontSize="sm" color="blue.200" fontWeight="bold">
+													Swap Details:
+												</Text>
+												<HStack justify="space-between" w="full">
+													<Text fontSize="sm" color="blue.300">
+														Price Impact:
+													</Text>
+													<Text fontSize="sm" color="blue.300">
+														{quote.priceImpact}%
+													</Text>
+												</HStack>
+												<HStack justify="space-between" w="full">
+													<Text fontSize="sm" color="blue.300">
+														Minimum Received:
+													</Text>
+													<Text fontSize="sm" color="blue.300">
+														{quote.minimumAmountOut} {toToken}
+													</Text>
+												</HStack>
+												<HStack justify="space-between" w="full">
+													<Text fontSize="sm" color="blue.300">
+														Gas Estimate:
+													</Text>
+													<Text fontSize="sm" color="blue.300">
+														{quote.gasEstimate}
+													</Text>
+												</HStack>
+											</VStack>
+										</Box>
+									)}
+
+									{/* Swap Button */}
+									<Button
+										onClick={handleSwap}
+										bg="#0088CD"
+										color="white"
+										size="lg"
+										w="full"
+										rounded="lg"
+										fontWeight={600}
+										isLoading={isSwapping}
+										loadingText="Swapping..."
+										isDisabled={
+											!isConnected ||
+											!fromAmount ||
+											!toAmount ||
+											loadingQuote ||
+											!quote
 										}
-										bg="transparent"
-										fontSize="xl"
-										color="white"
-										_placeholder={{ color: "gray.500" }}
-										_focus={{ outline: "none" }}
-									/>
-								</HStack>
-								<Text fontSize="xs" color="gray.500" mt={1}>
-									Balance:{" "}
-									{tokens.find((t) => t.symbol === fromToken)
-										?.balance || "0.00"}
-								</Text>
-							</Box>
-
-							{/* Swap Button */}
-							<Button
-								onClick={handleSwapTokens}
-								variant="ghost"
-								size="lg"
-								rounded={"lg"}
-								color="#0088CD"
-								_hover={{ bg: "gray.800", scale: 1.01 }}
-							>
-								<FaArrowsRotate />
-							</Button>
-
-							{/* To Token */}
-							<Box w="full" rounded="lg">
-								<Text fontSize="sm" color="gray.400" mb={2}>
-									To
-								</Text>
-								<HStack gap={3}>
-									<select
-										value={toToken}
-										onChange={(e) => setToToken(e.target.value)}
-										style={{
-											width: "100%",
-											border: "1px solid",
-											borderColor: "#71717A",
-											padding: "12.5px 10px ",
-											borderRadius: "5px",
-											backgroundColor: "#18181B",
-											outline: "none",
-											fontSize: "15px",
-											color: "#fff",
-										}}
+										_hover={{ bg: "#0077B6" }}
 									>
-										{tokens.map((token) => (
-											<option
-												key={token.symbol}
-												value={token.symbol}
-												style={{ backgroundColor: "#2D3748" }}
-											>
-												{token.symbol}
-											</option>
-										))}
-									</select>
-									<Input
-										type="text"
-										placeholder="0.0"
-										value={toAmount}
-										readOnly
-										bg="transparent"
-										border="1px solid"
-										borderColor="#71717A"
-										padding="21.5px 10px "
-										outline={"none"}
-										fontSize="xl"
-										color="white"
-										_placeholder={{ color: "gray.500" }}
-									/>
-								</HStack>
-								<Text fontSize="xs" color="gray.500" mt={1}>
-									Balance:{" "}
-									{tokens.find((t) => t.symbol === toToken)?.balance ||
-										"0.00"}
-								</Text>
-							</Box>
+										<FaCoins />
+										Swap Tokens
+									</Button>
+								</VStack>
+							</Card.Body>
+						</Card.Root>
 
-							{/* Exchange Rate */}
-							{fromAmount && toAmount && (
-								<Box
-									w="full"
-									p={3}
-									variant="ghost"
-									bg="blue.800"
-									rounded="lg"
-									// border="1px solid"
-									// borderColor="blue.700"
-								>
-									<Text
-										fontSize="sm"
-										color="blue.200"
-										textAlign="center"
-									>
-										1 {fromToken} ≈{" "}
-										{calculateExchange("1", fromToken, toToken)}{" "}
-										{toToken}
+						{/* Information Card */}
+						<Card.Root bg="blue.900" borderColor="blue.700">
+							<Card.Body>
+								<VStack gap={3} align="start">
+									<Text fontWeight="bold" color="blue.200">
+										Swap Information:
 									</Text>
-								</Box>
-							)}
-
-							{/* Swap Action Button */}
-							<Button
-								bg="#0088CD"
-								color="white"
-								size="lg"
-								w="full"
-								rounded={"lg"}
-								onClick={handleSwap}
-								isLoading={isSwapping}
-								loadingText="Swapping..."
-								isDisabled={
-									!isConnected || !fromAmount || fromToken === toToken
-								}
-								_hover={{ bg: "#0077B6" }}
-							>
-								<FaCoins /> Swap Tokens
-							</Button>
-						</VStack>
-					</Card.Body>
-				</Card.Root>
-
-				{/* Swap Information */}
-				<Card.Root bg="blue.900" borderColor="blue.700">
-					<Card.Body>
-						<VStack gap={3} align="start">
-							<Text fontWeight="bold" color="blue.200">
-								Swap Information:
-							</Text>
-							<Text fontSize="sm" color="blue.300">
-								• Instant swaps between supported tokens
-							</Text>
-							<Text fontSize="sm" color="blue.300">
-								• Competitive exchange rates updated in real-time
-							</Text>
-							<Text fontSize="sm" color="blue.300">
-								• Low transaction fees on Polygon zkEVM
-							</Text>
-							<Text fontSize="sm" color="blue.300">
-								• Secure and decentralized trading
-							</Text>
-						</VStack>
-					</Card.Body>
-				</Card.Root>
+									<Text fontSize="sm" color="blue.300">
+										• Swaps are powered by Uniswap V3
+									</Text>
+									<Text fontSize="sm" color="blue.300">
+										• Prices are updated in real-time
+									</Text>
+									<Text fontSize="sm" color="blue.300">
+										• 0.5% slippage tolerance applied automatically
+									</Text>
+									<Text fontSize="sm" color="blue.300">
+										• Make sure you have enough ETH for gas fees
+									</Text>
+								</VStack>
+							</Card.Body>
+						</Card.Root>
+					</>
+				)}
 			</VStack>
 		</Container>
 	);

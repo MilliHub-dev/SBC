@@ -1,43 +1,43 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
-	plugins: [react()],
-	resolve: {
-		alias: {
-			"@": path.resolve(__dirname, "./src"),
-		},
-	},
-
-	server: {
-		port: 5173,
-		host: true,
-		open: false,
-	},
-	define: {
-		global: "globalThis",
-	},
-	optimizeDeps: {
-		include: ["@rainbow-me/rainbowkit", "wagmi", "viem"],
-	},
-	build: {
-		rollupOptions: {
-			// external: ["@chakra-ui/react"],
-			output: {
-				manualChunks: {
-					vendor: ["react", "react-dom"],
-					chakra: [
-						"@chakra-ui/react",
-						"@emotion/react",
-						"@emotion/styled",
-					],
-					web3: ["@rainbow-me/rainbowkit", "wagmi", "viem"],
-				},
-			},
-		},
-	},
-	target: "esnext",
-	minify: "esbuild",
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  define: {
+    global: 'globalThis',
+  },
+  optimizeDeps: {
+    include: [
+      'ethers',
+      '@thirdweb-dev/sdk',
+      '@thirdweb-dev/react',
+      '@uniswap/sdk-core',
+      '@uniswap/v3-sdk',
+      '@uniswap/smart-order-router'
+    ],
+  },
+  build: {
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+    rollupOptions: {
+      external: [],
+      output: {
+        globals: {
+          'ethers': 'ethers'
+        }
+      }
+    }
+  },
+  server: {
+    host: true,
+    port: 5173,
+  },
 });
