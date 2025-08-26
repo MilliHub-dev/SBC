@@ -7,22 +7,28 @@ import {
   USDT_CONTRACT_ADDRESS,
   MINING_PLANS,
   POINT_TO_SABI_RATE,
-  MIN_POINT_CONVERSION 
+  MIN_POINT_CONVERSION,
+  IS_DEMO_MODE 
 } from '../config/web3Config';
-import { authAPI, pointsAPI } from '../config/apiConfig';
+import { authService } from '../services/authService';
+import { pointsService } from '../services/pointsService';
+import { thirdwebService } from '../services/thirdwebService';
+import { uniswapService } from '../services/uniswapService';
 
 export const useWeb3 = () => {
   const { address, isConnected, isConnecting, isDisconnected } = useAccount();
   const [userPoints, setUserPoints] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [stakingInfo, setStakingInfo] = useState(null);
+  const [pointsHistory, setPointsHistory] = useState([]);
+  const [userProfile, setUserProfile] = useState(null);
 
   // Get ETH balance
   const { data: ethBalance } = useBalance({
     address: address,
   });
 
-  // Get Sabi Cash balance - disable if contract not properly set
+  // Get Sabi Cash balance
   const { data: sabiBalance } = useReadContract({
     address: SABI_CASH_CONTRACT_ADDRESS,
     abi: SABI_CASH_ABI,
@@ -34,44 +40,106 @@ export const useWeb3 = () => {
   // Contract write functions
   const { writeContract } = useWriteContract();
 
-  // Buy Sabi Cash with Polygon (ETH)
+  // Check login status and load user data
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      const tokens = authService.getTokens();
+      const storedUser = authService.getStoredUser();
+      
+      if (tokens.sabiCashToken && storedUser) {
+        setIsLoggedIn(true);
+        setUserProfile(storedUser);
+        
+        // Load user points if we have Sabi Ride token
+        if (tokens.sabiRideToken) {
+          try {
+            const pointsResult = await pointsService.getPointsBalance(tokens.sabiRideToken);
+            if (pointsResult.success) {
+              setUserPoints(pointsResult.totalPoints);
+            }
+
+            const historyResult = await pointsService.getPointsHistory(tokens.sabiRideToken, { limit: 10 });
+            if (historyResult.success) {
+              setPointsHistory(historyResult.results);
+            }
+          } catch (error) {
+            console.error('Error loading points data:', error);
+          }
+        }
+      } else {
+        setIsLoggedIn(false);
+        setUserProfile(null);
+        setUserPoints(0);
+        setPointsHistory([]);
+      }
+    };
+
+    checkLoginStatus();
+  }, []);
+
+  // Login function
+  const login = async (email, password, userType = 'passenger') => {
+    try {
+      const result = await authService.login(email, password, userType, address);
+      if (result.success) {
+        setIsLoggedIn(true);
+        setUserProfile(result.user);
+        setUserPoints(result.points || 0);
+        return result;
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  };
+
+  // Logout function
+  const logout = async () => {
+    try {
+      await authService.logout();
+      setIsLoggedIn(false);
+      setUserProfile(null);
+      setUserPoints(0);
+      setPointsHistory([]);
+      setStakingInfo(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  // Buy Sabi Cash with Polygon (ETH) - Using ThirdWeb
   const buySabiWithPolygon = async (ethAmount) => {
     try {
-      if (!SABI_CASH_CONTRACT_ADDRESS || SABI_CASH_CONTRACT_ADDRESS === '0x' || SABI_CASH_CONTRACT_ADDRESS === '0x1234567890123456789012345678901234567890') {
-        // Demo mode - show success message but don't actually execute contract call
-        console.log(`Demo: Would buy ${ethAmount} ETH worth of Sabi Cash`);
-        return { hash: '0xdemo...', success: true };
+      if (!address) {
+        throw new Error('Wallet not connected');
       }
+
+      // Use ThirdWeb service for token purchase
+      const result = await thirdwebService.buyWithETH(address, ethAmount);
       
-      const result = await writeContract({
-        address: SABI_CASH_CONTRACT_ADDRESS,
-        abi: SABI_CASH_ABI,
-        functionName: 'buyWithPolygon',
-        value: parseEther(ethAmount.toString()),
-      });
-      return result;
+      if (result.success) {
+        return result;
+      } else {
+        throw new Error('Purchase failed');
+      }
     } catch (error) {
       console.error('Error buying Sabi Cash with Polygon:', error);
       throw error;
     }
   };
 
-  // Buy Sabi Cash with USDT
+  // Buy Sabi Cash with USDT - Using ThirdWeb
   const buySabiWithUSDT = async (usdtAmount) => {
     try {
-      if (!SABI_CASH_CONTRACT_ADDRESS || SABI_CASH_CONTRACT_ADDRESS === '0x' || SABI_CASH_CONTRACT_ADDRESS === '0x1234567890123456789012345678901234567890') {
-        // Demo mode - show success message but don't actually execute contract call
-        console.log(`Demo: Would buy ${usdtAmount} USDT worth of Sabi Cash`);
-        return { hash: '0xdemo...', success: true };
+      if (!address) {
+        throw new Error('Wallet not connected');
       }
-      
-      const result = await writeContract({
-        address: SABI_CASH_CONTRACT_ADDRESS,
-        abi: SABI_CASH_ABI,
-        functionName: 'buyWithUSDT',
-        args: [parseEther(usdtAmount.toString())],
-      });
-      return result;
+
+      // For USDT purchases, you might need to implement a different flow
+      // This is a placeholder for now
+      throw new Error('USDT purchases not yet implemented');
     } catch (error) {
       console.error('Error buying Sabi Cash with USDT:', error);
       throw error;
@@ -89,56 +157,45 @@ export const useWeb3 = () => {
         throw new Error(`Minimum ${MIN_POINT_CONVERSION} points required for conversion`);
       }
 
-      const sabiAmount = points * POINT_TO_SABI_RATE;
-      
-      // In demo mode, simulate API call
-      if (!SABI_CASH_CONTRACT_ADDRESS || SABI_CASH_CONTRACT_ADDRESS === '0x' || SABI_CASH_CONTRACT_ADDRESS === '0x1234567890123456789012345678901234567890') {
-        console.log(`Demo: Would convert ${points} points to ${sabiAmount} Sabi Cash`);
-        setUserPoints(prev => Math.max(0, prev - points));
-        return { hash: '0xdemo...', success: true };
+      const tokens = authService.getTokens();
+      if (!tokens.sabiRideToken) {
+        throw new Error('Sabi Ride token not found. Please login again.');
       }
 
-      // Call backend API to validate points and clear them
-      const conversionData = await pointsAPI.convertPoints(points, address);
+      const result = await pointsService.convertPoints(tokens.sabiRideToken, points, address);
       
-      if (!conversionData.success) {
-        throw new Error(conversionData.message || 'Failed to validate points conversion');
+      if (result.success) {
+        // Update local points balance
+        setUserPoints(result.newPointBalance);
+        return result;
+      } else {
+        throw new Error(result.error);
       }
-
-      // Mint Sabi Cash tokens
-      const result = await writeContract({
-        address: SABI_CASH_CONTRACT_ADDRESS,
-        abi: SABI_CASH_ABI,
-        functionName: 'mint',
-        args: [address, parseEther(sabiAmount.toString())],
-      });
-      
-      // Update local points after successful conversion
-      setUserPoints(prev => prev - points);
-      return result;
     } catch (error) {
-      console.error('Error converting points to Sabi Cash:', error);
+      console.error('Error converting points:', error);
       throw error;
     }
   };
 
-  // Stake Sabi Cash
-  const stakeSabiCash = async (amount, planId) => {
+  // Stake tokens for mining
+  const stakeTokens = async (planType, amount) => {
     try {
-      if (!SABI_CASH_CONTRACT_ADDRESS || SABI_CASH_CONTRACT_ADDRESS === '0x' || SABI_CASH_CONTRACT_ADDRESS === '0x1234567890123456789012345678901234567890') {
-        console.log(`Demo: Would stake ${amount} Sabi Cash with plan ${planId}`);
-        return { hash: '0xdemo...', success: true };
+      if (!isLoggedIn || !address) {
+        throw new Error('Please login and connect wallet to stake tokens');
       }
-      
+
+      // This would integrate with your mining/staking contract
+      // For now, this is a placeholder
       const result = await writeContract({
         address: SABI_CASH_CONTRACT_ADDRESS,
         abi: SABI_CASH_ABI,
         functionName: 'stake',
-        args: [parseEther(amount.toString()), planId],
+        args: [parseEther(amount.toString()), planType],
       });
+
       return result;
     } catch (error) {
-      console.error('Error staking Sabi Cash:', error);
+      console.error('Error staking tokens:', error);
       throw error;
     }
   };
@@ -146,16 +203,16 @@ export const useWeb3 = () => {
   // Claim mining rewards
   const claimMiningRewards = async () => {
     try {
-      if (!SABI_CASH_CONTRACT_ADDRESS || SABI_CASH_CONTRACT_ADDRESS === '0x' || SABI_CASH_CONTRACT_ADDRESS === '0x1234567890123456789012345678901234567890') {
-        console.log('Demo: Would claim mining rewards');
-        return { hash: '0xdemo...', success: true };
+      if (!isLoggedIn || !address) {
+        throw new Error('Please login and connect wallet to claim rewards');
       }
-      
+
       const result = await writeContract({
         address: SABI_CASH_CONTRACT_ADDRESS,
         abi: SABI_CASH_ABI,
         functionName: 'claimMiningRewards',
       });
+
       return result;
     } catch (error) {
       console.error('Error claiming mining rewards:', error);
@@ -163,201 +220,118 @@ export const useWeb3 = () => {
     }
   };
 
-  // Claim staking rewards
-  const claimStakingRewards = async () => {
+  // Get mining/staking information
+  const getStakingInfo = async () => {
     try {
-      if (!SABI_CASH_CONTRACT_ADDRESS || SABI_CASH_CONTRACT_ADDRESS === '0x' || SABI_CASH_CONTRACT_ADDRESS === '0x1234567890123456789012345678901234567890') {
-        console.log('Demo: Would claim staking rewards');
-        return { hash: '0xdemo...', success: true };
+      if (!isLoggedIn) {
+        return null;
       }
-      
-      const result = await writeContract({
-        address: SABI_CASH_CONTRACT_ADDRESS,
-        abi: SABI_CASH_ABI,
-        functionName: 'claimStakingRewards',
-      });
-      return result;
+
+      // This would fetch from your backend API
+      // For now, return null as placeholder
+      return null;
     } catch (error) {
-      console.error('Error claiming staking rewards:', error);
-      throw error;
+      console.error('Error getting staking info:', error);
+      return null;
     }
   };
 
-  // Login to Sabi Ride backend
-  const loginToSabiRide = async (email, password) => {
+  // Refresh user data
+  const refreshUserData = async () => {
+    if (!isLoggedIn) return;
+
     try {
-      const credentials = {
-        email,
-        password,
-        walletAddress: address,
-      };
-      
-      // In demo mode, simulate successful login
-      if (email === 'demo@sabicash.com' && password === 'demo123') {
-        const demoToken = 'demo_token_12345';
-        localStorage.setItem('sabiride_auth_token', demoToken);
-        setIsLoggedIn(true);
-        setUserPoints(1250); // Demo points
-        return { 
-          token: demoToken, 
-          points: 1250, 
-          message: 'Demo login successful',
-          user: { email, address }
-        };
-      }
-      
-      const data = await authAPI.loginLegacy(credentials);
-      
-      // Store the auth token
-      localStorage.setItem('sabiride_auth_token', data.token);
-      setIsLoggedIn(true);
-      setUserPoints(data.points || 0);
-      
-      // Update wallet address if not already linked
-      if (address && data.token) {
-        try {
-          await authAPI.updateWallet(address);
-        } catch (linkError) {
-          console.warn('Wallet linking failed:', linkError);
-          // Don't throw error for wallet linking failure
+      const tokens = authService.getTokens();
+      if (tokens.sabiRideToken) {
+        const pointsResult = await pointsService.getPointsBalance(tokens.sabiRideToken);
+        if (pointsResult.success) {
+          setUserPoints(pointsResult.totalPoints);
+        }
+
+        const historyResult = await pointsService.getPointsHistory(tokens.sabiRideToken, { limit: 10 });
+        if (historyResult.success) {
+          setPointsHistory(historyResult.results);
         }
       }
-      
-      return data;
+
+      // Update user profile
+      const currentUser = await authService.getCurrentUser();
+      if (currentUser) {
+        setUserProfile(currentUser);
+      }
     } catch (error) {
-      // If backend is not available, try demo login
-      if (error.message.includes('fetch') || error.message.includes('CORS') || error.message.includes('Network')) {
-        if (email === 'demo@sabicash.com' && password === 'demo123') {
-          const demoToken = 'demo_token_12345';
-          localStorage.setItem('sabiride_auth_token', demoToken);
-          setIsLoggedIn(true);
-          setUserPoints(1250); // Demo points
-          return { 
-            token: demoToken, 
-            points: 1250, 
-            message: 'Demo login successful (backend unavailable)',
-            user: { email, address }
-          };
-        }
-      }
-      console.error('Login error:', error);
-      throw error;
+      console.error('Error refreshing user data:', error);
     }
   };
 
-  // Get user points from backend
-  const fetchUserPoints = async () => {
-    try {
-      if (!isLoggedIn) return;
-      
-      // Check if this is a demo session
-      const token = localStorage.getItem('sabiride_auth_token');
-      if (token === 'demo_token_12345') {
-        setUserPoints(1250);
-        return;
-      }
-      
-      const data = await pointsAPI.getBalance();
-      setUserPoints(data.points || 0);
-    } catch (error) {
-      console.error('Error fetching user points:', error);
-      // If backend unavailable and it's demo mode, keep demo points
-      const token = localStorage.getItem('sabiride_auth_token');
-      if (token === 'demo_token_12345') {
-        setUserPoints(1250);
-      }
-    }
+  // Calculate points for distance
+  const calculatePointsForDistance = (distanceKm) => {
+    return pointsService.calculatePointsForDistance(distanceKm);
   };
 
-  // Check if user is logged in on mount
-  useEffect(() => {
-    const token = localStorage.getItem('sabiride_auth_token');
-    if (token) {
-      // Check if it's demo mode
-      if (token === 'demo_token_12345') {
-        setIsLoggedIn(true);
-        setUserPoints(1250);
-        return;
-      }
-      
-      // Verify token with backend
-      authAPI.getProfile()
-        .then((data) => {
-          setIsLoggedIn(true);
-          setUserPoints(data.points || 0);
-          fetchUserPoints();
-        })
-        .catch((error) => {
-          console.error('Token verification failed:', error);
-          localStorage.removeItem('sabiride_auth_token');
-          setIsLoggedIn(false);
-        });
-    }
-  }, []);
-
-  // Format balances for display
-  const formatSabiBalance = () => {
-    if (!sabiBalance) return '0';
-    try {
-      return parseFloat(formatEther(sabiBalance)).toFixed(2);
-    } catch {
-      return '0';
-    }
-  };
-
-  const formatEthBalance = () => {
-    if (!ethBalance) return '0';
-    try {
-      return parseFloat(formatEther(ethBalance.value)).toFixed(4);
-    } catch {
-      return '0';
-    }
-  };
-
-  // Calculate convertible Sabi Cash from points
-  const getConvertibleSabi = () => {
-    return userPoints * POINT_TO_SABI_RATE;
+  // Calculate SabiCash for points
+  const calculateSabiCashForPoints = (points) => {
+    return pointsService.calculateSabiCashForPoints(points);
   };
 
   // Check if user can convert points
   const canConvertPoints = () => {
-    return isLoggedIn && userPoints >= MIN_POINT_CONVERSION;
+    return userPoints >= MIN_POINT_CONVERSION;
+  };
+
+  // Get convertible Sabi Cash amount
+  const getConvertibleSabi = () => {
+    if (userPoints < MIN_POINT_CONVERSION) {
+      return '0.00';
+    }
+    return calculateSabiCashForPoints(userPoints).toFixed(2);
+  };
+
+  // Format balance display
+  const formatBalance = (balance) => {
+    if (!balance) return '0.00';
+    return parseFloat(formatEther(balance.value)).toFixed(4);
   };
 
   return {
-    // Wallet connection
+    // Connection state
     address,
     isConnected,
     isConnecting,
     isDisconnected,
     
     // Balances
-    ethBalance: formatEthBalance(),
-    sabiBalance: formatSabiBalance(),
-    userPoints,
+    ethBalance: ethBalance ? formatBalance(ethBalance) : '0.00',
+    sabiBalance: sabiBalance ? formatEther(sabiBalance).slice(0, 8) : '0.00',
     
-    // Login state
+    // User state
     isLoggedIn,
-    setIsLoggedIn,
+    userPoints,
+    userProfile,
+    pointsHistory,
+    stakingInfo,
     
-    // Functions
+    // Actions
+    login,
+    logout,
     buySabiWithPolygon,
     buySabiWithUSDT,
     convertPointsToSabi,
-    stakeSabiCash,
+    stakeTokens,
     claimMiningRewards,
-    claimStakingRewards,
-    loginToSabiRide,
-    fetchUserPoints,
+    refreshUserData,
     
     // Utilities
-    getConvertibleSabi,
+    calculatePointsForDistance,
+    calculateSabiCashForPoints,
     canConvertPoints,
+    getConvertibleSabi,
+    getStakingInfo,
     
     // Constants
-    MINING_PLANS,
     POINT_TO_SABI_RATE,
     MIN_POINT_CONVERSION,
-
+    MINING_PLANS,
+    IS_DEMO_MODE,
   };
 };
