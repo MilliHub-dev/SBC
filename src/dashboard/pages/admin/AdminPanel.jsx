@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useDisclosure } from "@chakra-ui/react"; // 👈 add this
 import {
 	Box,
 	Container,
@@ -9,24 +10,17 @@ import {
 	VStack,
 	HStack,
 	SimpleGrid,
-	Tabs,
 	Badge,
 	Icon,
 	Stat,
-	TabsTrigger,
 	Alert,
 	Input,
 	Textarea,
 	Select,
-	Modal,
-	ModalOverlay,
-	ModalContent,
-	ModalHeader,
-	ModalBody,
-	ModalFooter,
-	ModalCloseButton,
-	useDisclosure,
-} from "@chakra-ui/react";
+	Dialog,       // ⟵ v3 replacement for Modal
+	Portal,       // ⟵ for rendering overlays
+	CloseButton,  // ⟵ for the close icon
+  } from "@chakra-ui/react";
 import {
 	FaUsers,
 	FaListCheck,
@@ -38,7 +32,7 @@ import {
 	FaGift,
 	FaPiggyBank,
 	FaTrash,
-	FaEdit,
+	FaPenToSquare ,
 } from "react-icons/fa6";
 import { useWeb3 } from "../../../hooks/useWeb3";
 import { toaster } from "../../../components/ui/toaster";

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useDisclosure } from "@chakra-ui/react"; // 👈 add this
 import {
 	Box,
 	Button,
@@ -18,6 +19,7 @@ import SimpleHeading from "@/dashboard/components/SimpleHeading/SimpleHeading";
 import TokenWrap from "./TokenWrap";
 import { thirdwebService } from "../../../services/thirdwebService";
 import { useWalletClient } from "wagmi";
+import { ethers } from "ethers";
 
 const BuyTokens = () => {
 	const [paymentMethod, setPaymentMethod] = useState("eth");
@@ -31,7 +33,7 @@ const BuyTokens = () => {
 		isConnected,
 		address,
 		ethBalance,
-		sabiBalance,
+		sbcBalance,
 	} = useWeb3();
 
 	const { data: walletClient } = useWalletClient();
@@ -66,7 +68,7 @@ const BuyTokens = () => {
 		};
 
 		initializeThirdWeb();
-	}, [isConnected, signer, address]);
+	}, [isConnected, walletClient, address]);
 
 	const calculateTokensFromETH = (ethAmount) => {
 		if (!claimConditions) return 0;
@@ -200,14 +202,14 @@ const BuyTokens = () => {
 							<TokenWrap
 								name={"Ethereum"}
 								abv={"ETH"}
-								tokenPrice={claimConditions?.pricePerToken ? `${(1 / parseFloat(claimConditions.pricePerToken)).toFixed(0)} SABI per ETH` : "Loading..."}
+								tokenPrice={claimConditions?.pricePerToken ? `${(1 / parseFloat(claimConditions.pricePerToken)).toFixed(0)} SBC per ETH` : "Loading..."}
 								balance={ethBalance}
 							/>
 							<TokenWrap
 								name={"Sabi Cash"}
-								abv={"SABI"}
-								tokenPrice={claimConditions?.pricePerToken ? `${claimConditions.pricePerToken} ETH per SABI` : "Loading..."}
-								balance={sabiBalance}
+								abv={"SBC"}
+								tokenPrice={claimConditions?.pricePerToken ? `${claimConditions.pricePerToken} ETH per SBC` : "Loading..."}
+								balance={sbcBalance}
 							/>
 						</Box>
 
@@ -272,7 +274,7 @@ const BuyTokens = () => {
 											Amount{" "}
 											{paymentMethod === "eth"
 												? "(ETH)"
-												: "(SABI Tokens)"}
+												: "(SBC Tokens)"}
 										</Field.Label>
 										<Input
 											type="number"
@@ -291,7 +293,7 @@ const BuyTokens = () => {
 										/>
 										{amount && paymentMethod === "eth" && (
 											<Field.HelperText color="gray.400">
-												≈ {calculateTokensFromETH(amount)} SABI tokens
+												≈ {calculateTokensFromETH(amount)} SBC tokens
 											</Field.HelperText>
 										)}
 										{amount && paymentMethod === "tokens" && (

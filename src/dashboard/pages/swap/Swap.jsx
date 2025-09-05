@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
+import { ethers } from "ethers";
+import { usePublicClient } from "wagmi";
+
 import {
 	Box,
-	Heading,
 	Text,
 	Button,
 	Input,
 	VStack,
 	HStack,
 	Card,
-	Avatar,
-	Flex,
 	Container,
 	Spinner,
 } from "@chakra-ui/react";
@@ -23,7 +23,6 @@ import { toaster } from "../../../components/ui/toaster";
 import AlertNotification from "@/dashboard/components/AlertNotification/AlertNotification";
 import SimpleHeading from "@/dashboard/components/SimpleHeading/SimpleHeading";
 import { uniswapService } from "../../../services/uniswapService";
-import { useSigner, useProvider } from "wagmi";
 import { UNISWAP_CONFIG, SABI_CASH_CONTRACT_ADDRESS, USDT_CONTRACT_ADDRESS } from "../../../config/web3Config";
 
 const Swap = () => {
@@ -35,22 +34,36 @@ const Swap = () => {
 	const [quote, setQuote] = useState(null);
 	const [loadingQuote, setLoadingQuote] = useState(false);
 	const [supportedTokens, setSupportedTokens] = useState([]);
+	const [provider, setProvider] = useState(null);
 
 	const { isConnected, address, ethBalance, sabiBalance } = useWeb3();
-	const { data: signer } = useSigner();
-	const provider = useProvider();
+	const publicClient = usePublicClient();
+
+	// Create browser provider when window.ethereum is available
+	useEffect(() => {
+		if (typeof window === "undefined") return;
+		if (window.ethereum) {
+			try {
+				const p = new ethers.BrowserProvider(window.ethereum);
+				setProvider(p);
+			} catch (err) {
+				console.warn("Failed to create ethers BrowserProvider:", err);
+			}
+		}
+	}, []);
 
 	// Initialize Uniswap service
 	useEffect(() => {
 		const initializeUniswap = async () => {
-			if (!provider) return;
+			if (!provider && !publicClient) return;
 
 			try {
-				await uniswapService.initialize(provider);
+				// uniswapService expects a provider/public client — prefer provider when available
+				await uniswapService.initialize(provider || publicClient);
 				const tokens = uniswapService.getSupportedTokens();
 				setSupportedTokens(tokens);
 			} catch (error) {
-				console.error('Error initializing Uniswap:', error);
+				console.error("Error initializing Uniswap:", error);
 				toaster.create({
 					title: "Initialization Error",
 					description: "Failed to initialize swap functionality",
@@ -61,7 +74,7 @@ const Swap = () => {
 		};
 
 		initializeUniswap();
-	}, [provider]);
+	}, [provider, publicClient]);
 
 	// Get quote when amounts change
 	useEffect(() => {
@@ -79,11 +92,11 @@ const Swap = () => {
 
 			setLoadingQuote(true);
 			try {
-				const fromTokenData = supportedTokens.find(t => t.symbol === fromToken);
-				const toTokenData = supportedTokens.find(t => t.symbol === toToken);
+				const fromTokenData = supportedTokens.find((t) => t.symbol === fromToken);
+				const toTokenData = supportedTokens.find((t) => t.symbol === toToken);
 
 				if (!fromTokenData || !toTokenData) {
-					throw new Error('Unsupported token pair');
+					throw new Error("Unsupported token pair");
 				}
 
 				const quoteResult = await uniswapService.getQuote(
@@ -95,7 +108,7 @@ const Swap = () => {
 				setQuote(quoteResult);
 				setToAmount(quoteResult.amountOut);
 			} catch (error) {
-				console.error('Error getting quote:', error);
+				console.error("Error getting quote:", error);
 				setQuote(null);
 				setToAmount("");
 				toaster.create({
@@ -158,6 +171,16 @@ const Swap = () => {
 			return;
 		}
 
+		// Ensure we have a signer (ethers Signer) before executing the swap
+		let signer = null;
+		if (provider) {
+			try {
+				signer = await provider.getSigner();
+			} catch (err) {
+				console.warn("Failed to get signer from provider:", err);
+			}
+		}
+
 		if (!signer) {
 			toaster.create({
 				title: "Signer Not Available",
@@ -170,8 +193,8 @@ const Swap = () => {
 
 		setIsSwapping(true);
 		try {
-			const fromTokenData = supportedTokens.find(t => t.symbol === fromToken);
-			const toTokenData = supportedTokens.find(t => t.symbol === toToken);
+			const fromTokenData = supportedTokens.find((t) => t.symbol === fromToken);
+			const toTokenData = supportedTokens.find((t) => t.symbol === toToken);
 
 			const result = await uniswapService.executeSwap(
 				fromTokenData.address,
@@ -188,15 +211,14 @@ const Swap = () => {
 				duration: 5000,
 			});
 
-			// Reset form
 			setFromAmount("");
 			setToAmount("");
 			setQuote(null);
 		} catch (error) {
-			console.error('Swap error:', error);
+			console.error("Swap error:", error);
 			toaster.create({
 				title: "Swap Failed",
-				description: error.message,
+				description: error.message || "Swap failed",
 				type: "error",
 				duration: 5000,
 			});
@@ -207,24 +229,24 @@ const Swap = () => {
 
 	const getTokenBalance = (tokenSymbol) => {
 		switch (tokenSymbol) {
-			case 'WETH':
+			case "WETH":
 				return ethBalance;
-			case 'SABI':
+			case "SABI":
 				return sabiBalance;
-			case 'USDT':
-				return '0.00'; // You might want to fetch this from a contract
+			case "USDT":
+				return "0.00"; // placeholder; can be fetched via publicClient
 			default:
-				return '0.00';
+				return "0.00";
 		}
 	};
 
 	const getTokenIcon = (tokenSymbol) => {
 		const iconMap = {
-			'WETH': '🔷',
-			'SABI': '💰',
-			'USDT': '💵',
+			WETH: "🔷",
+			SABI: "💰",
+			USDT: "💵",
 		};
-		return iconMap[tokenSymbol] || '🪙';
+		return iconMap[tokenSymbol] || "🪙";
 	};
 
 	return (
@@ -357,11 +379,11 @@ const Swap = () => {
 															value={toToken}
 															onChange={(e) => setToToken(e.target.value)}
 															style={{
-																background: "transparent",
-																border: "none",
-																color: "white",
-																fontSize: "18px",
-																fontWeight: "bold",
+															background: "transparent",
+															border: "none",
+															color: "white",
+															fontSize: "18px",
+															fontWeight: "bold",
 															}}
 														>
 															{supportedTokens.map((token) => (
@@ -380,16 +402,16 @@ const Swap = () => {
 													</VStack>
 													<Box textAlign="right">
 														{loadingQuote ? (
-															<Spinner size="sm" />
-														) : (
-															<Text
-																fontSize="xl"
-																fontWeight="bold"
-																color="white"
-															>
-																{toAmount || "0.0"}
-															</Text>
-														)}
+														<Spinner size="sm" />
+													) : (
+														<Text
+															fontSize="xl"
+															fontWeight="bold"
+															color="white"
+														>
+															{toAmount || "0.0"}
+														</Text>
+													)}
 													</Box>
 												</HStack>
 											</Card.Body>
@@ -443,11 +465,7 @@ const Swap = () => {
 										isLoading={isSwapping}
 										loadingText="Swapping..."
 										isDisabled={
-											!isConnected ||
-											!fromAmount ||
-											!toAmount ||
-											loadingQuote ||
-											!quote
+											!isConnected || !fromAmount || !toAmount || loadingQuote || !quote
 										}
 										_hover={{ bg: "#0077B6" }}
 									>
@@ -456,34 +474,34 @@ const Swap = () => {
 									</Button>
 								</VStack>
 							</Card.Body>
-						</Card.Root>
+							</Card.Root>
 
-						{/* Information Card */}
-						<Card.Root bg="blue.900" borderColor="blue.700">
-							<Card.Body>
-								<VStack gap={3} align="start">
-									<Text fontWeight="bold" color="blue.200">
-										Swap Information:
-									</Text>
-									<Text fontSize="sm" color="blue.300">
-										• Swaps are powered by Uniswap V3
-									</Text>
-									<Text fontSize="sm" color="blue.300">
-										• Prices are updated in real-time
-									</Text>
-									<Text fontSize="sm" color="blue.300">
-										• 0.5% slippage tolerance applied automatically
-									</Text>
-									<Text fontSize="sm" color="blue.300">
-										• Make sure you have enough ETH for gas fees
-									</Text>
-								</VStack>
-							</Card.Body>
-						</Card.Root>
-					</>
-				)}
-			</VStack>
-		</Container>
+							{/* Information Card */}
+							<Card.Root bg="blue.900" borderColor="blue.700">
+								<Card.Body>
+									<VStack gap={3} align="start">
+										<Text fontWeight="bold" color="blue.200">
+											Swap Information:
+										</Text>
+										<Text fontSize="sm" color="blue.300">
+											• Swaps are powered by Uniswap V3
+										</Text>
+										<Text fontSize="sm" color="blue.300">
+											• Prices are updated in real-time
+										</Text>
+										<Text fontSize="sm" color="blue.300">
+											• 0.5% slippage tolerance applied automatically
+										</Text>
+										<Text fontSize="sm" color="blue.300">
+											• Make sure you have enough ETH for gas fees
+										</Text>
+									</VStack>
+								</Card.Body>
+								</Card.Root>
+						</>
+					)}
+				</VStack>
+			</Container>
 	);
 };
 

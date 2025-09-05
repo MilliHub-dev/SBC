@@ -35,17 +35,17 @@ export const config = getDefaultConfig({
 
 // ThirdWeb Configuration
 export const THIRDWEB_CONFIG = {
-  CLIENT_ID: process.env.VITE_THIRDWEB_CLIENT_ID || 'your-thirdweb-client-id',
-  SECRET_KEY: process.env.VITE_THIRDWEB_SECRET_KEY || 'your-thirdweb-secret-key',
+  CLIENT_ID: import.meta.env.VITE_THIRDWEB_CLIENT_ID || 'your-thirdweb-client-id',
+  SECRET_KEY: import.meta.env.VITE_THIRDWEB_SECRET_KEY || 'your-thirdweb-secret-key',
   CHAIN_ID: 1442, // Polygon zkEVM Testnet
   NETWORK: 'polygon-zkevm-testnet',
 };
 
 // ThirdWeb Token Drop Contract Address (Production)
-export const THIRDWEB_TOKEN_DROP_ADDRESS = process.env.VITE_THIRDWEB_TOKEN_DROP_ADDRESS || '0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983';
+export const THIRDWEB_TOKEN_DROP_ADDRESS = import.meta.env.VITE_THIRDWEB_TOKEN_DROP_ADDRESS || '0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983';
 
 // Sabi Cash Token Contract Address (ThirdWeb deployed)
-export const SABI_CASH_CONTRACT_ADDRESS = process.env.VITE_SABI_CASH_CONTRACT_ADDRESS || '0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983';
+export const SABI_CASH_CONTRACT_ADDRESS = import.meta.env.VITE_SABI_CASH_CONTRACT_ADDRESS || '0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983';
 
 // Contract ABI for Sabi Cash Token (ThirdWeb Standard + Custom)
 export const SABI_CASH_ABI = [
@@ -88,7 +88,7 @@ export const SABI_CASH_ABI = [
 ];
 
 // USDT Contract Address on Polygon zkEVM Testnet
-export const USDT_CONTRACT_ADDRESS = process.env.VITE_USDT_CONTRACT_ADDRESS || '0xA8CE8aee21bC2A48a5EF670afCc9274C7bbbC035';
+export const USDT_CONTRACT_ADDRESS = import.meta.env.VITE_USDT_CONTRACT_ADDRESS || '0xA8CE8aee21bC2A48a5EF670afCc9274C7bbbC035';
 
 // Uniswap Configuration
 export const UNISWAP_CONFIG = {
@@ -101,7 +101,7 @@ export const UNISWAP_CONFIG = {
 
 // Sabi Ride API Configuration (Production)
 export const SABI_RIDE_API_CONFIG = {
-  BASE_URL: process.env.VITE_SABI_RIDE_API_URL || 'https://tmp.sabirideweb.com.ng/api/v1',
+  BASE_URL: import.meta.env.VITE_API_BASE_URL  || 'https://tmp.sabirideweb.com.ng/api/v1',
   ENDPOINTS: {
     LOGIN: '/auth/login',
     DRIVER_PROFILE: '/users/me/sabi-rider',
@@ -154,5 +154,5 @@ export const POINT_TO_SABI_RATE = 0.5; // 1 point = 0.5 Sabi Cash
 export const MIN_POINT_CONVERSION = 500; // Minimum 500 points to convert
 
 // Production Environment Check
-export const IS_PRODUCTION = process.env.NODE_ENV === 'production';
-export const IS_DEMO_MODE = process.env.VITE_DEMO_MODE === 'true' || false;
+export const IS_PRODUCTION = import.meta.env.NODE_ENV === 'production';
+export const IS_DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true' || false;
