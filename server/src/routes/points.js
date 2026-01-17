@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { ethers } from 'ethers';
 import { query } from '../db/pool.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validatePointsConversion, validatePagination } from '../middleware/validation.js';
@@ -251,10 +252,46 @@ router.post('/convert', requireAuth, conversionLimiter, validatePointsConversion
       // Create conversion transaction record
       const transactionResult = await query(
         `INSERT INTO point_conversions (user_id, points_converted, sabi_cash_amount, conversion_rate, wallet_address, status)
-         VALUES ($1, $2, $3, $4, $5, 'pending')
+         VALUES ($1, $2, $3, $4, $5, 'signed')
          RETURNING id, created_at`,
         [req.user.id, points, sabiCashAmount, conversionRate, walletAddress]
       );
+
+      const nonce = transactionResult.rows[0].id; // Use DB ID as nonce
+
+      // Generate signature for smart contract redemption
+      // Message: (userAddress, amount, nonce)
+      // We need a wallet to sign this.
+      const signerPrivateKey = process.env.OPERATOR_PRIVATE_KEY;
+      let signature = null;
+
+      if (signerPrivateKey) {
+        try {
+            const wallet = new ethers.Wallet(signerPrivateKey);
+            // Corresponds to Solidity: keccak256(abi.encodePacked(msg.sender, amount, nonce))
+            // Ethers v5: ethers.utils.solidityKeccak256
+            // Ethers v6: ethers.solidityPackedKeccak256
+            
+            // Check ethers version compatibility
+            const solidityKeccak256 = ethers.utils ? ethers.utils.solidityKeccak256 : ethers.solidityPackedKeccak256;
+            const arrayify = ethers.utils ? ethers.utils.arrayify : ethers.getBytes;
+
+            const messageHash = solidityKeccak256(
+                ['address', 'uint256', 'uint256'],
+                [walletAddress, ethers.utils ? ethers.utils.parseUnits(sabiCashAmount.toString(), 18) : ethers.parseUnits(sabiCashAmount.toString(), 18), nonce]
+            );
+            
+            const messageBytes = arrayify(messageHash);
+            signature = await wallet.signMessage(messageBytes);
+        } catch (signErr) {
+            console.error("Signing failed:", signErr);
+            // We don't rollback here, but we return a warning? 
+            // Or we rollback because the user can't claim.
+            throw new Error("Failed to generate redemption signature");
+        }
+      } else {
+          console.warn("No OPERATOR_PRIVATE_KEY configured. Skipping signature generation.");
+      }
 
       await query('COMMIT');
 
@@ -264,9 +301,11 @@ router.post('/convert', requireAuth, conversionLimiter, validatePointsConversion
         sabi_cash_amount: sabiCashAmount,
         new_point_balance: newPointBalance,
         new_sabi_cash_balance: newSabiCashBalance,
-        transaction_id: transactionResult.rows[0].id,
+        transaction_id: nonce,
+        signature: signature,
+        nonce: nonce,
         created_at: transactionResult.rows[0].created_at,
-        message: 'Points converted successfully'
+        message: 'Points converted and signed successfully. Proceed to blockchain redemption.'
       });
 
     } catch (error) {

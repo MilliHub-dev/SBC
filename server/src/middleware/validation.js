@@ -87,7 +87,7 @@ export const validatePagination = [
 
 // Admin validation
 export const validateAdminReward = [
-  body('userId').isUUID().withMessage('Valid user ID required'),
+  param('userId').isUUID().withMessage('Valid user ID required'),
   body('amount').isFloat({ min: 0.01 }).withMessage('Amount must be positive'),
   body('type').isIn(['points', 'sabi_cash']).withMessage('Type must be points or sabi_cash'),
   body('reason').isLength({ min: 5 }).withMessage('Reason must be at least 5 characters'),

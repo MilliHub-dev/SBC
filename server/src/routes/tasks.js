@@ -16,11 +16,11 @@ router.get('/', optionalAuth, generalLimiter, validatePagination, async (req, re
     const activeOnly = req.query.active_only !== 'false';
 
     let whereClause = activeOnly ? 'WHERE t.is_active = TRUE' : '';
-    let params = [];
+    const filterParams = [];
 
     if (category) {
-      whereClause += (whereClause ? ' AND' : 'WHERE') + ' t.category = $' + (params.length + 1);
-      params.push(category);
+      whereClause += (whereClause ? ' AND' : 'WHERE') + ' t.category = $' + (filterParams.length + 1);
+      filterParams.push(category);
     }
 
     // Get user completion status if authenticated
@@ -28,30 +28,31 @@ router.get('/', optionalAuth, generalLimiter, validatePagination, async (req, re
     let userCompletionSelect = ', FALSE as user_completed';
     
     if (req.user) {
-      userCompletionJoin = `LEFT JOIN task_completions tc ON t.id = tc.task_id AND tc.user_id = $${params.length + 1}`;
+      userCompletionJoin = `LEFT JOIN task_completions tc ON t.id = tc.task_id AND tc.user_id = $${filterParams.length + 1}`;
       userCompletionSelect = ', CASE WHEN tc.id IS NOT NULL THEN TRUE ELSE FALSE END as user_completed';
-      params.push(req.user.id);
     }
 
+    const listParams = req.user ? [...filterParams, req.user.id] : [...filterParams];
+
     const result = await query(
-      `SELECT t.id, t.slug, t.title, t.description, t.task_type as "taskType", 
+      `SELECT t.id, t.title, t.description, t.task_type as "taskType", 
               t.category, t.reward_points as "rewardPoints", t.reward_sabi_cash as "rewardSabiCash", 
               t.max_completions as "maxCompletions", t.completion_count as "completionCount", 
               t.verification_method as "verificationMethod", t.external_url as "externalUrl", 
-              t.is_active as "isActive", t.created_at as "createdAt", t.expires_at as "expiresAt"
+              t.is_active as "isActive", t.task_data as "taskData", t.created_at as "createdAt"
               ${userCompletionSelect}
        FROM tasks t
        ${userCompletionJoin}
        ${whereClause}
        ORDER BY t.created_at DESC
-       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-      [...params, limit, offset]
+       LIMIT $${listParams.length + 1} OFFSET $${listParams.length + 2}`,
+      [...listParams, limit, offset]
     );
 
     // Get total count
     const countResult = await query(
       `SELECT COUNT(*) as total FROM tasks t ${whereClause}`,
-      params.slice(req.user ? 0 : -1) // Remove user ID from count params
+      filterParams
     );
 
     res.json({ 
@@ -59,32 +60,95 @@ router.get('/', optionalAuth, generalLimiter, validatePagination, async (req, re
       count: parseInt(countResult.rows[0].total),
       results: result.rows 
     });
+
+
   } catch (err) {
-    console.error('Task list error:', err);
-    res.status(500).json({ success: false, error: 'TASK_LIST_FAILED', message: 'Failed to fetch tasks' });
+    console.error('Task list error details:', err.message, err.stack);
+    console.error('Task list query params:', req.query);
+    console.error('Task list user:', req.user);
+    res.status(500).json({ success: false, error: 'TASK_LIST_FAILED', message: 'Failed to fetch tasks: ' + err.message });
+  }
+});
+
+// Update task (admin)
+router.put('/:taskId', requireAdmin, adminLimiter, validateUUIDParam('taskId'), async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const { title, description, taskType, category, rewardPoints, rewardSabiCash, maxCompletions, verificationMethod, externalUrl, isActive, taskData } = req.body;
+
+    const result = await query(
+      `UPDATE tasks
+       SET title = COALESCE($1, title),
+           description = COALESCE($2, description),
+           task_type = COALESCE($3, task_type),
+           category = COALESCE($4, category),
+           reward_points = COALESCE($5, reward_points),
+           reward_sabi_cash = COALESCE($6, reward_sabi_cash),
+           max_completions = COALESCE($7, max_completions),
+           verification_method = COALESCE($8, verification_method),
+           external_url = COALESCE($9, external_url),
+           is_active = COALESCE($10, is_active),
+           task_data = COALESCE($11, task_data),
+           updated_at = NOW()
+       WHERE id = $12
+       RETURNING *`,
+      [title, description, taskType, category, rewardPoints, rewardSabiCash, maxCompletions, verificationMethod, externalUrl, isActive, taskData, taskId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'TASK_NOT_FOUND', message: 'Task not found' });
+    }
+
+    res.json({ success: true, task: result.rows[0] });
+  } catch (err) {
+    console.error('Task update error:', err);
+    res.status(500).json({ success: false, error: 'TASK_UPDATE_FAILED', message: 'Failed to update task' });
+  }
+});
+
+// Delete task (admin)
+router.delete('/:taskId', requireAdmin, adminLimiter, validateUUIDParam('taskId'), async (req, res) => {
+  try {
+    const { taskId } = req.params;
+
+    // Check if task has completions
+    const completions = await query('SELECT count(*) FROM task_completions WHERE task_id = $1', [taskId]);
+    if (parseInt(completions.rows[0].count) > 0) {
+        // Soft delete if it has completions
+        const result = await query(
+            'UPDATE tasks SET is_active = FALSE WHERE id = $1 RETURNING id',
+            [taskId]
+        );
+         if (result.rowCount === 0) {
+            return res.status(404).json({ success: false, error: 'TASK_NOT_FOUND', message: 'Task not found' });
+         }
+         return res.json({ success: true, message: 'Task soft deleted due to existing completions' });
+    }
+
+    // Hard delete if no completions
+    const result = await query('DELETE FROM tasks WHERE id = $1 RETURNING id', [taskId]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, error: 'TASK_NOT_FOUND', message: 'Task not found' });
+    }
+
+    res.json({ success: true, message: 'Task deleted successfully' });
+  } catch (err) {
+    console.error('Task deletion error:', err);
+    res.status(500).json({ success: false, error: 'TASK_DELETE_FAILED', message: 'Failed to delete task' });
   }
 });
 
 // Create task (admin)
 router.post('/', requireAdmin, adminLimiter, validateTaskCreation, async (req, res) => {
   try {
-    const { slug, title, description, taskType, category, rewardPoints, rewardSabiCash, maxCompletions, verificationMethod, externalUrl, isActive, taskData, expiresAt } = req.body;
+    const { title, description, taskType, category, rewardPoints, rewardSabiCash, maxCompletions, verificationMethod, externalUrl, isActive, taskData, expiresAt } = req.body;
     
-    // Check if slug already exists
-    const existingTask = await query('SELECT id FROM tasks WHERE slug = $1', [slug]);
-    if (existingTask.rowCount > 0) {
-      return res.status(409).json({
-        success: false,
-        error: 'TASK_EXISTS',
-        message: 'Task with this slug already exists'
-      });
-    }
-
     const result = await query(
-      `INSERT INTO tasks (slug, title, description, task_type, category, reward_points, reward_sabi_cash, max_completions, verification_method, external_url, is_active, task_data, expires_at, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-       RETURNING id, slug, title, description, task_type as "taskType", category, reward_points as "rewardPoints", reward_sabi_cash as "rewardSabiCash", max_completions as "maxCompletions", verification_method as "verificationMethod", external_url as "externalUrl", is_active as "isActive", created_at as "createdAt", expires_at as "expiresAt"`,
-      [slug, title, description || null, taskType, category || null, rewardPoints || 0, rewardSabiCash || 0, maxCompletions || null, verificationMethod || 'manual', externalUrl || null, isActive ?? true, taskData || null, expiresAt || null, req.user.id]
+      `INSERT INTO tasks (title, description, task_type, category, reward_points, reward_sabi_cash, max_completions, verification_method, external_url, is_active, task_data, expires_at, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+       RETURNING id, title, description, task_type as "taskType", category, reward_points as "rewardPoints", reward_sabi_cash as "rewardSabiCash", max_completions as "maxCompletions", verification_method as "verificationMethod", external_url as "externalUrl", is_active as "isActive", created_at as "createdAt", expires_at as "expiresAt"`,
+      [title, description || null, taskType, category || null, rewardPoints || 0, rewardSabiCash || 0, maxCompletions || null, verificationMethod || 'manual', externalUrl || null, isActive ?? true, taskData || null, expiresAt || null, req.user.id]
     );
     
     res.status(201).json({ success: true, task: result.rows[0] });
@@ -120,11 +184,6 @@ router.post('/:taskId/complete', requireAuth, taskLimiter, validateUUIDParam('ta
       if (!task.is_active) {
         await query('ROLLBACK');
         return res.status(400).json({ success: false, error: 'TASK_INACTIVE', message: 'Task is not active' });
-      }
-
-      if (task.expires_at && new Date(task.expires_at) < new Date()) {
-        await query('ROLLBACK');
-        return res.status(400).json({ success: false, error: 'TASK_EXPIRED', message: 'Task has expired' });
       }
 
       if (task.max_completions && task.completion_count >= task.max_completions) {

@@ -16,7 +16,7 @@ export const generalLimiter = rateLimit({
 // Authentication rate limiting
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 login requests per windowMs
+  max: 50, // limit each IP to 50 login requests per windowMs
   message: {
     success: false,
     error: 'AUTH_RATE_LIMITED',

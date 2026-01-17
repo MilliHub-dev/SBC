@@ -1,12 +1,56 @@
 import { Router } from 'express';
+import axios from 'axios';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { query } from '../db/pool.js';
 import { generateTokens, verifyToken, requireAuth } from '../middleware/auth.js';
-import { validateLogin, validateRegister, validateWalletUpdate } from '../middleware/validation.js';
+import { validateLogin, validateWalletUpdate } from '../middleware/validation.js';
 import { authLimiter } from '../middleware/rateLimit.js';
 
 export const router = Router();
+
+// Proxy Login to Sabi Ride (Bypasses Frontend CORS/Proxy issues)
+router.post('/proxy-login', authLimiter, async (req, res) => {
+  try {
+    const { email, password, userType } = req.body;
+    
+    console.log(`Proxy login attempt for: ${email} (${userType})`);
+    
+    const apiUrl = process.env.SABI_RIDE_API_URL || 'https://tmp.sabirideweb.com.ng/api/v1';
+    let loginUrl;
+    
+    if (userType === 'driver' || userType === 'sabi-rider') {
+      loginUrl = `${apiUrl}/users/login/sabi-rider`;
+    } else {
+      loginUrl = `${apiUrl}/users/login/sabi-passenger`;
+    }
+
+    console.log(`Forwarding login to: ${loginUrl}`);
+
+    try {
+      const response = await axios.post(loginUrl, { email, password }, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      console.log('External API response status:', response.status);
+      return res.json(response.data);
+    } catch (apiError) {
+      console.error('External API Error:', apiError.message);
+      if (apiError.response) {
+        console.error('External API Response Data:', apiError.response.data);
+        return res.status(apiError.response.status).json(apiError.response.data);
+      }
+      throw apiError;
+    }
+  } catch (error) {
+    console.error('Proxy Login Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal Proxy Error',
+      error: error.message
+    });
+  }
+});
 
 // Registration disabled - users must exist in Sabi Ride system
 router.post('/register', (req, res) => {
@@ -20,7 +64,7 @@ router.post('/register', (req, res) => {
 // Login with Sabi Ride token (primary method)
 router.post('/login', authLimiter, async (req, res) => {
   try {
-    const { sabiRideToken, walletAddress } = req.body;
+    const { sabiRideToken, walletAddress, userType } = req.body;
 
     if (!sabiRideToken) {
       return res.status(400).json({
@@ -30,32 +74,73 @@ router.post('/login', authLimiter, async (req, res) => {
       });
     }
 
-    // Here you would verify the Sabi Ride token with their API
-    // For now, we'll simulate this - replace with actual Sabi Ride API call
+    // Verify with Sabi Ride API
     let sabiRideUserData;
     try {
-      // TODO: Replace with actual Sabi Ride API call
-      // const response = await fetch(`${process.env.SABI_RIDE_API_URL}/auth/verify`, {
-      //   headers: { Authorization: `Bearer ${sabiRideToken}` }
-      // });
-      // sabiRideUserData = await response.json();
+      const apiUrl = process.env.SABI_RIDE_API_URL || 'https://tmp.sabirideweb.com.ng/api/v1';
       
-      // Simulated response for development
-      sabiRideUserData = {
-        id: 'sabi_user_123',
-        email: 'user@sabiride.com',
-        username: 'sabiuser',
-        first_name: 'John',
-        last_name: 'Doe',
-        user_type: 'passenger', // or 'driver'
-        total_points: 1500,
-        is_verified: true
+      // Determine verification endpoint based on user type
+      // Default to passenger if not specified, but try to handle both if needed
+      let verifyUrl;
+      if (userType === 'driver' || userType === 'sabi-rider') {
+        verifyUrl = `${apiUrl}/users/me/sabi-rider`;
+      } else {
+        verifyUrl = `${apiUrl}/users/me/sabi-passenger`;
+      }
+
+      const response = await axios.get(verifyUrl, {
+        headers: { 
+          Authorization: `Bearer ${sabiRideToken}`,
+          'Accept': 'application/json'
+        }
+      });
+      
+      // Assume API returns { success: true, data: { ...user } } or just the user object
+      // Adjusting to handle likely response structures
+      const apiResponse = response.data;
+      
+      // Handle nested user object structure
+      // Support: { data: { user: { ... } } }, { data: { ... } }, { user: { ... } }
+      let remoteUser = apiResponse;
+      if (remoteUser.data) remoteUser = remoteUser.data;
+      if (remoteUser.user) remoteUser = remoteUser.user;
+
+      // Helper to map user type
+      const mapUserType = (type, fallback) => {
+        if (!type && fallback) return fallback;
+        if (!type) return 'passenger';
+        const t = String(type).toLowerCase();
+        if (t.includes('driver') || t.includes('rider')) return 'driver';
+        if (t.includes('admin')) return 'admin';
+        return 'passenger';
       };
+
+      // Helper to generate unique username
+      const generateUsername = (username, email) => {
+        if (username) return username;
+        const prefix = email.split('@')[0];
+        // Append 4 random chars to ensure uniqueness if falling back to email
+        const suffix = Math.random().toString(36).substring(2, 6);
+        return `${prefix}_${suffix}`;
+      };
+
+      sabiRideUserData = {
+        id: remoteUser.id || remoteUser._id,
+        email: remoteUser.email,
+        username: generateUsername(remoteUser.username, remoteUser.email),
+        first_name: remoteUser.first_name || remoteUser.firstName || 'Sabi',
+        last_name: remoteUser.last_name || remoteUser.lastName || 'User',
+        user_type: mapUserType(remoteUser.user_type || remoteUser.role, userType),
+        total_points: remoteUser.total_points || remoteUser.points || 0,
+        is_verified: remoteUser.is_verified || remoteUser.isVerified || false
+      };
+
     } catch (error) {
+      console.error('Sabi Ride API verification failed:', error.message);
       return res.status(401).json({
         success: false,
         error: 'INVALID_SABI_RIDE_TOKEN',
-        message: 'Invalid Sabi Ride token'
+        message: 'Invalid Sabi Ride token or API error'
       });
     }
 
@@ -67,6 +152,7 @@ router.post('/login', authLimiter, async (req, res) => {
 
     let user;
     if (userResult.rowCount === 0) {
+      console.log(`Creating new user for email: ${sabiRideUserData.email}`);
       // Create new user from Sabi Ride data
       const userId = uuidv4();
       const insertResult = await query(
@@ -88,6 +174,7 @@ router.post('/login', authLimiter, async (req, res) => {
       );
       user = insertResult.rows[0];
     } else {
+      console.log(`Updating existing user: ${sabiRideUserData.email}`);
       user = userResult.rows[0];
       
       // Update user data from Sabi Ride (sync points, verification status, etc.)
@@ -110,6 +197,7 @@ router.post('/login', authLimiter, async (req, res) => {
 
     // Check if user is active
     if (!user.is_active) {
+      console.warn(`Login blocked: Account disabled for ${user.email}`);
       return res.status(401).json({
         success: false,
         error: 'ACCOUNT_DISABLED',
@@ -123,6 +211,8 @@ router.post('/login', authLimiter, async (req, res) => {
       email: user.email,
       userType: user.user_type
     });
+
+    console.log(`Login successful for user: ${user.email} (${user.id})`);
 
     res.json({
       success: true,
@@ -277,7 +367,7 @@ router.post('/refresh', async (req, res) => {
       token: accessToken,
       refresh_token: newRefreshToken
     });
-  } catch (error) {
+  } catch {
     res.status(401).json({
       success: false,
       error: 'INVALID_REFRESH_TOKEN',
@@ -295,7 +385,7 @@ router.post('/logout', requireAuth, async (req, res) => {
       success: true,
       message: 'Logged out successfully'
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({
       success: false,
       error: 'LOGOUT_FAILED',

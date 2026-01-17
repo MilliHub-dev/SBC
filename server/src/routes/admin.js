@@ -10,6 +10,7 @@ export const router = Router();
 router.get('/analytics', requireAdmin, generalLimiter, async (req, res) => {
   try {
     // Get user statistics
+    console.log('Fetching user stats...');
     const userStats = await query(`
       SELECT 
         COUNT(*) as total_users,
@@ -41,13 +42,18 @@ router.get('/analytics', requireAdmin, generalLimiter, async (req, res) => {
     `);
 
     // Get task statistics
+    console.log('Fetching task stats...');
     const taskStats = await query(`
       SELECT 
         COUNT(*) as total_tasks,
         COUNT(*) FILTER (WHERE is_active = true) as active_tasks,
         (SELECT COUNT(*) FROM task_completions) as total_completions,
         (SELECT COUNT(*) FROM task_completions WHERE status = 'verified') as verified_completions,
-        (SELECT COUNT(*) FROM task_completions WHERE status = 'pending') as pending_completions
+        (SELECT COUNT(*) FROM task_completions WHERE status = 'pending') as pending_completions,
+        (SELECT COUNT(*) FROM task_completions WHERE completed_at >= CURRENT_DATE) as completed_today,
+        (SELECT COALESCE(SUM(points_awarded), 0) FROM task_completions WHERE status = 'verified') as total_points_distributed,
+        (SELECT COALESCE(SUM(sabi_cash_awarded), 0) FROM task_completions WHERE status = 'verified') as total_cash_distributed,
+        (SELECT COALESCE(SUM(t.reward_points), 0) FROM task_completions tc JOIN tasks t ON tc.task_id = t.id WHERE tc.status = 'pending') as pending_points
       FROM tasks
     `);
 
@@ -56,11 +62,11 @@ router.get('/analytics', requireAdmin, generalLimiter, async (req, res) => {
       SELECT 
         COUNT(*) as total_stakes,
         COUNT(*) FILTER (WHERE is_active = true) as active_stakes,
-        COALESCE(SUM(amount_staked) FILTER (WHERE is_active = true), 0) as total_staked_amount,
+        COALESCE(SUM(staked_amount) FILTER (WHERE is_active = true), 0) as total_staked_amount,
         COALESCE(SUM(total_claimed), 0) as total_rewards_claimed,
         COUNT(*) FILTER (WHERE plan_type = 'basic') as basic_stakes,
         COUNT(*) FILTER (WHERE plan_type = 'premium') as premium_stakes
-      FROM mining_stakes
+      FROM staking_records
     `);
 
     // Get transaction statistics
@@ -82,16 +88,45 @@ router.get('/analytics', requireAdmin, generalLimiter, async (req, res) => {
        FROM users WHERE created_at > NOW() - INTERVAL '7 days'
        ORDER BY created_at DESC LIMIT 5)
       UNION ALL
-      (SELECT 'task_completion' as type, completed_at as created_at,
-              json_build_object('task_id', task_id, 'status', status) as data
-       FROM task_completions WHERE completed_at > NOW() - INTERVAL '7 days'
-       ORDER BY completed_at DESC LIMIT 5)
+      (SELECT 'task_completion' as type, tc.completed_at as created_at,
+              json_build_object('task_id', tc.task_id, 'status', tc.status, 'email', u.email, 'title', t.title) as data
+       FROM task_completions tc
+       JOIN users u ON tc.user_id = u.id
+       LEFT JOIN tasks t ON tc.task_id = t.id
+       WHERE tc.completed_at > NOW() - INTERVAL '7 days'
+       ORDER BY tc.completed_at DESC LIMIT 5)
       UNION ALL
-      (SELECT 'mining_stake' as type, created_at,
-              json_build_object('plan_type', plan_type, 'amount', amount_staked) as data
-       FROM mining_stakes WHERE created_at > NOW() - INTERVAL '7 days'
-       ORDER BY created_at DESC LIMIT 5)
+      (SELECT 'mining_stake' as type, ms.start_time as created_at,
+              json_build_object('plan_type', ms.plan_type, 'amount', ms.staked_amount, 'email', u.email) as data
+       FROM staking_records ms
+       JOIN users u ON ms.user_id = u.id
+       WHERE ms.start_time > NOW() - INTERVAL '7 days'
+       ORDER BY ms.start_time DESC LIMIT 5)
       ORDER BY created_at DESC LIMIT 10
+    `);
+
+    // Get top users
+    const topUsers = await query(`
+      SELECT 
+        id, username, email, total_points as "totalEarned", 
+        (SELECT COUNT(*) FROM task_completions WHERE user_id = users.id) as "tasksCompleted"
+      FROM users
+      ORDER BY total_points DESC
+      LIMIT 5
+    `);
+
+    // Get task performance
+    const taskPerformance = await query(`
+      SELECT 
+        t.title as "taskName",
+        COUNT(tc.id) as completions,
+        COALESCE((COUNT(CASE WHEN tc.status = 'verified' THEN 1 END)::float / NULLIF(COUNT(tc.id), 0) * 100), 0) as "successRate",
+        COALESCE(SUM(tc.points_awarded), 0) as "totalRewards"
+      FROM tasks t
+      LEFT JOIN task_completions tc ON t.id = tc.task_id
+      GROUP BY t.id, t.title
+      ORDER BY completions DESC
+      LIMIT 5
     `);
 
     res.json({
@@ -103,7 +138,9 @@ router.get('/analytics', requireAdmin, generalLimiter, async (req, res) => {
         tasks: taskStats.rows[0],
         mining: miningStats.rows[0],
         transactions: transactionStats.rows[0],
-        recent_activity: recentActivity.rows
+        recent_activity: recentActivity.rows,
+        top_users: topUsers.rows,
+        task_performance: taskPerformance.rows
       }
     });
   } catch (error) {
@@ -119,6 +156,7 @@ router.get('/analytics', requireAdmin, generalLimiter, async (req, res) => {
 // Get all users (admin)
 router.get('/users', requireAdmin, generalLimiter, validatePagination, async (req, res) => {
   try {
+
     const limit = parseInt(req.query.limit) || 50;
     const offset = parseInt(req.query.offset) || 0;
     const userType = req.query.user_type;
@@ -285,7 +323,7 @@ router.get('/users/:userId', requireAdmin, generalLimiter, async (req, res) => {
 router.put('/users/:userId/status', requireAdmin, adminLimiter, async (req, res) => {
   try {
     const { userId } = req.params;
-    const { isActive, isVerified } = req.body;
+    const { isActive, isVerified, userType } = req.body;
 
     const updates = [];
     const params = [];
@@ -303,6 +341,12 @@ router.put('/users/:userId/status', requireAdmin, adminLimiter, async (req, res)
       paramIndex++;
     }
 
+    if (userType !== undefined) {
+      updates.push(`user_type = $${paramIndex}`);
+      params.push(userType);
+      paramIndex++;
+    }
+
     if (updates.length === 0) {
       return res.status(400).json({
         success: false,
@@ -315,7 +359,7 @@ router.put('/users/:userId/status', requireAdmin, adminLimiter, async (req, res)
     params.push(userId);
 
     const result = await query(
-      `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, is_active, is_verified`,
+      `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, is_active, is_verified, user_type`,
       params
     );
 
@@ -367,7 +411,6 @@ router.post('/users/:userId/reward', requireAdmin, adminLimiter, validateAdminRe
         });
       }
 
-      const user = userResult.rows[0];
       let newBalance;
 
       if (type === 'points') {

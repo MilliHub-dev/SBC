@@ -97,6 +97,20 @@ if (isProduction) {
   }));
 } else {
   app.use(morgan('dev'));
+  
+  // Log request body in development for debugging
+  app.use((req, res, next) => {
+    if (req.method !== 'GET') {
+      const sanitizedBody = { ...req.body };
+      // Mask sensitive fields
+      if (sanitizedBody.password) sanitizedBody.password = '***';
+      if (sanitizedBody.sabiRideToken) sanitizedBody.sabiRideToken = '***';
+      if (sanitizedBody.token) sanitizedBody.token = '***';
+      
+      console.log('Request Body:', JSON.stringify(sanitizedBody, null, 2));
+    }
+    next();
+  });
 }
 
 // Apply rate limiting to all routes
@@ -134,7 +148,7 @@ app.use('/api/*', (req, res) => {
 });
 
 // Global error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   logger.error('Unhandled error:', {
     error: err.message,
     stack: err.stack,

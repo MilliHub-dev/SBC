@@ -16,7 +16,7 @@ export function generateTokens(payload) {
 export function verifyToken(token) {
   try {
     return jwt.verify(token, process.env.JWT_SECRET);
-  } catch (error) {
+  } catch {
     throw new Error('Invalid token');
   }
 }
@@ -30,6 +30,7 @@ export async function requireAuth(req, res, next) {
 
     const token = authHeader.substring(7);
     const decoded = verifyToken(token);
+    // console.log('Auth Debug:', { token_payload: decoded });
     
     // Get user from database to ensure they still exist and are active
     const userResult = await query(
@@ -37,8 +38,13 @@ export async function requireAuth(req, res, next) {
       [decoded.userId]
     );
     
-    if (userResult.rowCount === 0 || !userResult.rows[0].is_active) {
-      return res.status(401).json({ success: false, error: 'UNAUTHORIZED', message: 'User not found or inactive' });
+    if (userResult.rowCount === 0) {
+       console.log('Auth Debug: User not found for ID', decoded.userId);
+       return res.status(401).json({ success: false, error: 'UNAUTHORIZED', message: 'User not found or inactive' });
+    }
+    if (!userResult.rows[0].is_active) {
+       console.log('Auth Debug: User inactive', userResult.rows[0].email);
+       return res.status(401).json({ success: false, error: 'UNAUTHORIZED', message: 'User not found or inactive' });
     }
     
     req.user = userResult.rows[0];
@@ -86,7 +92,7 @@ export async function optionalAuth(req, res, next) {
       }
     }
     next();
-  } catch (error) {
+  } catch {
     // Continue without authentication for optional auth
     next();
   }
