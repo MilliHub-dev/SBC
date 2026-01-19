@@ -28,7 +28,7 @@ async function main() {
   
   // Verify command hint
   console.log("\nTo verify on PolygonScan:");
-  console.log(`npx hardhat verify --network polygon-zkevm-testnet ${await redemption.getAddress()} ${sabiTokenAddress} ${signerAddress}`);
+  console.log(`npx hardhat verify --network ${hre.network.name} ${await redemption.getAddress()} ${sabiTokenAddress} ${signerAddress}`);
 }
 
 main().catch((error) => {
