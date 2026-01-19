@@ -16,11 +16,11 @@ import AlertNotification from "@/dashboard/components/AlertNotification/AlertNot
 import { LuWallet } from "react-icons/lu";
 import SimpleHeading from "@/dashboard/components/SimpleHeading/SimpleHeading";
 import TokenWrap from "./TokenWrap";
-import { thirdwebService } from "../../../services/thirdwebService";
-import { useSigner } from "@thirdweb-dev/react";
+import { solanaService } from "../../../services/solanaService";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 
 const BuyTokens = () => {
-	const [paymentMethod, setPaymentMethod] = useState("eth");
+	const [paymentMethod, setPaymentMethod] = useState("sol");
 	const [amount, setAmount] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [claimConditions, setClaimConditions] = useState(null);
@@ -30,30 +30,37 @@ const BuyTokens = () => {
 	const {
 		isConnected,
 		address,
-		ethBalance,
+		solBalance,
 		sabiBalance,
 	} = useWeb3();
 
-	const signer = useSigner();
+	const { connection } = useConnection();
+	const { publicKey, sendTransaction } = useWallet();
 
-	// Initialize ThirdWeb service and load claim conditions
+	// Initialize Service and load claim conditions
 	useEffect(() => {
-		const initializeThirdWeb = async () => {
-			if (!isConnected || !signer) return;
+		const initializeService = async () => {
+			if (!isConnected || !connection) return;
 
 			try {
 				setLoadingConditions(true);
-				await thirdwebService.initialize(signer);
+				await solanaService.initialize(connection);
 				
-				// Get claim conditions
-				const conditions = await thirdwebService.getClaimConditions();
+				// Get claim conditions (Mocked for Solana)
+				const conditions = await solanaService.getClaimConditions();
+				// Set default if empty
+				if (!conditions.pricePerToken) {
+					conditions.pricePerToken = "0.001"; // Default 0.001 SOL per Token
+					conditions.maxClaimableSupply = "1000000000";
+					conditions.supplyClaimed = "0";
+				}
 				setClaimConditions(conditions);
 
-				// Check user eligibility
-				const eligibility = await thirdwebService.canClaim(address, 1);
+				// Check user eligibility (Mocked for Solana)
+				const eligibility = await solanaService.canClaim(address, 1);
 				setUserClaimEligibility(eligibility);
 			} catch (error) {
-				console.error('Error initializing ThirdWeb:', error);
+				console.error('Error initializing Service:', error);
 				toaster.create({
 					title: "Initialization Error",
 					description: "Failed to load token drop information",
@@ -65,16 +72,16 @@ const BuyTokens = () => {
 			}
 		};
 
-		initializeThirdWeb();
-	}, [isConnected, signer, address]);
+		initializeService();
+	}, [isConnected, connection, address]);
 
-	const calculateTokensFromETH = (ethAmount) => {
+	const calculateTokensFromSOL = (solAmount) => {
 		if (!claimConditions) return 0;
 		const pricePerToken = parseFloat(claimConditions.pricePerToken) || 0.001;
-		return Math.floor(parseFloat(ethAmount) / pricePerToken);
+		return Math.floor(parseFloat(solAmount) / pricePerToken);
 	};
 
-	const calculateETHFromTokens = (tokenAmount) => {
+	const calculateSOLFromTokens = (tokenAmount) => {
 		if (!claimConditions) return 0;
 		const pricePerToken = parseFloat(claimConditions.pricePerToken) || 0.001;
 		return (parseFloat(tokenAmount) * pricePerToken).toFixed(6);
@@ -115,38 +122,39 @@ const BuyTokens = () => {
 		try {
 			let result;
 			
-			if (paymentMethod === "eth") {
-				// Buy with ETH using ThirdWeb
-				result = await thirdwebService.buyWithETH(address, amount);
+			if (paymentMethod === "sol") {
+				// Buy with SOL using Solana Service
+				// thirdwebService is now an instance of SolanaService
+				result = await thirdwebService.buyWithSOL(connection, publicKey, sendTransaction, amount);
 				
 				toaster.create({
 					title: "Purchase Successful",
-					description: `Successfully bought ${result.tokensReceived} Sabi Cash with ${amount} ETH`,
+					description: `Successfully bought ${result.tokensReceived || calculateTokensFromSOL(amount)} Sabi Cash with ${amount} SOL`,
 					type: "success",
 					duration: 5000,
 				});
 			} else if (paymentMethod === "tokens") {
-				// Direct token claim
-				const tokenAmount = parseInt(amount);
-				result = await thirdwebService.claimTokens(address, tokenAmount);
+				// Direct token claim (Convert token amount to SOL and buy)
+				const solRequired = calculateSOLFromTokens(amount);
+				result = await thirdwebService.buyWithSOL(connection, publicKey, sendTransaction, solRequired);
 				
 				toaster.create({
 					title: "Claim Successful",
-					description: `Successfully claimed ${tokenAmount} Sabi Cash tokens`,
+					description: `Successfully claimed ${amount} Sabi Cash tokens`,
 					type: "success",
 					duration: 5000,
 				});
 			}
 
 			// Refresh claim eligibility after successful purchase
-			const newEligibility = await thirdwebService.canClaim(address, 1);
+			const newEligibility = await solanaService.canClaim(address, 1);
 			setUserClaimEligibility(newEligibility);
 			
 			setAmount("");
 		} catch (error) {
 			toaster.create({
 				title: "Purchase Failed",
-				description: error.message,
+				description: error.message || "Transaction failed",
 				type: "error",
 				duration: 5000,
 			});
@@ -172,7 +180,7 @@ const BuyTokens = () => {
 					icon={LuWallet}
 					headingTitle={"Buy Sabi Cash"}
 					headingDesc={
-						"Purchase Sabi Cash tokens through our ThirdWeb token drop"
+						"Purchase Sabi Cash tokens directly with Solana (SOL)"
 					}
 				/>
 
@@ -198,15 +206,15 @@ const BuyTokens = () => {
 							gap={2}
 						>
 							<TokenWrap
-								name={"Ethereum"}
-								abv={"ETH"}
-								tokenPrice={claimConditions?.pricePerToken && parseFloat(claimConditions.pricePerToken) > 0 ? `${(1 / parseFloat(claimConditions.pricePerToken)).toFixed(0)} SBC per ETH` : "N/A"}
-								balance={ethBalance}
+								name={"Solana"}
+								abv={"SOL"}
+								tokenPrice={claimConditions?.pricePerToken && parseFloat(claimConditions.pricePerToken) > 0 ? `${(1 / parseFloat(claimConditions.pricePerToken)).toFixed(0)} SBC per SOL` : "N/A"}
+								balance={solBalance}
 							/>
 							<TokenWrap
 								name={"Sabi Cash"}
 								abv={"SBC"}
-								tokenPrice={claimConditions?.pricePerToken && parseFloat(claimConditions.pricePerToken) > 0 ? `${claimConditions.pricePerToken} ETH per SBC` : "N/A"}
+								tokenPrice={claimConditions?.pricePerToken && parseFloat(claimConditions.pricePerToken) > 0 ? `${claimConditions.pricePerToken} SOL per SBC` : "N/A"}
 								balance={sabiBalance}
 							/>
 						</Box>
@@ -220,7 +228,7 @@ const BuyTokens = () => {
 											Token Drop Information:
 										</Text>
 										<Text fontSize="sm" color="blue.300">
-											• Price per token: {claimConditions.pricePerToken} ETH
+											• Price per token: {claimConditions.pricePerToken} SOL
 										</Text>
 										<Text fontSize="sm" color="blue.300">
 											• Total supply: {claimConditions.maxClaimableSupply} tokens
@@ -262,7 +270,7 @@ const BuyTokens = () => {
 												setPaymentMethod(e.target.value)
 											}
 										>
-											<option value="eth">Pay with ETH</option>
+											<option value="sol">Pay with SOL</option>
 											<option value="tokens">Direct Token Claim</option>
 										</select>
 									</Field.Root>
@@ -270,13 +278,13 @@ const BuyTokens = () => {
 									<Field.Root>
 										<Field.Label color={"white"} fontSize={16} mb={2}>
 											Amount{" "}
-											{paymentMethod === "eth"
-												? "(ETH)"
+											{paymentMethod === "sol"
+												? "(SOL)"
 												: "(SBC Tokens)"}
 										</Field.Label>
 										<Input
 											type="number"
-											step={paymentMethod === "eth" ? "0.001" : "1"}
+											step={paymentMethod === "sol" ? "0.001" : "1"}
 											outline={"none"}
 											fontSize={"15px"}
 											color={"#fff"}
@@ -284,19 +292,19 @@ const BuyTokens = () => {
 											padding={"20px 10px"}
 											borderColor={"gray.500"}
 											placeholder={`Enter amount in ${
-												paymentMethod === "eth" ? "ETH" : "tokens"
+												paymentMethod === "sol" ? "SOL" : "tokens"
 											}`}
 											value={amount}
 											onChange={(e) => setAmount(e.target.value)}
 										/>
-										{amount && paymentMethod === "eth" && (
+										{amount && paymentMethod === "sol" && (
 											<Field.HelperText color="gray.400">
-												≈ {calculateTokensFromETH(amount)} SBC tokens
+												≈ {calculateTokensFromSOL(amount)} SBC tokens
 											</Field.HelperText>
 										)}
 										{amount && paymentMethod === "tokens" && (
 											<Field.HelperText color="gray.400">
-												≈ {calculateETHFromTokens(amount)} ETH required
+												≈ {calculateSOLFromTokens(amount)} SOL required
 											</Field.HelperText>
 										)}
 									</Field.Root>
@@ -315,7 +323,7 @@ const BuyTokens = () => {
 										_hover={{ bg: "#0077B6" }}
 									>
 										<LuWallet /> 
-										{paymentMethod === "eth" ? "Buy with ETH" : "Claim Tokens"}
+										{paymentMethod === "sol" ? "Buy with SOL" : "Claim Tokens"}
 									</Button>
 
 									{!userClaimEligibility?.canClaim && userClaimEligibility?.reasons && (
@@ -340,7 +348,7 @@ const BuyTokens = () => {
 										• Tokens will be transferred to your connected wallet
 									</Text>
 									<Text fontSize="sm" color="blue.300">
-										• Make sure you have enough ETH for transaction fees
+										• Make sure you have enough SOL for transaction fees
 									</Text>
 									<Text fontSize="sm" color="blue.300">
 										• Each wallet has a maximum claimable limit

@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useSDK } from "@thirdweb-dev/react";
-
 import {
 	Box,
 	Text,
@@ -29,49 +27,30 @@ import { useWeb3 } from "../../../hooks/useWeb3";
 import { toaster } from "../../../components/ui/toaster";
 import AlertNotification from "@/dashboard/components/AlertNotification/AlertNotification";
 import SimpleHeading from "@/dashboard/components/SimpleHeading/SimpleHeading";
-import { uniswapService } from "../../../services/uniswapService";
-import { UNISWAP_CONFIG, SABI_CASH_CONTRACT_ADDRESS, USDT_CONTRACT_ADDRESS } from "../../../config/web3Config";
+import { SWAP_CONFIG, SABI_CASH_CONTRACT_ADDRESS, USDT_CONTRACT_ADDRESS } from "../../../config/web3Config";
 
 const Swap = () => {
-	const [fromToken, setFromToken] = useState("WETH");
+	const [fromToken, setFromToken] = useState("SOL");
 	const [toToken, setToToken] = useState("SBC");
 	const [fromAmount, setFromAmount] = useState("");
 	const [toAmount, setToAmount] = useState("");
 	const [isSwapping, setIsSwapping] = useState(false);
 	const [quote, setQuote] = useState(null);
 	const [loadingQuote, setLoadingQuote] = useState(false);
-	const [supportedTokens, setSupportedTokens] = useState([]);
-	// const [provider, setProvider] = useState(null); // Removed manual provider state
+	const [supportedTokens, setSupportedTokens] = useState([
+		{ symbol: 'SOL', name: 'Solana', address: 'native' },
+		{ symbol: 'SBC', name: 'Sabi Cash', address: SABI_CASH_CONTRACT_ADDRESS },
+		{ symbol: 'USDT', name: 'Tether', address: USDT_CONTRACT_ADDRESS }
+	]);
 
-	const { isConnected, address, ethBalance, sabiBalance } = useWeb3();
-	const sdk = useSDK();
-	const provider = sdk?.getProvider();
+	const { isConnected, address, solBalance, sabiBalance } = useWeb3();
 
-	// Initialize Uniswap service
+	// Initialize Swap service
 	useEffect(() => {
-		const initializeUniswap = async () => {
-			if (!provider) return;
+		// Mock supported tokens for now
+	}, []);
 
-			try {
-				// uniswapService expects a provider
-				await uniswapService.initialize(provider);
-				const tokens = uniswapService.getSupportedTokens();
-				setSupportedTokens(tokens);
-			} catch (error) {
-				console.error("Error initializing Uniswap:", error);
-				toaster.create({
-					title: "Initialization Error",
-					description: "Failed to initialize swap functionality",
-					type: "error",
-					duration: 5000,
-				});
-			}
-		};
-
-		initializeUniswap();
-	}, [provider]);
-
-	// Get quote when amounts change
+	// Get quote when amounts change (Mocked for Solana)
 	useEffect(() => {
 		const getQuote = async () => {
 			if (!fromAmount || parseFloat(fromAmount) <= 0 || !fromToken || !toToken) {
@@ -87,18 +66,20 @@ const Swap = () => {
 
 			setLoadingQuote(true);
 			try {
-				const fromTokenData = supportedTokens.find((t) => t.symbol === fromToken);
-				const toTokenData = supportedTokens.find((t) => t.symbol === toToken);
+				// Mock quote for Solana
+				await new Promise(resolve => setTimeout(resolve, 500));
+				// Simple mock rate
+				const rate = fromToken === 'SOL' ? 100 : 0.01; 
+				const amountOut = (parseFloat(fromAmount) * rate).toString();
+				
+				// Mock gas estimate for Solana (approx 0.000005 SOL)
+				const gasEstimate = 5000; // lamports
 
-				if (!fromTokenData || !toTokenData) {
-					throw new Error("Unsupported token pair");
-				}
-
-				const quoteResult = await uniswapService.getQuote(
-					fromTokenData.address,
-					toTokenData.address,
-					fromAmount
-				);
+				const quoteResult = { 
+					amountOut, 
+					gasEstimate, 
+					priceImpact: "0.05" 
+				};
 
 				setQuote(quoteResult);
 				setToAmount(quoteResult.amountOut);
@@ -106,12 +87,6 @@ const Swap = () => {
 				console.error("Error getting quote:", error);
 				setQuote(null);
 				setToAmount("");
-				toaster.create({
-					title: "Quote Error",
-					description: error.message,
-					type: "error",
-					duration: 3000,
-				});
 			} finally {
 				setLoadingQuote(false);
 			}
@@ -119,7 +94,7 @@ const Swap = () => {
 
 		const debounceTimer = setTimeout(getQuote, 500);
 		return () => clearTimeout(debounceTimer);
-	}, [fromAmount, fromToken, toToken, supportedTokens]);
+	}, [fromAmount, fromToken, toToken]);
 
 	const handleFromAmountChange = (value) => {
 		setFromAmount(value);
@@ -146,86 +121,26 @@ const Swap = () => {
 			return;
 		}
 
+		toaster.create({
+			title: "Coming Soon",
+			description: "Swap functionality on Solana is coming soon!",
+			type: "info",
+			duration: 3000,
+		});
+		return;
+
+		/* 
+		// Old EVM Swap Logic
 		if (!fromAmount || parseFloat(fromAmount) <= 0) {
-			toaster.create({
-				title: "Invalid Amount",
-				description: "Please enter a valid amount to swap",
-				type: "error",
-				duration: 3000,
-			});
-			return;
+			// ...
 		}
-
-		if (!quote) {
-			toaster.create({
-				title: "No Quote Available",
-				description: "Please wait for quote to load before swapping",
-				type: "error",
-				duration: 3000,
-			});
-			return;
-		}
-
-		// Ensure we have a signer (ethers Signer) before executing the swap
-		let signer = null;
-		if (provider) {
-			try {
-				signer = await provider.getSigner();
-			} catch (err) {
-				console.warn("Failed to get signer from provider:", err);
-			}
-		}
-
-		if (!signer) {
-			toaster.create({
-				title: "Signer Not Available",
-				description: "Please ensure your wallet is properly connected",
-				type: "error",
-				duration: 3000,
-			});
-			return;
-		}
-
-		setIsSwapping(true);
-		try {
-			const fromTokenData = supportedTokens.find((t) => t.symbol === fromToken);
-			const toTokenData = supportedTokens.find((t) => t.symbol === toToken);
-
-			const result = await uniswapService.executeSwap(
-				fromTokenData.address,
-				toTokenData.address,
-				fromAmount,
-				address,
-				signer
-			);
-
-			toaster.create({
-				title: "Swap Successful",
-				description: `Successfully swapped ${fromAmount} ${fromToken} for ${result.amountOut} ${toToken}`,
-				type: "success",
-				duration: 5000,
-			});
-
-			setFromAmount("");
-			setToAmount("");
-			setQuote(null);
-		} catch (error) {
-			console.error("Swap error:", error);
-			toaster.create({
-				title: "Swap Failed",
-				description: error.message || "Swap failed",
-				type: "error",
-				duration: 5000,
-			});
-		} finally {
-			setIsSwapping(false);
-		}
+		*/
 	};
 
 	const getTokenBalance = (tokenSymbol) => {
 		switch (tokenSymbol) {
-			case "WETH":
-				return ethBalance;
+			case "SOL":
+				return solBalance;
 			case "SBC":
 				return sabiBalance;
 			case "USDT":
@@ -237,6 +152,7 @@ const Swap = () => {
 
 	const getTokenIcon = (tokenSymbol) => {
 		const iconMap = {
+			SOL: "◎",
 			WETH: "🔷",
 			SBC: "💰",
 			USDT: "💵",
@@ -537,7 +453,7 @@ const Swap = () => {
 
 						{/* Footer Info */}
 						<Text textAlign="center" fontSize="xs" color="gray.500" mt={4}>
-							Powered by Uniswap V3 • Sabi Cash
+							Powered by Solana • Sabi Cash
 						</Text>
 					</>
 				)}

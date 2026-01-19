@@ -1,14 +1,14 @@
 # Sabi Ride Web3 Integration
 
-A comprehensive Web3-enabled ride-hailing platform with native blockchain rewards and tokenomics on Polygon zkEVM.
+A comprehensive Web3-enabled ride-hailing platform with native blockchain rewards and tokenomics on Solana.
 
 ## 🚀 Features
 
 ### Core Web3 Features
-- **Wallet Connection**: RainbowKit integration with multiple wallet support
-- **Sabi Cash Token**: Native ERC-20 token with advanced tokenomics
+- **Wallet Connection**: Solana Wallet Adapter integration with multiple wallet support
+- **Sabi Cash Token**: Native SPL token with advanced tokenomics
 - **Point Conversion**: Convert Sabi Ride app points to Sabi Cash (1 point = 0.5 SABI)
-- **Token Purchase**: Buy Sabi Cash with Polygon (ETH) or USDT
+- **Token Purchase**: Buy Sabi Cash with Solana (SOL) or USDT
 - **DEX Functionality**: Token swapping capabilities
 - **Staking & Mining**: Multiple reward plans for earning passive income
 - **Task Rewards**: Earn tokens by completing social media tasks
@@ -28,17 +28,17 @@ A comprehensive Web3-enabled ride-hailing platform with native blockchain reward
 ## 🛠 Tech Stack
 
 - **Frontend**: React 19, Chakra UI, Vite
-- **Web3**: Wagmi, RainbowKit, Viem, Ethers.js
-- **Blockchain**: Polygon zkEVM (Testnet & Mainnet)
-- **Smart Contracts**: Solidity 0.8.19, OpenZeppelin
-- **Development**: Hardhat, TypeScript
+- **Web3**: @solana/web3.js, @solana/wallet-adapter
+- **Blockchain**: Solana (Devnet & Mainnet)
+- **Programs**: Rust, Anchor (if applicable) or SPL Token
+- **Development**: TypeScript
 
 ## 📋 Prerequisites
 
 - Node.js 18+ and npm
-- MetaMask or compatible Web3 wallet
-- Test ETH for Polygon zkEVM testnet
-- WalletConnect Project ID (for RainbowKit)
+- Phantom, Solflare, or compatible Solana wallet
+- Test SOL for Solana Devnet
+- Solana RPC URL (optional)
 
 ## 🔧 Setup Instructions
 
@@ -51,9 +51,6 @@ cd sabi-ride-web3
 
 # Install frontend dependencies
 npm install
-
-# Install Hardhat dependencies for contract deployment
-npm install --prefix . -D @nomicfoundation/hardhat-toolbox @openzeppelin/contracts hardhat dotenv
 ```
 
 ### 2. Environment Configuration
@@ -63,22 +60,20 @@ npm install --prefix . -D @nomicfoundation/hardhat-toolbox @openzeppelin/contrac
 cp .env.example .env
 
 # Edit .env with your values
-PRIVATE_KEY=your_wallet_private_key
+PRIVATE_KEY=your_wallet_private_key # Solana private key (base58)
 REACT_APP_WALLET_CONNECT_PROJECT_ID=your_walletconnect_project_id
-POLYGONSCAN_API_KEY=your_polygonscan_api_key
 ```
 
 ### 3. Smart Contract Deployment
 
 ```bash
-# Compile contracts
-npx hardhat compile
+# Build Solana program
+cargo build-bpf
 
-# Deploy to Polygon zkEVM testnet
-npx hardhat run scripts/deploy.js --network polygon-zkevm-testnet
+# Deploy to Solana Devnet
+solana program deploy target/deploy/sabi_cash.so --url devnet
 
-# Verify contract (optional)
-npx hardhat verify --network polygon-zkevm-testnet <CONTRACT_ADDRESS> "<USDT_ADDRESS>" "<OWNER_ADDRESS>"
+# Save the Program ID returned by the deploy command
 ```
 
 ### 4. Update Configuration
@@ -100,18 +95,13 @@ npm run dev
 
 ## 🌐 Network Configuration
 
-### Polygon zkEVM Testnet
-- **Chain ID**: 1442
-- **RPC URL**: https://rpc.public.zkevm-test.net
-- **Explorer**: https://testnet-zkevm.polygonscan.com
-- **Faucet**: https://faucet.polygon.technology
+### Solana Devnet
+- **RPC URL**: https://api.devnet.solana.com
+- **Explorer**: https://explorer.solana.com/?cluster=devnet
 
-### Polygon zkEVM Mainnet
-- **Chain ID**: 1101
-- **RPC URL**: https://zkevm-rpc.com
-- **Explorer**: https://zkevm.polygonscan.com
-
-## 📱 Usage Guide
+### Solana Mainnet Beta
+- **RPC URL**: https://api.mainnet-beta.solana.com
+- **Explorer**: https://explorer.solana.com/
 
 ### For Users
 
@@ -131,7 +121,7 @@ npm run dev
 
 4. **Buy Sabi Cash**
    - Go to "Buy Tokens"
-   - Choose payment method (ETH or USDT)
+   - Choose payment method (SOL or USDT)
    - Enter amount and purchase
 
 5. **Start Mining/Staking**
@@ -150,11 +140,11 @@ npm run dev
    ```javascript
    import { useWeb3 } from './hooks/useWeb3';
    
-   const { buySabiWithPolygon, convertPointsToSabi } = useWeb3();
+   const { buyWithSOL, convertPointsToSabi } = useWeb3();
    ```
 
 2. **Adding New Features**
-   - Update smart contract in `contracts/SabiCash.sol`
+   - Update smart contract in Solana Program
    - Add functions to `src/hooks/useWeb3.js`
    - Create UI components in `src/components/`
 
@@ -169,8 +159,8 @@ npm run dev
 ## 📊 Smart Contract Functions
 
 ### User Functions
-- `buyWithPolygon()`: Purchase tokens with ETH
-- `buyWithUSDT(uint256)`: Purchase tokens with USDT
+- `buyWithSOL(uint64)`: Purchase tokens with SOL
+- `buyWithUSDT(uint64)`: Purchase tokens with USDT
 - `stake(uint256, PlanType)`: Stake in mining plans
 - `claimMiningRewards()`: Claim free mining rewards
 - `claimStakingRewards()`: Claim staking rewards
@@ -237,10 +227,7 @@ npm run build
 ### Contract Deployment
 ```bash
 # Deploy to mainnet
-npx hardhat run scripts/deploy.js --network polygon-zkevm-mainnet
-
-# Verify on explorer
-npx hardhat verify --network polygon-zkevm-mainnet <CONTRACT_ADDRESS>
+solana program deploy dist/program/sabi_cash.so --url mainnet-beta
 ```
 
 ## 🔍 Troubleshooting
@@ -248,14 +235,14 @@ npx hardhat verify --network polygon-zkevm-mainnet <CONTRACT_ADDRESS>
 ### Common Issues
 
 1. **Wallet Connection Failed**
-   - Ensure you have a Web3 wallet installed
+   - Ensure you have a Solana wallet installed (Phantom/Solflare)
    - Check network configuration
-   - Verify WalletConnect Project ID
+   - Verify RPC URL connectivity
 
 2. **Transaction Failed**
-   - Check gas fees and balance
-   - Ensure correct network (Polygon zkEVM)
-   - Verify contract address
+   - Check SOL balance for gas fees
+   - Ensure correct network (Devnet/Mainnet)
+   - Verify program ID
 
 3. **Point Conversion Failed**
    - Ensure you're logged into Sabi Ride
@@ -282,10 +269,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- [Polygon zkEVM Documentation](https://wiki.polygon.technology/docs/zkEVM)
-- [Wagmi Documentation](https://wagmi.sh)
-- [RainbowKit Documentation](https://www.rainbowkit.com)
-- [Hardhat Documentation](https://hardhat.org/docs)
+- [Solana Documentation](https://docs.solana.com)
+- [Solana Web3.js](https://solana-labs.github.io/solana-web3.js/)
+- [Wallet Adapter](https://github.com/solana-labs/wallet-adapter)
+- [SPL Token](https://spl.solana.com/token)
 
 ---
 

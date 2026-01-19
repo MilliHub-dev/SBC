@@ -11,9 +11,8 @@ import marketImg from "./market.svg";
 import earningsImg from "./my_earnings.svg";
 import startMiningImg from "./start_mining.svg";
 import preOrderImg from "./pre_order.svg";
-import polygonImg from "./polygon.png";
+import solanaImg from "./solana.png";
 import sabiCashDollarImg from "./Sabi-Cash-logo-icon-dollar.png";
-import ehtereumImg from "./eth.png";
 import usdcImg from "./usdc.png";
 
 export const cryptoImgData = [
@@ -89,19 +88,14 @@ export const sidebarImg = [
 
 export const whatWeMine = [
 	{
-		name: "Polygon",
-		crypto: "polygon",
-		img: polygonImg,
+		name: "Solana",
+		crypto: "solana",
+		img: solanaImg,
 	},
 	{
 		name: "Sabi Cash",
 		crypto: "sabi cash",
 		img: sabiCashDollarImg,
-	},
-	{
-		name: "ETH",
-		crypto: "eth",
-		img: ehtereumImg,
 	},
 	{
 		name: "USD",

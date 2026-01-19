@@ -22,7 +22,7 @@ const MiningPackage = ({
 }) => {
 	const [showDetails, setShowDetails] = useState(false);
 	const [quantity] = useState(2);
-	const { buySabiWithPolygon, isConnected } = useWeb3();
+	const { buySabiWithSolana, isConnected } = useWeb3(); // Updated hook
 
 	const handleSelectPackage = async () => {
 		try {
@@ -33,10 +33,10 @@ const MiningPackage = ({
 
 			const totalCost = packageData.price * quantity;
 
-			// Convert price to ETH equivalent (assuming 1 ETH = $3000 for demo)
-			const ethAmount = totalCost / 3000;
+			// Convert price to SOL equivalent (assuming 1 SOL = $100 for demo)
+			const solAmount = totalCost / 100;
 
-			await buySabiWithPolygon(ethAmount);
+			await buySabiWithSolana(solAmount);
 			alert(
 				`Successfully purchased ${quantity} ${packageData.name} package(s)!`
 			);

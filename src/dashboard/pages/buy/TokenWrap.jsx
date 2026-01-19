@@ -1,5 +1,6 @@
 import { Avatar, Box, Flex, HStack, Text } from "@chakra-ui/react";
 import React from "react";
+import solanaLogo from "../../../assets/images/solana.png";
 
 const TokenWrap = ({ balance, name, abv, tokenPrice }) => {
 	return (
@@ -14,7 +15,7 @@ const TokenWrap = ({ balance, name, abv, tokenPrice }) => {
 			<Box display={"flex"} alignItems={"center"} gap={3}>
 				<Avatar.Root>
 					<Avatar.Fallback name={name} />
-					<Avatar.Image src="https://pngtree.com/freepng/vector-illustration-of-crytocurrency-ethereum_6326627.html" />
+					<Avatar.Image src={solanaLogo} />
 				</Avatar.Root>
 				<Flex flexDir={"column"} gap={1}>
 					<Text fontWeight={600} fontSize={17}>

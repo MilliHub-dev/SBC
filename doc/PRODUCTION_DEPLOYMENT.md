@@ -8,7 +8,7 @@ This guide will help you deploy the Sabi Cash application to production with all
 - PostgreSQL database
 - Redis instance (optional, for caching)
 - Domain name and SSL certificate
-- ThirdWeb account and project
+- Solana Wallet and Program ID
 - Sabi Ride API access
 
 ## Environment Setup
@@ -25,14 +25,14 @@ VITE_DEMO_MODE=false
 VITE_API_BASE_URL=https://your-backend-domain.com/api
 VITE_SABI_RIDE_API_URL=https://tmp.sabirideweb.com.ng/api/v1
 
-# ThirdWeb Configuration
-VITE_THIRDWEB_CLIENT_ID=your-thirdweb-client-id
-VITE_THIRDWEB_SECRET_KEY=your-thirdweb-secret-key
-VITE_THIRDWEB_TOKEN_DROP_ADDRESS=your-deployed-token-drop-address
+# Solana Configuration
+VITE_SOLANA_NETWORK=mainnet-beta
+VITE_SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+VITE_SOLANA_TOKEN_MINT=your-deployed-token-mint-address
 
 # Contract Addresses
-VITE_SABI_CASH_CONTRACT_ADDRESS=your-sabi-cash-contract-address
-VITE_USDT_CONTRACT_ADDRESS=0xA8CE8aee21bC2A48a5EF670afCc9274C7bbbC035
+VITE_SABI_CASH_PROGRAM_ID=your-sabi-cash-program-id
+VITE_USDT_CONTRACT_ADDRESS=your-usdt-mint-address
 ```
 
 ### 2. Backend Environment Variables
@@ -67,12 +67,11 @@ SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 
 # Blockchain Configuration
-POLYGON_ZKEVM_RPC_URL=https://rpc.public.zkevm-test.net
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 PRIVATE_KEY=your-backend-wallet-private-key
 
 # External Services
 COINGECKO_API_KEY=your-coingecko-api-key
-INFURA_PROJECT_ID=your-infura-project-id
 ```
 
 ## Deployment Steps
@@ -95,14 +94,15 @@ INFURA_PROJECT_ID=your-infura-project-id
    npm run db:setup
    ```
 
-### 2. ThirdWeb Token Drop Setup
+### 2. Solana SPL Token Setup
 
-1. **Create ThirdWeb Project**
-   - Go to [ThirdWeb Dashboard](https://thirdweb.com/dashboard)
-   - Create a new project
-   - Deploy a Token Drop contract on Polygon zkEVM Testnet
+1. **Create SPL Token**
+   - Use Solana CLI or a tool like Spl-token-ui to create a new Token Mint.
+   - Save the Mint Address.
 
-2. **Configure Token Drop**
+2. **Configure Token Drop / Sale**
+   - You can use a custom program or a service to manage token sales.
+   - Update `VITE_SABI_CASH_PROGRAM_ID` with your program ID or Token Mint address.
    - Set claim conditions (price, supply, etc.)
    - Configure allowlists if needed
    - Update `VITE_THIRDWEB_TOKEN_DROP_ADDRESS` with deployed address
@@ -343,10 +343,10 @@ sudo nano /etc/logrotate.d/sabicash
    - Check firewall settings
    - Ensure SSL settings match database configuration
 
-3. **ThirdWeb Integration Issues**
-   - Verify client ID and secret key
-   - Check contract addresses
-   - Ensure wallet has sufficient funds for gas
+3. **Solana Integration Issues**
+   - Verify RPC URL and connection
+   - Check Program ID
+   - Ensure wallet has sufficient SOL for rent/fees
 
 4. **API Integration Issues**
    - Test Sabi Ride API endpoints directly

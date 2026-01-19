@@ -39,7 +39,7 @@ const AddMinterModal = ({
 										value={newMinter}
 										onChange={(e) => setNewMinter(e.target.value)}
 										color={`#000`}
-										placeholder="0x..."
+										placeholder="Solana Address..."
 									/>
 								</Field.Root>
 								<HStack w="full" gap={4} pt={4}>

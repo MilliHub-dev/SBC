@@ -34,14 +34,14 @@ const UpdateRatesModal = ({
 						<Dialog.Body pb={6}>
 							<VStack gap={4}>
 								<Field.Root>
-									<Field.Label>ETH to SABI Rate</Field.Label>
+									<Field.Label>SOL to SABI Rate</Field.Label>
 									<NumberInput.Root
 										w={`full`}
-										value={newRates.eth}
+										value={newRates.sol}
 										onValueChange={({ value }) =>
 											setNewRates((prev) => ({
 												...prev,
-												eth: parseInt(value) || 0,
+												sol: parseInt(value) || 0,
 											}))
 										}
 										min={1}

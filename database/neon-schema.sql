@@ -20,7 +20,7 @@ CREATE TABLE users (
     total_points INTEGER DEFAULT 0,
     
     -- Web3 integration
-    wallet_address VARCHAR(42) UNIQUE,
+    wallet_address VARCHAR(44) UNIQUE,
     sabi_cash_balance DECIMAL(20, 8) DEFAULT 0,
     
     -- Status and metadata
@@ -42,7 +42,7 @@ CREATE TABLE user_sessions (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     session_token VARCHAR(255) UNIQUE NOT NULL,
     refresh_token VARCHAR(255) UNIQUE,
-    wallet_address VARCHAR(42),
+    wallet_address VARCHAR(44),
     ip_address INET,
     user_agent TEXT,
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -156,12 +156,12 @@ CREATE TABLE web3_transactions (
     user_id UUID REFERENCES users(id),
     
     -- Transaction details
-    transaction_hash VARCHAR(66) UNIQUE NOT NULL,
-    wallet_address VARCHAR(42) NOT NULL,
+    transaction_hash VARCHAR(88) UNIQUE NOT NULL,
+    wallet_address VARCHAR(44) NOT NULL,
     transaction_type VARCHAR(50) NOT NULL, -- 'buy_tokens', 'stake', 'claim_rewards', 'convert_points'
     
     -- Amounts
-    eth_amount DECIMAL(20, 8),
+    sol_amount DECIMAL(20, 8),
     usdt_amount DECIMAL(20, 8),
     sabi_cash_amount DECIMAL(20, 8),
     points_converted INTEGER,
@@ -170,7 +170,7 @@ CREATE TABLE web3_transactions (
     block_number BIGINT,
     gas_used BIGINT,
     gas_price DECIMAL(20, 8),
-    network VARCHAR(50) DEFAULT 'polygon-zkevm',
+    network VARCHAR(50) DEFAULT 'solana-devnet',
     
     -- Status
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'failed')),
@@ -208,8 +208,8 @@ CREATE TABLE staking_records (
     pending_rewards DECIMAL(20, 8) DEFAULT 0,
     
     -- Blockchain reference
-    stake_transaction_hash VARCHAR(66),
-    unstake_transaction_hash VARCHAR(66)
+    stake_transaction_hash VARCHAR(88),
+    unstake_transaction_hash VARCHAR(88)
 );
 
 -- Admin actions log

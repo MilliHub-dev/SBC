@@ -7,10 +7,10 @@ Congratulations! Your Sabi Ride Web3 platform has been successfully integrated w
 ## ✅ What's Been Completed
 
 ### 1. Smart Contract Integration
-- **✅ ThirdWeb Contract**: `0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983`
-- **✅ Web3 Configuration**: Updated for Polygon zkEVM
-- **✅ ABI Integration**: ThirdWeb standard functions supported
-- **✅ Network Setup**: Testnet and mainnet ready
+- **✅ Solana Program**: `7e8b6...` (Deployed Program ID)
+- **✅ Web3 Configuration**: Updated for Solana
+- **✅ SPL Token**: Native Solana Token Standard supported
+- **✅ Network Setup**: Devnet and Mainnet ready
 
 ### 2. Sabi Ride API Integration
 - **✅ Existing Authentication**: Integrated with your Sabi Ride login system
@@ -86,9 +86,9 @@ Database (Neon PostgreSQL)
 ├── Transaction logging
 └── Analytics and reporting
 
-Blockchain (Polygon zkEVM)
-├── SabiCash Token (ThirdWeb)
-├── ERC-20 standard
+Blockchain (Solana)
+├── SabiCash Token (SPL Token)
+├── SPL Token standard
 ├── Minting capabilities
 └── Transfer functionality
 ```
@@ -110,10 +110,10 @@ Driver Login:
 
 ### Contract Details
 ```
-Contract Address: 0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983
-Network: Polygon zkEVM Testnet (1442)
+Program ID: 7e8b6... (Your deployed program ID)
+Network: Solana Devnet / Mainnet
 Token: SabiCash (SBC)
-Standard: ERC-20 with ThirdWeb extensions
+Standard: SPL Token
 ```
 
 ## 📋 Deployment Checklist
@@ -203,8 +203,8 @@ Standard: ERC-20 with ThirdWeb extensions
 
 ### SabiCash Web3 Endpoints
 - **Contract Address**: `0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983`
-- **Network**: Polygon zkEVM Testnet (Chain ID: 1442)
-- **Token Standard**: ERC-20 with ThirdWeb extensions
+- **Network**: Solana Devnet / Mainnet
+- **Token Standard**: SPL Token
 
 ## 🎯 Success Metrics
 

@@ -10,7 +10,7 @@ import {
 import React, { useState } from "react";
 import { FaWallet, FaUser, FaRightFromBracket } from "react-icons/fa6";
 import { IoMenuSharp } from "react-icons/io5";
-import { ConnectWallet } from "@thirdweb-dev/react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useWeb3 } from "../../../hooks/useWeb3";
 import LoginModal from "../../../components/Login/LoginModal";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +24,7 @@ const DashboardNav = ({ onToggleSidebar }) => {
 		isLoggedIn,
 		userPoints,
 		sabiBalance,
-		ethBalance,
+		solBalance,
 		logout,
 	} = useWeb3();
 	const [openLoginModal, setOpenLoginModal] = useState(false);
@@ -99,10 +99,10 @@ const DashboardNav = ({ onToggleSidebar }) => {
 							>
 								<Box textAlign="center">
 									<Text fontSize="xs" color="gray.400">
-										ETH
+										SOL
 									</Text>
 									<Text fontSize="sm" fontWeight="bold">
-										{ethBalance}
+										{solBalance}
 									</Text>
 								</Box>
 								<Box textAlign="center">
@@ -158,7 +158,7 @@ const DashboardNav = ({ onToggleSidebar }) => {
 							</Button>
 						)}
 
-						<ConnectWallet theme="dark" btnTitle="Connect Wallet" />
+						<WalletMultiButton style={{ backgroundColor: "#000", color: "#fff" }} />
 
 						<Link
 							as={"button"}

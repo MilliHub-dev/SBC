@@ -14,7 +14,7 @@ import { useWeb3 } from "../../../hooks/useWeb3";
 import AlertNotification from "@/dashboard/components/AlertNotification/AlertNotification";
 
 const StartMining = () => {
-	const [selectedCurrency, setSelectedCurrency] = useState("polygon");
+	const [selectedCurrency, setSelectedCurrency] = useState("solana");
 	const { isConnected, address } = useWeb3();
 
 	// Updated mining packages as requested: Free, 100 Sabi Cash, 1000 Sabi Cash

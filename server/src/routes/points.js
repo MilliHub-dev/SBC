@@ -264,29 +264,53 @@ router.post('/convert', requireAuth, conversionLimiter, validatePointsConversion
       // We need a wallet to sign this.
       const signerPrivateKey = process.env.OPERATOR_PRIVATE_KEY;
       let signature = null;
+      let numericNonce = null;
 
       if (signerPrivateKey) {
         try {
-            const wallet = new ethers.Wallet(signerPrivateKey);
-            // Corresponds to Solidity: keccak256(abi.encodePacked(msg.sender, amount, nonce))
-            // Ethers v5: ethers.utils.solidityKeccak256
-            // Ethers v6: ethers.solidityPackedKeccak256
-            
-            // Check ethers version compatibility
-            const solidityKeccak256 = ethers.utils ? ethers.utils.solidityKeccak256 : ethers.solidityPackedKeccak256;
-            const arrayify = ethers.utils ? ethers.utils.arrayify : ethers.getBytes;
+            // Solana signature generation mock
+            const nacl = await import('tweetnacl');
+            const bs58 = await import('bs58');
+            const { Keypair, PublicKey } = await import('@solana/web3.js');
+            let keypair;
+            try {
+              // Try as base58 string
+              keypair = Keypair.fromSecretKey(bs58.decode(signerPrivateKey));
+            } catch {
+              // Try as JSON array
+              keypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(signerPrivateKey)));
+            }
 
-            const messageHash = solidityKeccak256(
-                ['address', 'uint256', 'uint256'],
-                [walletAddress, ethers.utils ? ethers.utils.parseUnits(sabiCashAmount.toString(), 18) : ethers.parseUnits(sabiCashAmount.toString(), 18), nonce]
-            );
+            // Message construction for Solana program
+            // Assuming the program expects a concatenated buffer of:
+            // [wallet_pubkey(32) + amount(8) + nonce(8)]
+            // Amount and nonce as LE u64
             
-            const messageBytes = arrayify(messageHash);
-            signature = await wallet.signMessage(messageBytes);
+            const walletPubkey = new PublicKey(walletAddress);
+            
+            // Amount: convert to lamports (9 decimals)
+            const lamports = BigInt(Math.floor(sabiCashAmount * 1e9));
+            const amountBuf = Buffer.alloc(8);
+            amountBuf.writeBigUInt64LE(lamports);
+
+            // Use Date.now() as numeric nonce
+            const nonceVal = BigInt(Date.now());
+            numericNonce = nonceVal.toString();
+            
+            const nonceBuf = Buffer.alloc(8);
+            nonceBuf.writeBigUInt64LE(nonceVal);
+
+            const message = Buffer.concat([
+                walletPubkey.toBuffer(),
+                amountBuf,
+                nonceBuf
+            ]);
+            
+            const signatureBytes = nacl.sign.detached(message, keypair.secretKey);
+            signature = bs58.encode(signatureBytes);
+             
         } catch (signErr) {
             console.error("Signing failed:", signErr);
-            // We don't rollback here, but we return a warning? 
-            // Or we rollback because the user can't claim.
             throw new Error("Failed to generate redemption signature");
         }
       } else {
@@ -303,7 +327,7 @@ router.post('/convert', requireAuth, conversionLimiter, validatePointsConversion
         new_sabi_cash_balance: newSabiCashBalance,
         transaction_id: nonce,
         signature: signature,
-        nonce: nonce,
+        nonce: numericNonce || nonce, // Return numeric nonce if available, else UUID
         created_at: transactionResult.rows[0].created_at,
         message: 'Points converted and signed successfully. Proceed to blockchain redemption.'
       });

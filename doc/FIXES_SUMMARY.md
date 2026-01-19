@@ -30,7 +30,7 @@
 **Solution:** Created comprehensive swap interface with:
 - Token balance display
 - Exchange rate calculations
-- Swap functionality between ETH, SABI, and USDT
+- Swap functionality between SOL, SABI, and USDT
 - Real-time amount calculations
 - Beautiful dark UI design
 

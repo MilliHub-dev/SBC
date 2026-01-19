@@ -8,8 +8,8 @@ This guide walks through deploying the complete Sabi Ride Web3 platform with Thi
 
 - Node.js 18+ and npm/yarn
 - PostgreSQL database (Neon recommended)
-- ThirdWeb account and deployed contract
-- Polygon zkEVM testnet/mainnet access
+- Solana Wallet
+- Solana Devnet/Mainnet access
 - Domain name for production deployment
 
 ## 1. Environment Configuration
@@ -22,16 +22,16 @@ VITE_API_BASE_URL=https://your-api-domain.com/api
 VITE_APP_ENV=production
 
 # Web3 Configuration
-VITE_WALLETCONNECT_PROJECT_ID=2f05ae7f1116030fde2d36508f472bfb
-VITE_THIRDWEB_CLIENT_ID=your_thirdweb_client_id
+VITE_SOLANA_RPC_URL=https://api.devnet.solana.com
+VITE_SOLANA_NETWORK=devnet
 
-# Contract Addresses (Your ThirdWeb Contract)
-VITE_SABI_CASH_CONTRACT=0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983
-VITE_USDT_CONTRACT=0xA8CE8aee21bC2A48a5EF670afCc9274C7bbbC035
+# Contract Addresses (Your Solana Program)
+VITE_SABI_CASH_PROGRAM_ID=your_solana_program_id
+VITE_USDT_CONTRACT=your_usdt_mint_address
 
 # Network Configuration
-VITE_DEFAULT_CHAIN_ID=1442
-VITE_NETWORK_NAME=polygon-zkevm-testnet
+VITE_DEFAULT_CHAIN_ID=solana-devnet
+VITE_NETWORK_NAME=solana-devnet
 
 # Database (Neon)
 DATABASE_URL=postgresql://username:password@ep-hostname.region.neon.tech/sabiride
@@ -42,7 +42,7 @@ JWT_SECRET_KEY=generate_a_strong_secret_key_here
 JWT_EXPIRY_HOURS=24
 
 # Admin Wallets
-ADMIN_WALLET_ADDRESSES=0x1234567890123456789012345678901234567890
+ADMIN_WALLET_ADDRESSES=Hv2... (Your Solana Admin Public Key)
 
 # Point System
 POINTS_PER_KM=1

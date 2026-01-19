@@ -154,10 +154,9 @@ The application now includes comprehensive error handling:
 
 1. Deploy actual smart contracts to mainnet/testnet
 2. Set up production backend API
-3. Configure real WalletConnect project ID
-4. Add comprehensive testing suite
-5. Implement real payment processing
-6. Add security audits for smart contracts
+3. Add comprehensive testing suite
+4. Implement real payment processing
+5. Add security audits for smart contracts
 
 ## Files Modified
 

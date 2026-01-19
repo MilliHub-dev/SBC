@@ -7,16 +7,17 @@ import { Link, useLocation } from "react-router-dom";
 import { RiQuestionLine } from "react-icons/ri";
 import navigationItems from "./NavigationItems";
 import NavItem from "./NavItem";
-import { useAddress } from "@thirdweb-dev/react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { ADMIN_WALLET_ADDRESSES } from "../../../config/web3Config";
 
 const DashboardSideNav = ({ sidebarWidth, isExpanded, onToggleSidebar }) => {
 	const location = useLocation();
-	const address = useAddress();
+	const { publicKey } = useWallet();
+	const address = publicKey ? publicKey.toString() : null;
 
 	const filteredNavItems = navigationItems.filter(item => {
 		if (item.name === "admin") {
-			return address && ADMIN_WALLET_ADDRESSES.map(a => a.toLowerCase()).includes(address.toLowerCase());
+			return address && ADMIN_WALLET_ADDRESSES.includes(address);
 		}
 		return true;
 	});

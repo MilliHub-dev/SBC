@@ -13,7 +13,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      brotli: path.resolve(__dirname, 'shims/empty.js'), // 👈 fix here
+      brotli: path.resolve(__dirname, 'shims/empty.js'),
+      crypto: 'crypto-browserify',
+      stream: 'stream-browserify',
     },
   },
   define: {
@@ -21,13 +23,10 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: [
-      'ethers',
-      "ethers/lib/utils",
-      '@thirdweb-dev/sdk',
-      '@thirdweb-dev/react',
-      '@uniswap/sdk-core',
-      '@uniswap/v3-sdk',
-      '@uniswap/smart-order-router'
+      '@solana/web3.js',
+      '@solana/wallet-adapter-react',
+      '@solana/wallet-adapter-wallets',
+      '@solana/wallet-adapter-react-ui'
     ],
   },
   build: {

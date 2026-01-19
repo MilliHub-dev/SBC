@@ -1,16 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  useAddress, 
-  useConnectionStatus, 
-  useBalance, 
-  useContract, 
-  useContractWrite, 
-  useTokenBalance 
-} from '@thirdweb-dev/react';
-import { ethers } from 'ethers';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { 
   SABI_CASH_CONTRACT_ADDRESS, 
-  SABI_CASH_ABI, 
   MIN_POINT_CONVERSION,
   POINT_TO_SABI_RATE,
   MINING_PLANS,
@@ -18,16 +10,18 @@ import {
 } from '../config/web3Config';
 import { authService } from '../services/authService';
 import { pointsService } from '../services/pointsService';
-import { thirdwebService } from '../services/thirdwebService';
+import { solanaService } from '../services/solanaService';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const address = useAddress();
-  const connectionStatus = useConnectionStatus();
-  const isConnected = connectionStatus === 'connected';
-  const isConnecting = connectionStatus === 'connecting';
-  const isDisconnected = connectionStatus === 'disconnected';
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction, connected, connecting, disconnect } = useWallet();
+
+  const address = publicKey ? publicKey.toString() : null;
+  const isConnected = connected;
+  const isConnecting = connecting;
+  const isDisconnected = !connected && !connecting;
 
   const [userPoints, setUserPoints] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -36,109 +30,50 @@ export const AuthProvider = ({ children }) => {
   const [pointsHistory, setPointsHistory] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
 
-  // Get ETH balance
-  const { data: ethBalance } = useBalance();
+  // Native Balance (SOL)
+  const [nativeBalance, setNativeBalance] = useState("0");
+  
+  // Sabi Cash Balance (SPL Token)
+  const [sabiBalance, setSabiBalance] = useState("0");
 
-  // Get Sabi Cash contract
-  const { contract: sabiContract } = useContract(SABI_CASH_CONTRACT_ADDRESS, SABI_CASH_ABI);
+  // Fetch Balances
+  const fetchBalances = useCallback(async () => {
+      if (!publicKey || !connection) return;
 
-  // Get Sabi Cash balance
-  const { data: sabiBalanceData, error: sabiBalanceError } = useTokenBalance(sabiContract, address);
+      try {
+          // SOL Balance
+          const solBalance = await connection.getBalance(publicKey);
+          setNativeBalance((solBalance / LAMPORTS_PER_SOL).toString());
 
-  // Manual balance state for fallback
-  const [manualBalance, setManualBalance] = useState("0");
-
-  useEffect(() => {
-    if (sabiBalanceError) {
-      console.error("Error fetching Sabi Cash balance:", sabiBalanceError);
-    }
-  }, [sabiBalanceError]);
-
-  // Fallback balance fetching using ethers directly
-  useEffect(() => {
-    const fetchBalanceManually = async () => {
-      if (address && SABI_CASH_CONTRACT_ADDRESS) {
-        try {
-          // Use the provider from the wallet if available, or a public RPC
-          let provider;
-          if (window.ethereum) {
-            provider = new ethers.providers.Web3Provider(window.ethereum);
-          } else {
-            provider = new ethers.providers.JsonRpcProvider("https://zkevm-rpc.com");
+          // SPL Token Balance
+          // Ensure SABI_CASH_CONTRACT_ADDRESS is a valid PublicKey string before using
+          if (SABI_CASH_CONTRACT_ADDRESS && SABI_CASH_CONTRACT_ADDRESS.length > 20 && !SABI_CASH_CONTRACT_ADDRESS.startsWith("0x")) {
+             try {
+                const mintPublicKey = new PublicKey(SABI_CASH_CONTRACT_ADDRESS);
+                const tokenAccounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
+                    mint: mintPublicKey
+                });
+                
+                if (tokenAccounts.value.length > 0) {
+                    const balance = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+                    setSabiBalance(balance.toString());
+                } else {
+                    setSabiBalance("0");
+                }
+             } catch (e) {
+                 console.warn("Error fetching SPL token balance (likely invalid mint address):", e);
+             }
           }
-
-          // Minimal ABI for balance
-          const minABI = [
-            'function balanceOf(address) view returns (uint256)', 
-            'function decimals() view returns (uint8)'
-          ];
-          
-          const contract = new ethers.Contract(SABI_CASH_CONTRACT_ADDRESS, minABI, provider);
-
-          const balance = await contract.balanceOf(address);
-          
-          let decimals = 18;
-          try {
-             decimals = await contract.decimals();
-          } catch {
-             console.warn("Could not fetch decimals, defaulting to 18");
-          }
-          
-          const formatted = ethers.utils.formatUnits(balance, decimals);
-          
-          console.log("Manual balance fetch:", formatted);
-          setManualBalance(formatted);
-        } catch (err) {
-          console.error("Manual balance fetch failed:", err);
-        }
+      } catch (err) {
+          console.error("Error fetching balances:", err);
       }
-    };
+  }, [publicKey, connection]);
 
-    if (address) {
-        fetchBalanceManually();
-        // Poll every 10 seconds
-        const interval = setInterval(fetchBalanceManually, 10000);
-        return () => clearInterval(interval);
-    }
-  }, [address]);
-
-
-  // Contract write functions
-  const { mutateAsync: stake } = useContractWrite(sabiContract, "stake");
-  const { mutateAsync: claimRewards } = useContractWrite(sabiContract, "claimMiningRewards");
-
-  // Auto-import Sabi Cash token to wallet
   useEffect(() => {
-    const addTokenToWallet = async () => {
-      if (connectionStatus === 'connected' && window.ethereum) {
-        // Check if we've already tried to add the token to avoid spamming
-        const hasAddedToken = localStorage.getItem('sabi_token_added');
-        if (hasAddedToken) return;
-
-        try {
-          await window.ethereum.request({
-            method: 'wallet_watchAsset',
-            params: {
-              type: 'ERC20',
-              options: {
-                address: SABI_CASH_CONTRACT_ADDRESS,
-                symbol: 'SBC',
-                decimals: 18,
-              },
-            },
-          });
-          // Mark as added so we don't ask again
-          localStorage.setItem('sabi_token_added', 'true');
-        } catch (error) {
-          console.error('Error adding token to wallet:', error);
-          // Mark as added/ignored to prevent spamming on every reload
-          localStorage.setItem('sabi_token_added', 'true');
-        }
-      }
-    };
-
-    addTokenToWallet();
-  }, [connectionStatus]);
+      fetchBalances();
+      const id = setInterval(fetchBalances, 10000);
+      return () => clearInterval(id);
+  }, [fetchBalances]);
 
   // Check login status and load user data
   useEffect(() => {
@@ -210,20 +145,25 @@ export const AuthProvider = ({ children }) => {
       setUserPoints(0);
       setPointsHistory([]);
       setStakingInfo(null);
+      // Disconnect wallet if connected
+      if (connected) {
+          await disconnect();
+      }
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
 
-  // Buy Sabi Cash with Polygon (ETH) - Using ThirdWeb
-  const buySabiWithPolygon = async (ethAmount) => {
+  // Buy Sabi Cash with Solana (SOL)
+  const buySabiWithSolana = async (solAmount) => {
     try {
-      if (!address) {
+      if (!publicKey || !connected) {
         throw new Error('Wallet not connected');
       }
 
-      // Use ThirdWeb service for token purchase
-      const result = await thirdwebService.buyWithETH(address, ethAmount);
+      // Use the updated solanaService
+      // passing connection and wallet info needed
+      const result = await solanaService.buyWithSOL(connection, publicKey, sendTransaction, solAmount);
       
       if (result.success) {
         return result;
@@ -231,25 +171,14 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Purchase failed');
       }
     } catch (error) {
-      console.error('Error buying Sabi Cash with Polygon:', error);
+      console.error('Error buying Sabi Cash with Solana:', error);
       throw error;
     }
   };
 
-  // Buy Sabi Cash with USDT - Using ThirdWeb
+  // Buy Sabi Cash with USDT
   const buySabiWithUSDT = async () => {
-    try {
-      if (!address) {
-        throw new Error('Wallet not connected');
-      }
-
-      // For USDT purchases, you might need to implement a different flow
-      // This is a placeholder for now
-      throw new Error('USDT purchases not yet implemented');
-    } catch (error) {
-      console.error('Error buying Sabi Cash with USDT:', error);
-      throw error;
-    }
+      throw new Error('USDT purchases not yet implemented on Solana');
   };
 
   // Convert points to Sabi Cash
@@ -283,35 +212,32 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Stake tokens for mining
+  // Stake tokens for mining - Placeholder for Solana
   const stakeTokens = async (planType, amount) => {
     try {
-      if (!isLoggedIn || !address) {
+      if (!isLoggedIn || !connected) {
         throw new Error('Please login and connect wallet to stake tokens');
       }
 
-      // This would integrate with your mining/staking contract
-      const result = await stake({
-        args: [ethers.utils.parseEther(amount.toString()), planType]
-      });
-
-      return result;
+      // TODO: Implement Solana staking program interaction
+      console.log("Staking not yet implemented for Solana");
+      return { success: false, error: "Staking not yet implemented for Solana" };
     } catch (error) {
       console.error('Error staking tokens:', error);
       throw error;
     }
   };
 
-  // Claim mining rewards
+  // Claim mining rewards - Placeholder for Solana
   const claimMiningRewards = async () => {
     try {
-      if (!isLoggedIn || !address) {
+      if (!isLoggedIn || !connected) {
         throw new Error('Please login and connect wallet to claim rewards');
       }
 
-      const result = await claimRewards();
-
-      return result;
+      // TODO: Implement Solana reward claim
+      console.log("Claiming rewards not yet implemented for Solana");
+      return { success: false, error: "Claiming not yet implemented for Solana" };
     } catch (error) {
       console.error('Error claiming mining rewards:', error);
       throw error;
@@ -320,18 +246,7 @@ export const AuthProvider = ({ children }) => {
 
   // Get mining/staking information
   const getStakingInfo = async () => {
-    try {
-      if (!isLoggedIn) {
-        return null;
-      }
-
-      // This would fetch from your backend API
-      // For now, return null as placeholder
       return null;
-    } catch (error) {
-      console.error('Error getting staking info:', error);
-      return null;
-    }
   };
 
   // Refresh user data
@@ -388,7 +303,7 @@ export const AuthProvider = ({ children }) => {
   // Format balance display
   const formatBalance = (balance) => {
     if (!balance) return '0.00';
-    return parseFloat(balance.displayValue).toFixed(4);
+    return parseFloat(balance).toFixed(4);
   };
 
   const value = {
@@ -399,8 +314,10 @@ export const AuthProvider = ({ children }) => {
     isDisconnected,
     
     // Balances
-    ethBalance: ethBalance ? formatBalance(ethBalance) : '0.00',
-    sabiBalance: sabiBalanceData ? parseFloat(sabiBalanceData.displayValue).toFixed(2) : (manualBalance ? parseFloat(manualBalance).toFixed(2) : '0.00'),
+    nativeBalance: formatBalance(nativeBalance),
+    solBalance: formatBalance(nativeBalance), // Alias for Solana
+    ethBalance: formatBalance(nativeBalance), // Keep for compatibility
+    sabiBalance: formatBalance(sabiBalance),
     
     // User state
     isLoggedIn,
@@ -413,7 +330,7 @@ export const AuthProvider = ({ children }) => {
     // Actions
     login,
     logout,
-    buySabiWithPolygon,
+    buySabiWithSolana, 
     buySabiWithUSDT,
     convertPointsToSabi,
     stakeTokens,

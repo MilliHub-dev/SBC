@@ -9,7 +9,7 @@ import {
 } from "@chakra-ui/react";
 import { Link, useNavigate } from "react-router-dom";
 import { CiMenuKebab } from "react-icons/ci";
-import { ConnectWallet } from "@thirdweb-dev/react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { FaCircleUser } from "react-icons/fa6";
 import LoginModal from "../Login/LoginModal";
 import { useWeb3 } from "../../hooks/useWeb3";
@@ -128,8 +128,8 @@ const Navbar = ({ setIsOpenNavbar }) => {
 						Login
 					</Button>
 				)}
-				<Box display={{ base: `none`, md: `block` }} fontWeight={200}>
-					<ConnectWallet theme="dark" btnTitle="Connect Wallet" />
+				<Box display={{ base: "none", md: "block" }}>
+					<WalletMultiButton style={{ backgroundColor: "#0088CD" }} />
 				</Box>
 				<Button
 					onClick={() => setIsOpenNavbar(true)}

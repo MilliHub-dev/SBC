@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Container, Button, Image, Text } from "@chakra-ui/react";
 import { cryptoImgData } from "../../assets/images/imagesData";
 import MinersCard from "../MinersCard/MinersCard";
-import { ConnectWallet } from "@thirdweb-dev/react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 // import { useWeb3 } from "../../hooks/useWeb3";
 // import { useNavigate } from "react-router-dom";
 // import { Button } from "../ui/button";
@@ -90,7 +90,7 @@ const HeroSection = () => {
 					fontWeight={"500"}
 					gap={{ base: 3, md: 6 }}
 				>
-					<ConnectWallet theme="dark" btnTitle="Connect Wallet" />
+					<WalletMultiButton style={{ backgroundColor: "#0088CD" }} />
 					<Button
 						bg={"gray.800"}
 						color={"#fff"}

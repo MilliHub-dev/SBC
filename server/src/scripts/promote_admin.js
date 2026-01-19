@@ -44,7 +44,8 @@ async function promoteUser() {
     // Dynamic import AFTER env is loaded
     const { query } = await import('../db/pool.js');
 
-    const walletAddress = '0x8324d27DE5eb746117906F5e10f44408Bca8d888';
+    // Solana wallet address
+    const walletAddress = 'So11111111111111111111111111111111111111112'; // Replace with actual admin wallet
     console.log(`Promoting user with wallet ${walletAddress} to admin...`);
     
     const result = await query(

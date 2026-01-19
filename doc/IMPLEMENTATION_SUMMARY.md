@@ -9,7 +9,7 @@
 - **✅ Responsive Design**: Works on mobile and desktop
 
 ### 2. Dashboard Integration
-- **✅ Wallet Information Display**: ETH, SABI balance, and user points
+- **✅ Wallet Information Display**: SOL, SABI balance, and user points
 - **✅ Login to Sabi Ride**: Modal for backend authentication
 - **✅ Navigation Updates**: Dynamic login button in dashboard nav
 - **✅ Real-time Updates**: Balance and points update automatically
@@ -50,9 +50,9 @@
 - **✅ Reward Distribution**: Automatic token minting on completion
 
 ### 7. Smart Contract Development
-- **✅ ERC-20 Token**: Sabi Cash with 18 decimals and 1B max supply
+- **✅ ERC-20 Token**: Sabi Cash with 9 decimals and 1B max supply
 - **✅ Purchase Functions**: 
-  - `buyWithPolygon()`: ETH to SABI conversion
+  - `buyWithSOL()`: SOL to SABI conversion
   - `buyWithUSDT()`: USDT to SABI conversion
 - **✅ Staking System**: 
   - `stake()`: Lock tokens in mining plans
@@ -68,8 +68,8 @@
   - ReentrancyGuard, access control, supply caps
 
 ### 8. Web3 Infrastructure
-- **✅ wagmi Configuration**: Polygon zkEVM testnet and mainnet support
-- **✅ RainbowKit Integration**: Dark theme matching Sabi Ride branding
+- **✅ Solana Configuration**: Solana Devnet and Mainnet support
+- **✅ Wallet Adapter Integration**: Dark theme matching Sabi Ride branding
 - **✅ Custom Hook**: `useWeb3()` for centralized Web3 operations
 - **✅ Error Handling**: Comprehensive error messages and user feedback
 - **✅ Loading States**: Proper loading indicators for all async operations
@@ -83,8 +83,8 @@
 - **✅ Success/Error Feedback**: Toast notifications for all operations
 
 ### 10. Development Setup
-- **✅ Hardhat Configuration**: Ready for Polygon zkEVM deployment
-- **✅ Deployment Scripts**: Automated contract deployment with verification
+- **✅ Solana Configuration**: Ready for Solana deployment
+- **✅ Solana Scripts**: Automated program deployment
 - **✅ Environment Setup**: Template files for easy configuration
 - **✅ Documentation**: Comprehensive README and setup guides
 

@@ -1,7 +1,7 @@
 # Sabi Ride Web3 DApp - Deployment Guide
 
 ## Overview
-This is a Web3 decentralized application (DApp) built with React, Vite, Chakra UI v3, and wagmi for Ethereum interaction. The app includes features for cryptocurrency mining, staking, rewards, and points conversion.
+This is a Web3 decentralized application (DApp) built with React, Vite, Chakra UI v3, and Solana Wallet Adapter for Solana interaction. The app includes features for cryptocurrency mining, staking, rewards, and points conversion.
 
 ## API Configuration
 - **Base URL**: `https://dev.sabirideweb.com.ng`
@@ -24,8 +24,8 @@ NODE_ENV=production
 
 ### 2. Smart Contract Configuration
 Update the contract addresses in `src/config/web3Config.js`:
-- `SABI_CASH_CONTRACT_ADDRESS`: Deploy your ERC20 token contract
-- `USDT_CONTRACT_ADDRESS`: Set the USDT contract address for your network
+- `SABI_CASH_PROGRAM_ID`: Deploy your SPL Token
+- `USDT_CONTRACT_ADDRESS`: Set the USDT mint address for your network
 
 ### 3. Backend API
 Ensure your backend API at `dev.sabirideweb.com.ng` is:

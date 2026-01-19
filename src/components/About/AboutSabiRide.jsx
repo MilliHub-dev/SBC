@@ -25,7 +25,7 @@ const AboutSabiRide = () => {
 					What is Sabi Cash?
 				</Text>
 				<Text as={"p"} color={"gray.500"} fontSize={"16px"}>
-					Sabi Cash ($SBC) is a utility token built on the Polygon zkEVM
+					Sabi Cash ($SBC) is a utility token built on the Solana
 					blockchain that enables ride-to-earn, referrals, staking, and
 					payments within the Sabi Ride platform. It’s designed to reward
 					everyday transport activity while supporting a decentralized
@@ -42,7 +42,7 @@ const AboutSabiRide = () => {
 					<Text>✅ Earn while you ride or drive</Text>
 					<Text>✅ Get rewarded for referrals and tasks</Text>
 					<Text>✅ Stake to earn passive income</Text>
-					<Text>✅ Secure, fast, and eco-friendly on Polygon zkEVM</Text>
+					<Text>✅ Secure, fast, and eco-friendly on Solana</Text>
 				</Box>
 
 				<Box display={"grid"} gap={5} mt={10}>
