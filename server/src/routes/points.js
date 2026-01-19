@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { ethers } from 'ethers';
 import { query } from '../db/pool.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validatePointsConversion, validatePagination } from '../middleware/validation.js';

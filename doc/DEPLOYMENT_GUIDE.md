@@ -180,25 +180,25 @@ pip install python-jose[cryptography] passlib[bcrypt]
 
 ## 5. Smart Contract Integration
 
-### ThirdWeb Configuration
+### Solana Configuration
 
-Your contract is already deployed at: `0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983`
+Your SPL Token Program should be deployed to Solana Devnet or Mainnet.
 
-#### Verify Contract Functions
+#### Verify Program Interaction
 
 ```javascript
-// Test basic ERC20 functions
-const contract = new ethers.Contract(
-  '0x3884Ac9400D3D57eB8E94bcb5Bb6987477c3169d',
-  SABI_CASH_ABI,
-  provider
-);
+// Test basic SPL Token functions
+import { Connection, PublicKey } from '@solana/web3.js';
+import { getAccount, getMint } from '@solana/spl-token';
 
-// Check contract info
-const name = await contract.name();
-const symbol = await contract.symbol();
-const totalSupply = await contract.totalSupply();
-console.log(`${name} (${symbol}) - Supply: ${totalSupply}`);
+const connection = new Connection('https://api.devnet.solana.com');
+const mint = new PublicKey('YOUR_SPL_TOKEN_MINT_ADDRESS');
+
+// Check mint info
+const mintInfo = await getMint(connection, mint);
+console.log(mintInfo.supply);
+```
+```
 ```
 
 #### Add Custom Functions (if needed)
