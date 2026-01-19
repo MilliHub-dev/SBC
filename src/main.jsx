@@ -1,18 +1,5 @@
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { Buffer } from "buffer";
-
-// Polyfill Buffer and process for Web3 dependencies
-window.Buffer = window.Buffer || Buffer;
-window.process = window.process || { env: {} };
-window.global = window; // Polyfill global
-window.BigInt = window.BigInt || global.BigInt; // Ensure BigInt is available
-
-window.process.env = window.process.env || {};
-if (!window.process.env.NODE_ENV) {
-  window.process.env.NODE_ENV = import.meta.env.MODE;
-}
-
 import "./index.css";
 import { Provider } from "./components/ui/provider";
 import { Toaster } from "./components/ui/toaster";
