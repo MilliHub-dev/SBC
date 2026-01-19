@@ -184,7 +184,7 @@ Admin Verifies
 
 ### 2. Configure Environment
 ```bash
-VITE_SABI_CASH_CONTRACT=0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983
+VITE_SABI_CASH_CONTRACT=0x3884Ac9400D3D57eB8E94bcb5Bb6987477c3169d
 VITE_API_BASE_URL=your_backend_url
 DATABASE_URL=your_neon_connection_string
 ```

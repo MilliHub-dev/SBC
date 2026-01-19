@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
 	Box,
 	Button,
@@ -7,15 +7,34 @@ import {
 	Link as ChakraLink,
 	Text,
 } from "@chakra-ui/react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { CiMenuKebab } from "react-icons/ci";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectWallet } from "@thirdweb-dev/react";
 import { FaCircleUser } from "react-icons/fa6";
+import LoginModal from "../Login/LoginModal";
+import { useWeb3 } from "../../hooks/useWeb3";
 
 const Navbar = ({ setIsOpenNavbar }) => {
+	const [openLoginModal, setOpenLoginModal] = useState(false);
+	const { isLoggedIn } = useWeb3();
+	const navigate = useNavigate();
+
+	const handleDashboardClick = () => {
+		if (isLoggedIn) {
+			navigate("/dashboard");
+		} else {
+			setOpenLoginModal(true);
+		}
+	};
+
 	return (
-		<Box
-			as={"nav"}
+		<>
+			<LoginModal
+				openLoginModal={openLoginModal}
+				setOpenLoginModal={setOpenLoginModal}
+			/>
+			<Box
+				as={"nav"}
 			display={"flex"}
 			alignItems={"center"}
 			justifyContent={{ base: `space-between`, md: `space-around` }}
@@ -79,20 +98,38 @@ const Navbar = ({ setIsOpenNavbar }) => {
 			</Box>
 			<Box display={"flex"} alignItems={"center"} gap={3}>
 				<ChakraLink
-					as={Link}
 					bg={{ base: "#0088CD" }}
 					rounded={"lg"}
 					color={`#fff`}
 					padding={".46rem 1.2rem"}
 					fontSize={18}
-					to="/dashboard/start-mining"
+					onClick={handleDashboardClick}
+					cursor="pointer"
 					fontWeight={`600`}
+					_hover={{ textDecoration: 'none', bg: "#0077B6" }}
 				>
 					<FaCircleUser />
 					<Text display={{ base: `none`, md: `block` }}>Dashboard</Text>
 				</ChakraLink>
+				{!isLoggedIn && (
+					<Button
+						onClick={() => setOpenLoginModal(true)}
+						bg={"#0088CD"}
+						color={"#fff"}
+						rounded={"lg"}
+						padding={".46rem 1.2rem"}
+						fontSize={18}
+						fontWeight={`600`}
+						_hover={{ bg: "#0077B6" }}
+						display={{ base: "none", md: "flex" }}
+						gap={2}
+					>
+						<FaCircleUser />
+						Login
+					</Button>
+				)}
 				<Box display={{ base: `none`, md: `block` }} fontWeight={200}>
-					<ConnectButton />
+					<ConnectWallet theme="dark" btnTitle="Connect Wallet" />
 				</Box>
 				<Button
 					onClick={() => setIsOpenNavbar(true)}
@@ -100,12 +137,11 @@ const Navbar = ({ setIsOpenNavbar }) => {
 					color={"#fff"}
 					display={{ base: "flex", md: "none" }}
 				>
-					<Icon size={"lg"}>
-						<CiMenuKebab />
-					</Icon>
+					<Icon as={CiMenuKebab} boxSize={5} />
 				</Button>
 			</Box>
 		</Box>
+		</>
 	);
 };
 

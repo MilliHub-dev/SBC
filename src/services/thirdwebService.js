@@ -59,11 +59,33 @@ class ThirdWebService {
         throw new Error('ThirdWeb service not initialized');
       }
 
+      // Check if the contract supports claim conditions
+      if (!this.tokenDrop.claimConditions) {
+          console.warn('Contract does not support claim conditions');
+          // Return default/fallback conditions to prevent UI crash
+          return {
+              pricePerToken: '0',
+              maxClaimableSupply: '0',
+              supplyClaimed: '0',
+              quantityLimitPerWallet: '0',
+              currency: '0x0000000000000000000000000000000000000000',
+              metadata: 'Claiming not supported for this contract'
+          };
+      }
+
       const conditions = await this.tokenDrop.claimConditions.getActive();
       return conditions;
     } catch (error) {
       console.error('Error getting claim conditions:', error);
-      throw error;
+      // Return default/fallback conditions instead of throwing
+      return {
+          pricePerToken: '0',
+          maxClaimableSupply: '0',
+          supplyClaimed: '0',
+          quantityLimitPerWallet: '0',
+          currency: '0x0000000000000000000000000000000000000000',
+          metadata: 'Error loading claim conditions'
+      };
     }
   }
 
@@ -212,6 +234,16 @@ class ThirdWebService {
 
       if (!this.initialized || !this.tokenDrop) {
         throw new Error('ThirdWeb service not initialized');
+      }
+
+      // Check if contract supports claim conditions
+      if (!this.tokenDrop.claimConditions) {
+          return {
+              canClaim: false,
+              reasons: ['Contract does not support claiming'],
+              maxClaimable: 0,
+              alreadyClaimed: 0
+          };
       }
 
       const reasons = await this.tokenDrop.claimConditions.getClaimIneligibilityReasons(

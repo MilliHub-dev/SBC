@@ -6,6 +6,7 @@ import {
 	LuRefreshCw,
 	LuShield,
 	LuWallet,
+	LuTerminal,
 } from "react-icons/lu";
 import { PiPiggyBank } from "react-icons/pi";
 
@@ -35,23 +36,17 @@ const navigationItems = [
 		//description: "Earn rewards by staking",
 	//},
 	{
-		name: "Mine",
-		path: "/dashboard/start-mining",
-		icon: LuPickaxe,
-		description: "Mine cryptocurrency",
-	},
-	{
 		name: "rewards",
 		path: "/dashboard/rewards",
 		icon: LuGift,
 		description: "View your rewards",
 	},
-	//{
-		//name: "admin",
-		//path: "/dashboard/admin",
-		//icon: LuShield,
-		//description: "Admin panel",
-	//},
+	{
+		name: "admin",
+		path: "/dashboard/admin",
+		icon: LuShield,
+		description: "Admin panel",
+	},
 ];
 
 export default navigationItems;

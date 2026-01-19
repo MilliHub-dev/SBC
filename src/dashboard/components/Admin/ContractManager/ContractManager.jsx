@@ -14,8 +14,6 @@ import {
 	Dialog,
 } from "@chakra-ui/react";
 import {
-	FaCog,
-	FaCoins,
 	FaExchangeAlt,
 	FaShieldAlt,
 	FaWallet,
@@ -23,12 +21,15 @@ import {
 	FaPlay,
 	FaPause,
 } from "react-icons/fa";
+import { ethers } from "ethers";
 import { useWeb3 } from "../../../../hooks/useWeb3";
 import { toaster } from "../../../../components/ui/toaster";
 import AlertNotification from "../../AlertNotification/AlertNotification";
 import AddMinterModal from "./AddMinterModal";
 import UpdateRatesModal from "./UpdateRatesModal";
-import UpdateMiningPlanModal from "./UpdateMiningPlanModal";
+import { SABI_CASH_ABI, SABI_CASH_CONTRACT_ADDRESS } from "../../../../config/web3Config";
+
+const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
 
 const ContractManager = () => {
 	const { isConnected, address } = useWeb3();
@@ -42,22 +43,6 @@ const ContractManager = () => {
 		maxSupply: 1000000000,
 	});
 
-	const [miningPlans, setMiningPlans] = useState({
-		FREE: { deposit: 0, dailyReward: 0.9, duration: 1, autoTrigger: false },
-		BASIC: {
-			deposit: 100,
-			dailyReward: 15,
-			duration: 30,
-			autoTrigger: false,
-		},
-		PREMIUM: {
-			deposit: 1000,
-			dailyReward: 170,
-			duration: 30,
-			autoTrigger: true,
-		},
-	});
-
 	const [authorizedMinters, setAuthorizedMinters] = useState([]);
 	const [newMinter, setNewMinter] = useState("");
 	const [newRates, setNewRates] = useState({ eth: 1000, usdt: 1 });
@@ -66,89 +51,163 @@ const ContractManager = () => {
 	// Modals Popup
 	const [openMinterModal, setOpenMinterModal] = useState(false);
 	const [openUpdateRateModal, setOpenUpdateRateModal] = useState(false);
-	const [openUpdatePlanModal, setOpenUpdatePlanModal] = useState(false);
-
-	// Selected plan for editing
-	const [selectedPlan, setSelectedPlan] = useState(null);
-	const [planForm, setPlanForm] = useState({
-		deposit: 0,
-		dailyReward: 0,
-		duration: 1,
-		autoTrigger: false,
-	});
 
 	useEffect(() => {
-		// Initialize with mock data - in real app, fetch from contract
-		setContractData({
-			address: "0x1234567890123456789012345678901234567890",
-			owner: address || "0x0000000000000000000000000000000000000000",
-			totalSupply: 500000,
-			ethToSabiRate: 1000,
-			usdtToSabiRate: 1,
-			isPaused: false,
-			maxSupply: 1000000000,
-		});
+		const loadContractData = async () => {
+			if (!isConnected || !SABI_CASH_CONTRACT_ADDRESS) return;
+			if (!window.ethereum) return;
 
-		setAuthorizedMinters([
-			address || "0x0000000000000000000000000000000000000000",
-			"0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-			"0x1111222233334444555566667777888899990000",
-		]);
-	}, [address]);
+			setIsLoading(true);
+			try {
+				const provider = new ethers.providers.Web3Provider(window.ethereum);
+				const contract = new ethers.Contract(
+					SABI_CASH_CONTRACT_ADDRESS,
+					SABI_CASH_ABI,
+					provider
+				);
+
+				let owner = "";
+				try {
+					owner = await contract.owner();
+				} catch (e) {
+					console.error("Failed to fetch owner:", e);
+					owner = "";
+				}
+
+				let decimals = 18;
+				try {
+					decimals = await contract.decimals();
+				} catch {
+					decimals = 18;
+				}
+
+				let totalSupply = 0;
+				try {
+					const supply = await contract.totalSupply();
+					totalSupply = Number(ethers.utils.formatUnits(supply, decimals));
+				} catch {
+					totalSupply = 0;
+				}
+
+				// Fetch claim conditions for rate and pause status
+				let ethRate = 1000;
+				let isPaused = false;
+				try {
+					const condition = await contract.claimCondition();
+					if (condition) {
+						// pricePerToken is in Wei per token. 
+						// If 1 Token = 0.001 ETH, then pricePerToken = 10^15
+						// Rate = 1 ETH / pricePerToken
+						const price = ethers.BigNumber.from(condition.pricePerToken);
+						if (price.gt(0)) {
+							const oneEth = ethers.utils.parseEther("1");
+							ethRate = oneEth.div(price).toNumber();
+						}
+						
+						// Check pause status via maxClaimableSupply or timestamp
+						// If startTimestamp is in future, effectively paused for public
+						const now = Math.floor(Date.now() / 1000);
+						const start = ethers.BigNumber.from(condition.startTimestamp).toNumber();
+						const maxSupply = ethers.BigNumber.from(condition.maxClaimableSupply);
+						
+						isPaused = start > now || maxSupply.eq(0);
+					}
+				} catch {
+					// Default conditions if none exist
+				}
+
+				setContractData((prev) => ({
+					...prev,
+					address: SABI_CASH_CONTRACT_ADDRESS,
+					owner: owner || prev.owner,
+					totalSupply,
+					ethToSabiRate: ethRate,
+					isPaused,
+				}));
+
+				// Minters are hard to fetch without events, so we start empty
+				setAuthorizedMinters([]);
+			} catch {
+				toaster.create({
+					title: "Error",
+					description: "Failed to load contract data from chain.",
+					type: "error",
+					duration: 4000,
+				});
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		loadContractData();
+	}, [isConnected, address]);
 
 	const handleUpdateRates = async () => {
 		setIsLoading(true);
 		try {
-			// TODO: Call smart contract updateRates function
-			// await contract.updateRates(newRates.eth, newRates.usdt);
+			const provider = new ethers.providers.Web3Provider(window.ethereum);
+			const signer = provider.getSigner();
+			const contract = new ethers.Contract(
+				SABI_CASH_CONTRACT_ADDRESS,
+				SABI_CASH_ABI,
+				signer
+			);
+
+			// Calculate new pricePerToken: 1 ETH / Rate
+			// e.g. Rate = 1000 SABI/ETH => Price = 0.001 ETH/SABI
+			const oneEth = ethers.utils.parseEther("1");
+			const pricePerToken = oneEth.div(newRates.eth);
+
+			// Preserve existing conditions but update price
+			let currentCondition;
+			try {
+				currentCondition = await contract.claimCondition();
+			} catch {
+				// Default conditions if none exist
+				currentCondition = {
+					startTimestamp: 0,
+					maxClaimableSupply: ethers.constants.MaxUint256,
+					supplyClaimed: 0,
+					quantityLimitPerWallet: ethers.constants.MaxUint256,
+					merkleRoot: ethers.constants.HashZero,
+					pricePerToken: pricePerToken,
+					currency: ethers.constants.AddressZero, // Native Token
+					metadata: ""
+				};
+			}
+
+			const newCondition = {
+				startTimestamp: currentCondition.startTimestamp,
+				maxClaimableSupply: currentCondition.maxClaimableSupply,
+				supplyClaimed: currentCondition.supplyClaimed,
+				quantityLimitPerWallet: currentCondition.quantityLimitPerWallet,
+				merkleRoot: currentCondition.merkleRoot,
+				pricePerToken: pricePerToken,
+				currency: currentCondition.currency,
+				metadata: currentCondition.metadata
+			};
+
+			const tx = await contract.setClaimConditions(newCondition, false); // resetClaimEligibility = false
+			await tx.wait();
 
 			setContractData((prev) => ({
 				...prev,
 				ethToSabiRate: newRates.eth,
-				usdtToSabiRate: newRates.usdt,
+				// usdtToSabiRate: newRates.usdt // Cannot update USDT rate via single claim condition easily without multi-phase
 			}));
 
 			toaster.create({
 				title: "Rates Updated",
-				description: `ETH rate: ${newRates.eth}, USDT rate: ${newRates.usdt}`,
+				description: `ETH rate updated to: ${newRates.eth}. USDT rate requires custom contract logic.`,
 				type: "success",
 				duration: 3000,
 			});
 			setOpenUpdateRateModal(false);
 		} catch (error) {
+			console.error(error);
 			toaster.create({
 				title: "Error",
-				description: "Failed to update rates. Please try again.",
-				type: "error",
-				duration: 3000,
-			});
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	const handleUpdateMiningPlan = async () => {
-		if (!selectedPlan) return;
-
-		setIsLoading(true);
-		try {
-			// TODO: Call smart contract updateMiningPlan function
-			setMiningPlans((prev) => ({
-				...prev,
-				[selectedPlan]: planForm,
-			}));
-
-			toaster.create({
-				title: "Mining Plan Updated",
-				description: `${selectedPlan} plan has been updated successfully`,
-				type: "success",
-				duration: 3000,
-			});
-			setOpenUpdatePlanModal(false);
-		} catch (error) {
-			toaster.create({
-				title: "Error",
-				description: "Failed to update mining plan. Please try again.",
+				description: "Failed to update rates on-chain.",
 				type: "error",
 				duration: 3000,
 			});
@@ -174,7 +233,17 @@ const ContractManager = () => {
 
 		setIsLoading(true);
 		try {
-			// TODO: Call smart contract setAuthorizedMinter function
+			const provider = new ethers.providers.Web3Provider(window.ethereum);
+			const signer = provider.getSigner();
+			const contract = new ethers.Contract(
+				SABI_CASH_CONTRACT_ADDRESS,
+				SABI_CASH_ABI,
+				signer
+			);
+
+			const tx = await contract.grantRole(MINTER_ROLE, newMinter);
+			await tx.wait();
+
 			setAuthorizedMinters((prev) => [...prev, newMinter]);
 			setNewMinter("");
 
@@ -186,9 +255,10 @@ const ContractManager = () => {
 			});
 			setOpenMinterModal(false);
 		} catch (error) {
+			console.error(error);
 			toaster.create({
 				title: "Error",
-				description: "Failed to add authorized minter. Please try again.",
+				description: "Failed to add authorized minter. Ensure you are Admin.",
 				type: "error",
 				duration: 3000,
 			});
@@ -199,7 +269,17 @@ const ContractManager = () => {
 
 	const handleRemoveMinter = async (minterAddress) => {
 		try {
-			// TODO: Call smart contract setAuthorizedMinter(address, false) function
+			const provider = new ethers.providers.Web3Provider(window.ethereum);
+			const signer = provider.getSigner();
+			const contract = new ethers.Contract(
+				SABI_CASH_CONTRACT_ADDRESS,
+				SABI_CASH_ABI,
+				signer
+			);
+
+			const tx = await contract.revokeRole(MINTER_ROLE, minterAddress);
+			await tx.wait();
+
 			setAuthorizedMinters((prev) =>
 				prev.filter((m) => m !== minterAddress)
 			);
@@ -211,10 +291,11 @@ const ContractManager = () => {
 				duration: 3000,
 			});
 		} catch (error) {
+			console.error(error);
 			toaster.create({
 				title: "Error",
 				description:
-					"Failed to remove authorized minter. Please try again.",
+					"Failed to remove authorized minter. Ensure you are Admin.",
 				type: "error",
 				duration: 3000,
 			});
@@ -223,24 +304,57 @@ const ContractManager = () => {
 
 	const handlePauseContract = async () => {
 		try {
-			// TODO: Call smart contract pause/unpause function
+			const provider = new ethers.providers.Web3Provider(window.ethereum);
+			const signer = provider.getSigner();
+			const contract = new ethers.Contract(
+				SABI_CASH_CONTRACT_ADDRESS,
+				SABI_CASH_ABI,
+				signer
+			);
+
+			// Toggle pause by setting maxClaimableSupply to 0 or restoring it
+			let currentCondition;
+			try {
+				currentCondition = await contract.claimCondition();
+			} catch {
+				throw new Error("Cannot fetch current conditions");
+			}
+
+			const newPausedState = !contractData.isPaused;
+			const newMaxSupply = newPausedState ? 0 : ethers.constants.MaxUint256;
+
+			const newCondition = {
+				startTimestamp: currentCondition.startTimestamp,
+				maxClaimableSupply: newMaxSupply,
+				supplyClaimed: currentCondition.supplyClaimed,
+				quantityLimitPerWallet: currentCondition.quantityLimitPerWallet,
+				merkleRoot: currentCondition.merkleRoot,
+				pricePerToken: currentCondition.pricePerToken,
+				currency: currentCondition.currency,
+				metadata: currentCondition.metadata
+			};
+
+			const tx = await contract.setClaimConditions(newCondition, false);
+			await tx.wait();
+
 			setContractData((prev) => ({
 				...prev,
-				isPaused: !prev.isPaused,
+				isPaused: newPausedState,
 			}));
 
 			toaster.create({
-				title: `Contract ${contractData.isPaused ? "Unpaused" : "Paused"}`,
+				title: `Contract ${newPausedState ? "Paused" : "Unpaused"}`,
 				description: `Smart contract has been ${
-					contractData.isPaused ? "unpaused" : "paused"
+					newPausedState ? "paused" : "unpaused"
 				}`,
 				type: "success",
 				duration: 3000,
 			});
 		} catch (error) {
+			console.error(error);
 			toaster.create({
 				title: "Error",
-				description: "Failed to change contract status. Please try again.",
+				description: "Failed to change contract status.",
 				type: "error",
 				duration: 3000,
 			});
@@ -256,7 +370,7 @@ const ContractManager = () => {
 				status: "success",
 				duration: 3000,
 			});
-		} catch (error) {
+		} catch {
 			toaster.create({
 				title: "Error",
 				description: "Failed to withdraw funds. Please try again.",
@@ -264,12 +378,6 @@ const ContractManager = () => {
 				duration: 3000,
 			});
 		}
-	};
-
-	const openPlanModal = (planName) => {
-		setSelectedPlan(planName);
-		setPlanForm(miningPlans[planName]);
-		setOpenUpdatePlanModal(true);
 	};
 
 	if (!isConnected) {
@@ -369,28 +477,6 @@ const ContractManager = () => {
 								</Dialog.Trigger>
 							</UpdateRatesModal>
 
-							{/* Edit Only Free Mining Plan */}
-							<UpdateMiningPlanModal
-								handleUpdateMiningPlan={handleUpdateMiningPlan}
-								isLoading={isLoading}
-								planForm={planForm}
-								selectedPlan={selectedPlan}
-								setPlanForm={setPlanForm}
-								openUpdatePlanModal={openUpdatePlanModal}
-								setOpenUpdatePlanModal={setOpenUpdatePlanModal}
-							>
-								<Dialog.Trigger>
-									<Button
-										colorPalette="purple"
-										w={`full`}
-										fontSize={{ base: 14, md: `initial` }}
-										onClick={() => openPlanModal("FREE")}
-									>
-										<FaCoins /> Edit Mining Plans
-									</Button>
-								</Dialog.Trigger>
-							</UpdateMiningPlanModal>
-
 							<Button
 								colorPalette="orange"
 								w={`full`}
@@ -444,53 +530,6 @@ const ContractManager = () => {
 									</Text>
 								</HStack>
 							</Box>
-						</SimpleGrid>
-					</VStack>
-				</Card.Body>
-			</Card.Root>
-
-			{/* Mining Plans Configuration */}
-			<Card.Root>
-				<Card.Body>
-					<VStack gap={4} align="stretch">
-						<Heading size="md">Mining Plans Configuration</Heading>
-						<SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
-							{Object.entries(miningPlans).map(([planName, plan]) => (
-								<Card.Root
-									key={planName}
-									border="1px solid"
-									borderColor="gray.200"
-								>
-									<Card.Body>
-										<VStack gap={3} align="stretch">
-											<HStack justify="space-between">
-												<Text fontWeight="bold">
-													{planName} Plan
-												</Text>
-												<Button
-													size="sm"
-													onClick={() => openPlanModal(planName)}
-												>
-													<FaCog /> Edit
-												</Button>
-											</HStack>
-											<Text fontSize="sm">
-												Deposit: {plan.deposit} SABI
-											</Text>
-											<Text fontSize="sm">
-												Daily Reward: {plan.dailyReward} SABI
-											</Text>
-											<Text fontSize="sm">
-												Duration: {plan.duration} days
-											</Text>
-											<Text fontSize="sm">
-												Auto Trigger:{" "}
-												{plan.autoTrigger ? "Yes" : "No"}
-											</Text>
-										</VStack>
-									</Card.Body>
-								</Card.Root>
-							))}
 						</SimpleGrid>
 					</VStack>
 				</Card.Body>

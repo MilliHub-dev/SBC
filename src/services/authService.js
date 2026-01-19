@@ -19,15 +19,25 @@ class AuthService {
         response = await sabiRideAPI.loginPassenger(credentials);
       }
 
-      if (response.success && response.token) {
-        this.sabiRideToken = response.token;
+      if (response.access_token || response.token) {
+        const token = response.access_token || response.token;
+        this.sabiRideToken = token;
         return {
           success: true,
-          token: response.token,
-          user: response.user
+          token: token,
+          user: response // The whole response acts as the user object for now
+        };
+      } else if (response.success && response.data && (response.data.token || response.data.access_token)) {
+        // Handle potential nested structure if API changes
+        const token = response.data.token || response.data.access_token;
+        this.sabiRideToken = token;
+        return {
+          success: true,
+          token: token,
+          user: response.data.user || response.data
         };
       } else {
-        throw new Error(response.message || 'Sabi Ride login failed');
+        throw new Error(response.message || 'Sabi Ride login failed: No access token received');
       }
     } catch (error) {
       console.error('Sabi Ride login error:', error);
@@ -36,9 +46,9 @@ class AuthService {
   }
 
   // Step 2: Login to SabiCash with Sabi Ride token
-  async loginToSabiCash(sabiRideToken, walletAddress = null) {
+  async loginToSabiCash(sabiRideToken, walletAddress = null, userType = 'passenger') {
     try {
-      const response = await authAPI.login(sabiRideToken, walletAddress);
+      const response = await authAPI.login(sabiRideToken, walletAddress, userType);
       
       if (response.success && response.token) {
         this.sabiCashToken = response.token;
@@ -72,7 +82,7 @@ class AuthService {
       const sabiRideResult = await this.loginToSabiRide(email, password, userType);
       
       // Step 2: Login to SabiCash with Sabi Ride token
-      const sabiCashResult = await this.loginToSabiCash(sabiRideResult.token, walletAddress);
+      const sabiCashResult = await this.loginToSabiCash(sabiRideResult.token, walletAddress, userType);
       
       return {
         success: true,
@@ -223,6 +233,7 @@ class AuthService {
       const storedUser = localStorage.getItem('currentUser');
       return storedUser ? JSON.parse(storedUser) : null;
     } catch (error) {
+      console.error('Get current user error:', error);
       return null;
     }
   }

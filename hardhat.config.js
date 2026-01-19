@@ -4,12 +4,13 @@ require("dotenv").config();
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.19",
+    version: "0.8.20",
     settings: {
       optimizer: {
         enabled: true,
         runs: 200,
       },
+      evmVersion: "paris", // Use paris to avoid PUSH0 if uncertain about chain support
     },
   },
   networks: {

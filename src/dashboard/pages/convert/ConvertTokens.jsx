@@ -12,7 +12,6 @@ import {
 	Spinner,
 } from "@chakra-ui/react";
 import { useWeb3 } from "../../../hooks/useWeb3";
-import LoginModal from "../../../components/Login/LoginModal";
 import { toaster } from "../../../components/ui/toaster";
 import AlertNotification from "@/dashboard/components/AlertNotification/AlertNotification";
 import SimpleHeading from "../../components/SimpleHeading/SimpleHeading";
@@ -45,11 +44,11 @@ const ConvertTokens = () => {
 			setLoadingPoints(true);
 			try {
 				const tokens = authService.getTokens();
-				if (!tokens.sabiRideToken) {
-					throw new Error('No Sabi Ride token found. Please login again.');
+				if (!tokens.sabiCashToken) {
+					throw new Error('No authentication token found. Please login again.');
 				}
 
-				const result = await pointsService.getPointsBalance(tokens.sabiRideToken);
+				const result = await pointsService.getPointsBalance(tokens.sabiCashToken);
 				if (result.success) {
 					setUserPoints(result.totalPoints);
 					setPointsData(result);
@@ -116,13 +115,13 @@ const ConvertTokens = () => {
 		setIsConverting(true);
 		try {
 			const tokens = authService.getTokens();
-			if (!tokens.sabiRideToken) {
+			if (!tokens.sabiCashToken) {
 				throw new Error('Authentication token not found. Please login again.');
 			}
 
 			// First validate the conversion
 			const validation = await pointsService.validateConversion(
-				tokens.sabiRideToken,
+				tokens.sabiCashToken,
 				parseInt(pointsToConvert),
 				address
 			);
@@ -133,7 +132,7 @@ const ConvertTokens = () => {
 
 			// Proceed with conversion
 			const result = await pointsService.convertPoints(
-				tokens.sabiRideToken,
+				tokens.sabiCashToken,
 				parseInt(pointsToConvert),
 				address
 			);
@@ -154,7 +153,7 @@ const ConvertTokens = () => {
 			setPointsToConvert("");
 
 			// Refresh points data
-			const updatedPointsData = await pointsService.getPointsBalance(tokens.sabiRideToken);
+			const updatedPointsData = await pointsService.getPointsBalance(tokens.sabiCashToken);
 			if (updatedPointsData.success) {
 				setPointsData(updatedPointsData);
 			}
@@ -190,7 +189,6 @@ const ConvertTokens = () => {
 
 	return (
 		<>
-			<LoginModal />
 			<Container maxW="4xl" p={0}>
 				<VStack gap={10} align="stretch">
 					<SimpleHeading
@@ -233,12 +231,12 @@ const ConvertTokens = () => {
 									balance={userPoints.toLocaleString()}
 									name="Available Points"
 									abv="Points"
-									tokenPrice={`${conversionRate} SABI per point`}
+									tokenPrice={`${conversionRate} SBC per point`}
 								/>
 								<TokenWrap
 									balance={sabiBalance || '0.00'}
 									name="Sabi Cash Balance"
-									abv="SABI"
+									abv="SBC"
 									tokenPrice="Current wallet balance"
 								/>
 							</Box>

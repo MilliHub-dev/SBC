@@ -1,7 +1,21 @@
-// ethers will be imported from wagmi/viem instead
+import { ethers } from 'ethers';
 import { Token, CurrencyAmount, TradeType, Percent } from '@uniswap/sdk-core';
 import { AlphaRouter, SwapType } from '@uniswap/smart-order-router';
 import { UNISWAP_CONFIG, SABI_CASH_CONTRACT_ADDRESS, USDT_CONTRACT_ADDRESS, IS_DEMO_MODE } from '../config/web3Config';
+
+// Minimal ABIs
+const QUOTER_ABI = [
+  'function quoteExactInputSingle(address tokenIn, address tokenOut, uint24 fee, uint256 amountIn, uint160 sqrtPriceLimitX96) external returns (uint256 amountOut)'
+];
+
+const ROUTER_ABI = [
+  'function exactInputSingle((address tokenIn, address tokenOut, uint24 fee, address recipient, uint256 deadline, uint256 amountIn, uint256 amountOutMinimum, uint160 sqrtPriceLimitX96) params) external payable returns (uint256 amountOut)'
+];
+
+const ERC20_ABI = [
+  'function approve(address spender, uint256 amount) external returns (bool)',
+  'function allowance(address owner, address spender) external view returns (uint256)'
+];
 
 /**
  * Uniswap Service for Token Swapping
@@ -13,6 +27,7 @@ class UniswapService {
     this.provider = null;
     this.initialized = false;
     this.chainId = 1442; // Polygon zkEVM Testnet
+    this.useRouter = true; // Default to AlphaRouter
   }
 
   /**
@@ -28,10 +43,17 @@ class UniswapService {
       }
 
       this.provider = provider;
-      this.router = new AlphaRouter({
-        chainId: this.chainId,
-        provider: this.provider,
-      });
+      
+      try {
+        this.router = new AlphaRouter({
+          chainId: this.chainId,
+          provider: this.provider,
+        });
+        console.log('AlphaRouter initialized successfully');
+      } catch (routerError) {
+        console.warn('AlphaRouter initialization failed, falling back to direct contract usage:', routerError);
+        this.useRouter = false;
+      }
 
       this.initialized = true;
       console.log('Uniswap Service initialized successfully');
@@ -54,11 +76,11 @@ class UniswapService {
         'WETH',
         'Wrapped Ether'
       ),
-      SABI: new Token(
+      SBC: new Token(
         this.chainId,
         SABI_CASH_CONTRACT_ADDRESS,
         18,
-        'SABI',
+        'SBC',
         'Sabi Cash'
       ),
       USDT: new Token(
@@ -105,8 +127,13 @@ class UniswapService {
         };
       }
 
-      if (!this.initialized || !this.router) {
+      if (!this.initialized) {
         throw new Error('Uniswap service not initialized');
+      }
+
+      // Direct fallback if router failed
+      if (!this.useRouter) {
+        return this.getQuoteDirect(tokenInAddress, tokenOutAddress, amountIn);
       }
 
       const tokens = this.getTokens();
@@ -176,7 +203,16 @@ class UniswapService {
         };
       }
 
-      if (!this.initialized || !this.router) {
+      if (!this.initialized) {
+        throw new Error('Uniswap service not initialized');
+      }
+
+      // Fallback
+      if (!this.useRouter) {
+        return this.executeSwapDirect(tokenInAddress, tokenOutAddress, amountIn, recipientAddress, signer);
+      }
+
+      if (!this.router) {
         throw new Error('Uniswap service not initialized');
       }
 
@@ -226,6 +262,93 @@ class UniswapService {
     } catch (error) {
       console.error('Error executing swap:', error);
       throw new Error('Swap execution failed: ' + error.message);
+    }
+  }
+
+  async getQuoteDirect(tokenInAddress, tokenOutAddress, amountIn) {
+    try {
+      const quoter = new ethers.Contract(UNISWAP_CONFIG.QUOTER_ADDRESS, QUOTER_ABI, this.provider);
+      const fee = UNISWAP_CONFIG.POOL_FEE;
+      const tokens = this.getTokens();
+      const tokenIn = Object.values(tokens).find(t => t.address.toLowerCase() === tokenInAddress.toLowerCase());
+      const tokenOut = Object.values(tokens).find(t => t.address.toLowerCase() === tokenOutAddress.toLowerCase());
+
+      if (!tokenIn || !tokenOut) throw new Error("Tokens not found");
+
+      const amountInRaw = ethers.utils.parseUnits(amountIn, tokenIn.decimals);
+
+      const amountOutRaw = await quoter.callStatic.quoteExactInputSingle(
+        tokenInAddress,
+        tokenOutAddress,
+        fee,
+        amountInRaw,
+        0
+      );
+
+      const amountOut = ethers.utils.formatUnits(amountOutRaw, tokenOut.decimals);
+
+      return {
+        amountIn,
+        amountOut,
+        priceImpact: '0',
+        route: [`${tokenIn.symbol} -> ${tokenOut.symbol}`],
+        gasEstimate: '200000',
+        minimumAmountOut: (parseFloat(amountOut) * 0.995).toFixed(6),
+        isDirect: true
+      };
+    } catch (error) {
+      console.error('Direct quote failed:', error);
+      throw error;
+    }
+  }
+
+  async executeSwapDirect(tokenInAddress, tokenOutAddress, amountIn, recipientAddress, signer) {
+    try {
+      const router = new ethers.Contract(UNISWAP_CONFIG.ROUTER_ADDRESS, ROUTER_ABI, signer);
+      const tokens = this.getTokens();
+      const tokenIn = Object.values(tokens).find(t => t.address.toLowerCase() === tokenInAddress.toLowerCase());
+      const tokenOut = Object.values(tokens).find(t => t.address.toLowerCase() === tokenOutAddress.toLowerCase());
+      const amountInRaw = ethers.utils.parseUnits(amountIn, tokenIn.decimals);
+      
+      const quote = await this.getQuoteDirect(tokenInAddress, tokenOutAddress, amountIn);
+      const minOut = ethers.utils.parseUnits(quote.minimumAmountOut, tokenOut.decimals);
+
+      const params = {
+        tokenIn: tokenInAddress,
+        tokenOut: tokenOutAddress,
+        fee: UNISWAP_CONFIG.POOL_FEE,
+        recipient: recipientAddress,
+        deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+        amountIn: amountInRaw,
+        amountOutMinimum: minOut,
+        sqrtPriceLimitX96: 0
+      };
+
+      let tx;
+      if (tokenIn.symbol === 'WETH') {
+         tx = await router.exactInputSingle(params, { value: amountInRaw });
+      } else {
+         const tokenContract = new ethers.Contract(tokenInAddress, ERC20_ABI, signer);
+         const allowance = await tokenContract.allowance(recipientAddress, UNISWAP_CONFIG.ROUTER_ADDRESS);
+         if (allowance.lt(amountInRaw)) {
+             const approveTx = await tokenContract.approve(UNISWAP_CONFIG.ROUTER_ADDRESS, amountInRaw);
+             await approveTx.wait();
+         }
+         tx = await router.exactInputSingle(params);
+      }
+      
+      const receipt = await tx.wait();
+      return {
+        hash: receipt.transactionHash,
+        success: receipt.status === 1,
+        amountIn,
+        amountOut: quote.amountOut,
+        recipient: recipientAddress,
+        gasUsed: receipt.gasUsed.toString()
+      };
+    } catch (error) {
+       console.error('Direct swap failed:', error);
+       throw error;
     }
   }
 

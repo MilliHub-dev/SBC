@@ -1,34 +1,44 @@
-import React from 'react';
-
-import { WagmiProvider } from 'wagmi';
-import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit';
+import { ThirdwebProvider, metamaskWallet, coinbaseWallet, walletConnect } from "@thirdweb-dev/react";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { config } from '../config/web3Config';
-import '@rainbow-me/rainbowkit/styles.css';
+import { THIRDWEB_CONFIG } from '../config/web3Config';
+import { AuthProvider } from '../context/auth-context';
+
+// Define Polygon zkEVM Mainnet manually
+const PolygonZkEvmMainnet = {
+  chainId: 1101,
+  name: "Polygon zkEVM",
+  nativeCurrency: {
+    name: "Ether",
+    symbol: "ETH",
+    decimals: 18,
+  },
+  rpc: ["https://zkevm-rpc.com"],
+  shortName: "zkevm",
+  slug: "polygon-zkevm",
+  testnet: false,
+  chain: "Polygon",
+};
+
 
 const queryClient = new QueryClient();
 
 const Web3Provider = ({ children }) => {
   return (
-    <WagmiProvider config={config}>
+    <ThirdwebProvider
+      activeChain={PolygonZkEvmMainnet}
+      clientId={THIRDWEB_CONFIG.CLIENT_ID}
+      supportedWallets={[
+        metamaskWallet(),
+        coinbaseWallet(),
+        walletConnect()
+      ]}
+    >
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider 
-          theme={darkTheme({
-            accentColor: '#0088CD',
-            accentColorForeground: 'white',
-            borderRadius: 'medium',
-            fontStack: 'system',
-          })}
-          appInfo={{
-            appName: 'Sabi Ride',
-            learnMoreUrl: 'https://sabiride.net',
-          }}
-        >
+        <AuthProvider>
           {children}
-        </RainbowKitProvider>
+        </AuthProvider>
       </QueryClientProvider>
-    </WagmiProvider>
-
+    </ThirdwebProvider>
   );
 };
 

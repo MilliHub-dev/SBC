@@ -1,5 +1,4 @@
 import { Avatar, Box, Flex, HStack, Text } from "@chakra-ui/react";
-import { useDisclosure } from "@chakra-ui/react"; // 👈 add this
 import React from "react";
 
 const TokenWrap = ({ balance, name, abv, tokenPrice }) => {

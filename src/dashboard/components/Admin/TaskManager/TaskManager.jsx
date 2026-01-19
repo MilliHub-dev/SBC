@@ -14,6 +14,8 @@ import {
 	Heading,
 	SimpleGrid,
 	Stat,
+	Spinner,
+	Center,
 } from "@chakra-ui/react";
 import {
 	FaPlus,
@@ -29,11 +31,12 @@ import {
 import { toaster } from "../../../../components/ui/toaster";
 import AddEditTaskModal from "./AddEditTaskModal";
 import DeleteConfirmModal from "./DeleteConfirmModal";
+import { tasksAPI } from "../../../../config/apiConfig";
 
-const TaskManager = () => {
+const TaskManager = ({ tasks: initialTasks = [], loading = false, onRefresh, stats }) => {
 	const [tasks, setTasks] = useState([]);
 	const [selectedTask, setSelectedTask] = useState(null);
-	const [isLoading, setIsLoading] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [taskStats, setTaskStats] = useState({
 		totalTasks: 0,
 		activeTasks: 0,
@@ -52,130 +55,110 @@ const TaskManager = () => {
 		description: "",
 		type: "social",
 		category: "twitter",
-		reward: 7,
+		rewardPoints: 0,
+		rewardSabiCash: 0,
 		isActive: true,
 		maxCompletions: 1000,
-		externalLink: "",
+		externalUrl: "",
 		verificationMethod: "manual",
 		instructions: "",
 		validationRules: "",
 	});
 
-	// Mock task data
+	// Update local state when props change
 	useEffect(() => {
-		const mockTasks = [
-			{
-				id: 1,
-				title: "Follow @SabiRide on Twitter",
-				description: "Follow our official Twitter account",
-				type: "social",
-				category: "twitter",
-				reward: 7,
-				isActive: true,
-				completions: 245,
-				maxCompletions: 1000,
-				createdAt: "2024-01-15",
-				externalLink: "https://twitter.com/sabiride",
-				verificationMethod: "api",
-				icon: FaTwitter,
-			},
-			{
-				id: 2,
-				title: "Refer a Friend",
-				description: "Invite someone to join Sabi Ride",
-				type: "referral",
-				category: "referral",
-				reward: 7,
-				isActive: true,
-				completions: 89,
-				maxCompletions: 500,
-				createdAt: "2024-01-10",
-				verificationMethod: "manual",
-				icon: FaUserPlus,
-			},
-			{
-				id: 3,
-				title: "Like Latest Post",
-				description: "Like our latest social media post",
-				type: "social",
-				category: "engagement",
-				reward: 7,
-				isActive: false,
-				completions: 156,
-				maxCompletions: 200,
-				createdAt: "2024-01-08",
-				verificationMethod: "manual",
-				icon: FaThumbsUp,
-			},
-		];
+		if (initialTasks) {
+			setTasks(initialTasks);
+			
+			// Calculate stats from tasks if stats prop is not yet available
+			if (!stats) {
+				setTaskStats({
+					totalTasks: initialTasks.length,
+					activeTasks: initialTasks.filter((t) => t.isActive).length,
+					completedToday: 0, 
+					totalRewardsDistributed: 0,
+				});
+			}
+		}
+	}, [initialTasks, stats]);
 
-		setTasks(mockTasks);
-		setTaskStats({
-			totalTasks: mockTasks.length,
-			activeTasks: mockTasks.filter((t) => t.isActive).length,
-			completedToday: 47,
-			totalRewardsDistributed: mockTasks.reduce(
-				(sum, task) => sum + task.completions * task.reward,
-				0
-			),
-		});
-	}, []);
+	// Update stats when stats prop changes
+	useEffect(() => {
+		if (stats) {
+			setTaskStats({
+				totalTasks: stats.totalTasks,
+				activeTasks: stats.activeTasks,
+				completedToday: stats.completedToday,
+				totalRewardsDistributed: stats.totalRewardsDistributed,
+			});
+		}
+	}, [stats]);
 
 	const handleTaskSubmit = async (e) => {
 		e.preventDefault();
-		setIsLoading(true);
+		setIsSubmitting(true);
 
 		try {
+			const taskData = {
+				title: taskForm.title,
+				description: taskForm.description,
+				taskType: taskForm.type,
+				category: taskForm.category,
+				rewardPoints: Number(taskForm.rewardPoints),
+				rewardSabiCash: Number(taskForm.rewardSabiCash),
+				maxCompletions: Number(taskForm.maxCompletions),
+				verificationMethod: taskForm.verificationMethod,
+				externalUrl: taskForm.externalUrl,
+				isActive: taskForm.isActive,
+				taskData: {
+					instructions: taskForm.instructions,
+					validationRules: taskForm.validationRules
+				}
+			};
+
 			if (selectedTask) {
 				// Update existing task
-				setTasks((prev) =>
-					prev.map((task) =>
-						task.id === selectedTask.id
-							? {
-									...task,
-									...taskForm,
-									updatedAt: new Date().toISOString().split("T")[0],
-							  }
-							: task
-					)
-				);
-				toaster.create({
-					title: "Task Updated",
-					description: "Task has been updated successfully",
-					type: "success",
-					duration: 3000,
-				});
+				const result = await tasksAPI.updateTask(selectedTask.id, taskData);
+				if (result.success) {
+					toaster.create({
+						title: "Task Updated",
+						description: "Task has been updated successfully",
+						type: "success",
+						duration: 3000,
+					});
+					if (onRefresh) onRefresh();
+				} else {
+					throw new Error(result.error || "Failed to update task");
+				}
 			} else {
 				// Create new task
-				const newTask = {
-					id: Date.now(),
-					...taskForm,
-					completions: 0,
-					createdAt: new Date().toISOString().split("T")[0],
-					icon: getTaskIcon(taskForm.category),
-				};
-
-				setTasks((prev) => [...prev, newTask]);
-				toaster.create({
-					title: "Task Created",
-					description: "New task has been created successfully",
-					type: "success",
-					duration: 3000,
-				});
+				const result = await tasksAPI.createTask(taskData);
+				if (result.success) {
+					toaster.create({
+						title: "Task Created",
+						description: "New task has been created successfully",
+						type: "success",
+						duration: 3000,
+					});
+					if (onRefresh) onRefresh();
+				} else {
+					throw new Error(result.error || "Failed to create task");
+				}
 			}
 
 			// Reset form and close modal
 			resetForm();
 			setOpenAddEditModal(false);
 		} catch (error) {
+			console.error("Task save error:", error);
 			toaster.create({
 				title: "Error",
-				description: "Failed to save task. Please try again.",
+				description: error.message || "Failed to save task. Please try again.",
 				type: "error",
 				duration: 3000,
 			});
 		} finally {
-			setIsLoading(false);
+			setIsSubmitting(false);
 		}
 	};
 
@@ -183,43 +166,53 @@ const TaskManager = () => {
 		if (!selectedTask) return;
 
 		try {
-			setTasks((prev) => prev.filter((task) => task.id !== selectedTask.id));
-			toaster.create({
-				title: "Task Deleted",
-				description: "Task has been deleted successfully",
-				type: "info",
-				duration: 3000,
-			});
-			setOpenConfirmDeleteModal(false);
-			setSelectedTask(null);
+			const result = await tasksAPI.deleteTask(selectedTask.id);
+			if (result.success) {
+				toaster.create({
+					title: "Task Deleted",
+					description: "Task has been deleted successfully",
+					type: "info",
+					duration: 3000,
+				});
+				setOpenConfirmDeleteModal(false);
+				setSelectedTask(null);
+				if (onRefresh) onRefresh();
+			} else {
+				throw new Error(result.error || "Failed to delete task");
+			}
 		} catch (error) {
+			console.error("Task delete error:", error);
 			toaster.create({
 				title: "Error",
-				description: "Failed to delete task. Please try again.",
+				description: error.message || "Failed to delete task. Please try again.",
 				type: "error",
 				duration: 3000,
 			});
 		}
 	};
 
-	const toggleTaskStatus = async (taskId) => {
+	const toggleTaskStatus = async (task) => {
 		try {
-			setTasks((prev) =>
-				prev.map((task) =>
-					task.id === taskId ? { ...task, isActive: !task.isActive } : task
-				)
-			);
-
-			toaster.create({
-				title: "Task Status Updated",
-				description: "Task status has been changed",
-				type: "success",
-				duration: 2000,
+			const result = await tasksAPI.updateTask(task.id, {
+				isActive: !task.is_active
 			});
+
+			if (result.success) {
+				toaster.create({
+					title: "Task Status Updated",
+					description: "Task status has been changed",
+					type: "success",
+					duration: 2000,
+				});
+				if (onRefresh) onRefresh();
+			} else {
+				throw new Error(result.error || "Failed to update task status");
+			}
 		} catch (error) {
+			console.error("Task status update error:", error);
 			toaster.create({
 				title: "Error",
-				description: "Failed to update task status",
+				description: error.message || "Failed to update task status",
 				type: "error",
 				duration: 3000,
 			});
@@ -232,10 +225,11 @@ const TaskManager = () => {
 			description: "",
 			type: "social",
 			category: "twitter",
-			reward: 7,
+			rewardPoints: 0,
+			rewardSabiCash: 0,
 			isActive: true,
 			maxCompletions: 1000,
-			externalLink: "",
+			externalUrl: "",
 			verificationMethod: "manual",
 			instructions: "",
 			validationRules: "",
@@ -248,15 +242,16 @@ const TaskManager = () => {
 		setTaskForm({
 			title: task.title,
 			description: task.description,
-			type: task.type,
-			category: task.category,
-			reward: task.reward,
+			type: task.taskType || "social",
+			category: task.category || "twitter",
+			rewardPoints: task.rewardPoints || 0,
+			rewardSabiCash: task.rewardSabiCash || 0,
 			isActive: task.isActive,
-			maxCompletions: task.maxCompletions,
-			externalLink: task.externalLink || "",
-			verificationMethod: task.verificationMethod,
-			instructions: task.instructions || "",
-			validationRules: task.validationRules || "",
+			maxCompletions: task.maxCompletions || 1000,
+			externalUrl: task.externalUrl || "",
+			verificationMethod: task.verificationMethod || "manual",
+			instructions: task.taskData?.instructions || "",
+			validationRules: task.taskData?.validationRules || "",
 		});
 		setOpenAddEditModal(true);
 	};
@@ -278,6 +273,14 @@ const TaskManager = () => {
 
 	const getStatusColor = (isActive) => (isActive ? "green" : "red");
 	const getStatusText = (isActive) => (isActive ? "Active" : "Inactive");
+
+	if (loading) {
+		return (
+			<Center py={10}>
+				<Spinner size="xl" color="blue.500" />
+			</Center>
+		);
+	}
 
 	return (
 		<VStack gap={6} align="stretch">
@@ -335,7 +338,7 @@ const TaskManager = () => {
 				{/* Add/Edit Task Modal */}
 				<AddEditTaskModal
 					handleTaskSubmit={handleTaskSubmit}
-					isLoading={isLoading}
+					isLoading={isSubmitting}
 					selectedTask={selectedTask}
 					taskForm={taskForm}
 					setTaskForm={setTaskForm}
@@ -384,7 +387,7 @@ const TaskManager = () => {
 									<Table.Row key={task.id}>
 										<Table.Cell>
 											<HStack>
-												<Icon as={task.icon} color="blue.500" />
+												<Icon as={getTaskIcon(task.category)} color="blue.500" />
 												<Box>
 													<Text
 														fontWeight="600"
@@ -403,9 +406,18 @@ const TaskManager = () => {
 												{task.category}
 											</Badge>
 										</Table.Cell>
-										<Table.Cell>{task.reward} SABI</Table.Cell>
 										<Table.Cell>
-											{task.completions} / {task.maxCompletions}
+											<VStack align="start" gap={0}>
+												<Text>{task.rewardPoints} Pts</Text>
+												{Number(task.rewardSabiCash) > 0 && (
+													<Text fontSize="xs" color="green.500">
+														+ ${Number(task.rewardSabiCash).toFixed(2)}
+													</Text>
+												)}
+											</VStack>
+										</Table.Cell>
+										<Table.Cell>
+											{task.completionCount || 0} / {task.maxCompletions}
 										</Table.Cell>
 										<Table.Cell>
 											<HStack>
@@ -419,7 +431,7 @@ const TaskManager = () => {
 												<Switch.Root
 													checked={task.isActive}
 													onCheckedChange={() =>
-														toggleTaskStatus(task.id)
+														toggleTaskStatus(task)
 													}
 													size="sm"
 												>

@@ -189,7 +189,7 @@ Your contract is already deployed at: `0x53308b85F0Fceadfc0a474eb0c196F0F02CD498
 ```javascript
 // Test basic ERC20 functions
 const contract = new ethers.Contract(
-  '0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983',
+  '0x3884Ac9400D3D57eB8E94bcb5Bb6987477c3169d',
   SABI_CASH_ABI,
   provider
 );

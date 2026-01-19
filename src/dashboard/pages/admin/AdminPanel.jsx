@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useDisclosure } from "@chakra-ui/react"; // 👈 add this
 import {
 	Box,
@@ -16,7 +16,8 @@ import {
 	Alert,
 	Input,
 	Textarea,
-	Select,
+	NativeSelect,
+	Tabs,
 	Dialog,       // ⟵ v3 replacement for Modal
 	Portal,       // ⟵ for rendering overlays
 	CloseButton,  // ⟵ for the close icon
@@ -33,14 +34,15 @@ import {
 	FaPiggyBank,
 	FaTrash,
 	FaPenToSquare ,
+	FaCar,
 } from "react-icons/fa6";
 import { useWeb3 } from "../../../hooks/useWeb3";
 import { toaster } from "../../../components/ui/toaster";
 import TaskManager from "../../components/Admin/TaskManager/TaskManager";
 import UserManager from "../../components/Admin/UserManager/UserManager";
+import DriverApplicationManager from "../../components/Admin/DriverApplicationManager/DriverApplicationManager";
 import ContractManager from "../../components/Admin/ContractManager/ContractManager";
 import AnalyticsDashboard from "../../components/Admin/AnalyticsDashboard";
-import MiningPlanManager from "../../components/Admin/MiningPlanManager/MiningPlanManager";
 import AlertNotification from "@/dashboard/components/AlertNotification/AlertNotification";
 import { LuChartBar, LuPickaxe } from "react-icons/lu";
 import { FaCheckCircle } from "react-icons/fa";
@@ -58,6 +60,20 @@ const AdminPanel = () => {
 		pendingRewards: 0,
 		totalStaked: 0,
 		monthlyGrowth: 0,
+		dailyActiveUsers: 0,
+		taskCompletionRate: 0,
+		avgTokensPerUser: 0,
+	});
+	const [taskManagerStats, setTaskManagerStats] = useState({
+		totalTasks: 0,
+		activeTasks: 0,
+		completedToday: 0,
+		totalRewardsDistributed: 0,
+	});
+	const [dashboardData, setDashboardData] = useState({
+		recentActivity: [],
+		topUsers: [],
+		taskPerformance: []
 	});
 	const [tasks, setTasks] = useState([]);
 	const [loadingTasks, setLoadingTasks] = useState(false);
@@ -86,24 +102,24 @@ const AdminPanel = () => {
 			try {
 				// Check if user has admin privileges through the API
 				const tokens = authService.getTokens();
+				let apiAuthorized = false;
+				
+				// 1. Check API if logged in
 				if (tokens.sabiCashToken) {
-					const config = await adminAPI.getConfig();
-					setIsAuthorized(config.success);
-				} else {
-					// Fallback to wallet address check for development
-					const adminAddresses = [
-						"0x742d35Cc6665C6532F6C5e4B5B6B3c2E1234567890", // Replace with actual admin addresses
-						"0x123456789abcdef123456789abcdef1234567890",
-					];
-
-					const isAdmin =
-						adminAddresses.includes(address.toLowerCase()) ||
-						localStorage.getItem("isAdmin") === "true"; // For demo purposes
-
-					setIsAuthorized(isAdmin);
+					try {
+						const config = await adminAPI.getConfig();
+						apiAuthorized = config.success;
+					} catch (e) {
+						console.warn("Admin API check failed:", e);
+					}
 				}
+				
+				const localAuthorized = localStorage.getItem("isAdmin") === "true";
+				const nextAuthorized = apiAuthorized || localAuthorized;
 
-				if (!isAuthorized) {
+				setIsAuthorized(nextAuthorized);
+
+				if (!nextAuthorized) {
 					toaster.create({
 						title: "Access Denied",
 						description: "You do not have administrator privileges",
@@ -118,7 +134,7 @@ const AdminPanel = () => {
 		};
 
 		checkAdminStatus();
-	}, [isConnected, address, isLoggedIn, isAuthorized]);
+	}, [isConnected, address, isLoggedIn]);
 
 	// Fetch admin statistics
 	useEffect(() => {
@@ -128,27 +144,54 @@ const AdminPanel = () => {
 			setLoadingStats(true);
 			try {
 				const analytics = await adminAPI.getAnalytics();
-				if (analytics.success) {
+				if (analytics.success && analytics.analytics) {
+					const data = analytics.analytics;
+					
+					// Calculate monthly growth
+					const totalUsers = parseInt(data.users.total_users) || 0;
+					const newUsers = parseInt(data.users.new_users_30d) || 0;
+					const prevUsers = totalUsers - newUsers;
+					const growth = prevUsers > 0 
+						? ((newUsers / prevUsers) * 100).toFixed(1) 
+						: (newUsers > 0 ? 100 : 0);
+
+					// Calculate task completion rate
+					const totalCompletions = parseInt(data.tasks.total_completions) || 0;
+					const verifiedCompletions = parseInt(data.tasks.verified_completions) || 0;
+					const completionRate = totalCompletions > 0 
+						? ((verifiedCompletions / totalCompletions) * 100).toFixed(1) 
+						: 0;
+
 					setAdminStats({
-						totalUsers: analytics.totalUsers || 0,
-						totalTokens: analytics.totalTokens || 0,
-						activeTasks: analytics.activeTasks || 0,
-						pendingRewards: analytics.pendingRewards || 0,
-						totalStaked: analytics.totalStaked || 0,
-						monthlyGrowth: analytics.monthlyGrowth || 0,
+						totalUsers: totalUsers,
+						totalTokens: parseFloat(data.sabi_cash.total_sabi_cash_in_system) || 0,
+						activeTasks: parseInt(data.tasks.active_tasks) || 0,
+						pendingRewards: parseInt(data.tasks.pending_points) || 0,
+						totalStaked: parseFloat(data.mining.total_staked_amount) || 0,
+						monthlyGrowth: growth,
+						dailyActiveUsers: parseInt(data.users.active_users_24h) || 0,
+						taskCompletionRate: completionRate,
+						avgTokensPerUser: parseFloat(data.sabi_cash.avg_sabi_cash_per_user).toFixed(2) || 0,
 					});
+
+					setDashboardData({
+						recentActivity: data.recent_activity || [],
+						topUsers: data.top_users || [],
+						taskPerformance: data.task_performance || []
+					});
+					
+					if (data.tasks) {
+						const tStats = data.tasks;
+						setTaskManagerStats({
+							totalTasks: parseInt(tStats.total_tasks) || 0,
+							activeTasks: parseInt(tStats.active_tasks) || 0,
+							completedToday: parseInt(tStats.completed_today) || 0,
+							totalRewardsDistributed: parseInt(tStats.total_points_distributed) || 0,
+						});
+					}
 				}
 			} catch (error) {
 				console.error("Error fetching admin stats:", error);
-				// Fallback to demo data if API fails
-				setAdminStats({
-					totalUsers: 1250,
-					totalTokens: 500000,
-					activeTasks: 12,
-					pendingRewards: 15000,
-					totalStaked: 250000,
-					monthlyGrowth: 15.8,
-				});
 			} finally {
 				setLoadingStats(false);
 			}
@@ -158,30 +201,35 @@ const AdminPanel = () => {
 	}, [isAuthorized]);
 
 	// Fetch tasks
-	useEffect(() => {
-		const fetchTasks = async () => {
-			if (!isAuthorized) return;
+	const fetchTasks = useCallback(async () => {
+		if (!isAuthorized) return;
 
-			setLoadingTasks(true);
-			try {
-				const tasksResult = await tasksAPI.getTasks();
-				if (tasksResult.success) {
-					setTasks(tasksResult.results || []);
-				}
-			} catch (error) {
-				console.error("Error fetching tasks:", error);
-			} finally {
-				setLoadingTasks(false);
+		setLoadingTasks(true);
+		try {
+			const tasksResult = await tasksAPI.getTasks();
+			if (tasksResult.success) {
+				setTasks(tasksResult.results || []);
 			}
-		};
-
-		fetchTasks();
+		} catch (error) {
+			console.error("Error fetching tasks:", error);
+		} finally {
+			setLoadingTasks(false);
+		}
 	}, [isAuthorized]);
+
+	useEffect(() => {
+		fetchTasks();
+	}, [fetchTasks]);
 
 	// Create new task
 	const handleCreateTask = async () => {
 		try {
-			const result = await tasksAPI.createTask(taskForm);
+			const taskData = {
+				...taskForm,
+				rewardPoints: taskForm.points,
+				rewardSabiCash: taskForm.sabiCash
+			};
+			const result = await tasksAPI.createTask(taskData);
 			if (result.success) {
 				toaster.create({
 					title: "Task Created",
@@ -191,10 +239,7 @@ const AdminPanel = () => {
 				});
 				
 				// Refresh tasks
-				const tasksResult = await tasksAPI.getTasks();
-				if (tasksResult.success) {
-					setTasks(tasksResult.results || []);
-				}
+				fetchTasks();
 				
 				// Reset form and close modal
 				setTaskForm({
@@ -284,13 +329,13 @@ const AdminPanel = () => {
 			id: "dashboard",
 			label: "Dashboard",
 			icon: FaChartLine,
-			component: <AnalyticsDashboard stats={adminStats} loading={loadingStats} />,
+			component: <AnalyticsDashboard stats={adminStats} data={dashboardData} loading={loadingStats} />,
 		},
 		{
 			id: "tasks",
 			label: "Task Manager",
 			icon: FaListCheck,
-			component: <TaskManager tasks={tasks} loading={loadingTasks} onRefresh={() => window.location.reload()} />,
+			component: <TaskManager tasks={tasks} loading={loadingTasks} onRefresh={fetchTasks} stats={taskManagerStats} />,
 		},
 		{
 			id: "users",
@@ -299,11 +344,12 @@ const AdminPanel = () => {
 			component: <UserManager />,
 		},
 		{
-			id: "mining",
-			label: "Mining Plans",
-			icon: FaCoins,
-			component: <MiningPlanManager />,
+			id: "drivers",
+			label: "Driver Applications",
+			icon: FaCar,
+			component: <DriverApplicationManager />,
 		},
+
 		{
 			id: "contract",
 			label: "Contract Admin",
@@ -377,8 +423,8 @@ const AdminPanel = () => {
 										<Box key={index} p={3} bg="gray.800" rounded="md" mb={2}>
 											<HStack justify="space-between">
 												<Text color="white">{task.title}</Text>
-												<Badge colorScheme={task.is_active ? "green" : "red"}>
-													{task.is_active ? "Active" : "Inactive"}
+												<Badge colorScheme={task.isActive ? "green" : "red"}>
+													{task.isActive ? "Active" : "Inactive"}
 												</Badge>
 											</HStack>
 											<Text fontSize="sm" color="gray.400">{task.description}</Text>
@@ -525,12 +571,16 @@ const AdminPanel = () => {
 			</VStack>
 
 			{/* Task Creation Modal */}
-			<Modal isOpen={isTaskModalOpen} onClose={onTaskModalClose} size="lg">
-				<ModalOverlay />
-				<ModalContent bg="gray.900" borderColor="gray.700">
-					<ModalHeader color="white">Create New Task</ModalHeader>
-					<ModalCloseButton />
-					<ModalBody>
+			<Dialog.Root open={isTaskModalOpen} onOpenChange={(e) => !e.open && onTaskModalClose()} size="lg">
+				<Portal>
+					<Dialog.Backdrop />
+					<Dialog.Positioner>
+						<Dialog.Content bg="gray.900" borderColor="gray.700">
+							<Dialog.Header color="white">
+								<Dialog.Title>Create New Task</Dialog.Title>
+							</Dialog.Header>
+							<Dialog.CloseTrigger />
+							<Dialog.Body>
 						<VStack gap={4} align="stretch">
 							<Box>
 								<Text color="white" mb={2}>Task Title</Text>
@@ -558,18 +608,18 @@ const AdminPanel = () => {
 
 							<Box>
 								<Text color="white" mb={2}>Task Type</Text>
-								<Select
+								<NativeSelect.Root
 									value={taskForm.type}
 									onChange={(e) => setTaskForm({...taskForm, type: e.target.value})}
-									bg="gray.800"
-									borderColor="gray.600"
-									color="white"
 								>
-									<option value="social">Social Media</option>
-									<option value="referral">Referral</option>
-									<option value="survey">Survey</option>
-									<option value="app_usage">App Usage</option>
-								</Select>
+									<NativeSelect.Field bg="gray.800" borderColor="gray.600" color="white">
+										<option value="social" style={{color: "black"}}>Social Media</option>
+										<option value="referral" style={{color: "black"}}>Referral</option>
+										<option value="survey" style={{color: "black"}}>Survey</option>
+										<option value="app_usage" style={{color: "black"}}>App Usage</option>
+									</NativeSelect.Field>
+									<NativeSelect.Indicator />
+								</NativeSelect.Root>
 							</Box>
 
 							<HStack>
@@ -601,17 +651,19 @@ const AdminPanel = () => {
 								</Box>
 							</HStack>
 						</VStack>
-					</ModalBody>
-					<ModalFooter>
-						<Button variant="ghost" mr={3} onClick={onTaskModalClose}>
-							Cancel
-						</Button>
-						<Button colorScheme="blue" onClick={handleCreateTask}>
-							Create Task
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
+							</Dialog.Body>
+							<Dialog.Footer>
+								<Button variant="ghost" mr={3} onClick={onTaskModalClose}>
+									Cancel
+								</Button>
+								<Button colorScheme="blue" onClick={handleCreateTask}>
+									Create Task
+								</Button>
+							</Dialog.Footer>
+						</Dialog.Content>
+					</Dialog.Positioner>
+				</Portal>
+			</Dialog.Root>
 		</Container>
 	);
 };

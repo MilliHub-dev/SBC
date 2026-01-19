@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useDisclosure } from "@chakra-ui/react"; // 👈 add this
 import {
 	Box,
 	Button,
@@ -18,8 +17,7 @@ import { LuWallet } from "react-icons/lu";
 import SimpleHeading from "@/dashboard/components/SimpleHeading/SimpleHeading";
 import TokenWrap from "./TokenWrap";
 import { thirdwebService } from "../../../services/thirdwebService";
-import { useWalletClient } from "wagmi";
-import { ethers } from "ethers";
+import { useSigner } from "@thirdweb-dev/react";
 
 const BuyTokens = () => {
 	const [paymentMethod, setPaymentMethod] = useState("eth");
@@ -33,19 +31,19 @@ const BuyTokens = () => {
 		isConnected,
 		address,
 		ethBalance,
-		sbcBalance,
+		sabiBalance,
 	} = useWeb3();
 
-	const { data: walletClient } = useWalletClient();
+	const signer = useSigner();
 
 	// Initialize ThirdWeb service and load claim conditions
 	useEffect(() => {
 		const initializeThirdWeb = async () => {
-			if (!isConnected || !walletClient) return;
+			if (!isConnected || !signer) return;
 
 			try {
 				setLoadingConditions(true);
-				await thirdwebService.initialize(walletClient);
+				await thirdwebService.initialize(signer);
 				
 				// Get claim conditions
 				const conditions = await thirdwebService.getClaimConditions();
@@ -68,7 +66,7 @@ const BuyTokens = () => {
 		};
 
 		initializeThirdWeb();
-	}, [isConnected, walletClient, address]);
+	}, [isConnected, signer, address]);
 
 	const calculateTokensFromETH = (ethAmount) => {
 		if (!claimConditions) return 0;
@@ -202,14 +200,14 @@ const BuyTokens = () => {
 							<TokenWrap
 								name={"Ethereum"}
 								abv={"ETH"}
-								tokenPrice={claimConditions?.pricePerToken ? `${(1 / parseFloat(claimConditions.pricePerToken)).toFixed(0)} SBC per ETH` : "Loading..."}
+								tokenPrice={claimConditions?.pricePerToken && parseFloat(claimConditions.pricePerToken) > 0 ? `${(1 / parseFloat(claimConditions.pricePerToken)).toFixed(0)} SBC per ETH` : "N/A"}
 								balance={ethBalance}
 							/>
 							<TokenWrap
 								name={"Sabi Cash"}
 								abv={"SBC"}
-								tokenPrice={claimConditions?.pricePerToken ? `${claimConditions.pricePerToken} ETH per SBC` : "Loading..."}
-								balance={sbcBalance}
+								tokenPrice={claimConditions?.pricePerToken && parseFloat(claimConditions.pricePerToken) > 0 ? `${claimConditions.pricePerToken} ETH per SBC` : "N/A"}
+								balance={sabiBalance}
 							/>
 						</Box>
 

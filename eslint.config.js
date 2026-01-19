@@ -23,11 +23,37 @@ export default [
     rules: {
       ...js.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'no-unused-vars': [
+        'error',
+        { 
+          varsIgnorePattern: '^[A-Z_]',
+          argsIgnorePattern: '^[A-Z_]' 
+        }
+      ],
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
       ],
     },
   },
-]
+  {
+    files: ['test/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.mocha,
+      },
+    },
+    rules: {
+       'no-unused-vars': 'warn',
+     },
+   },
+   {
+     files: ['server/**/*.js', 'scripts/**/*.js', '*.config.js'],
+     languageOptions: {
+       globals: {
+         ...globals.node,
+       },
+     },
+   },
+ ]

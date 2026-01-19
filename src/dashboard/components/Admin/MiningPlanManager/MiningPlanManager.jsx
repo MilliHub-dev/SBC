@@ -141,7 +141,7 @@ const MiningPlanManager = () => {
 
 			resetForm();
 			setShowCreateForm(false);
-		} catch (error) {
+		} catch {
 			toaster.create({
 				title: "Error",
 				description: "Failed to create plan. Please try again.",
@@ -179,7 +179,7 @@ const MiningPlanManager = () => {
 			});
 
 			setShowEditForm(false);
-		} catch (error) {
+		} catch {
 			toaster.create({
 				title: "Error",
 				description: "Failed to update plan. Please try again.",
@@ -215,6 +215,7 @@ const MiningPlanManager = () => {
 				duration: 3000,
 			});
 		} catch (error) {
+			console.error("Toggle plan error:", error);
 			toaster.create({
 				title: "Error",
 				description: "Failed to update plan status",
@@ -233,7 +234,7 @@ const MiningPlanManager = () => {
 				type: "info",
 				duration: 3000,
 			});
-		} catch (error) {
+		} catch {
 			toaster.create({
 				title: "Error",
 				description: "Failed to delete plan",

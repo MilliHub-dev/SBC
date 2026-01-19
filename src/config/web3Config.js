@@ -1,51 +1,16 @@
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
-import { polygonZkEvm, polygonZkEvmTestnet } from 'wagmi/chains';
-
-// Custom Polygon zkEVM Testnet configuration
-const polygonZkEvmTestnetCustom = {
-  ...polygonZkEvmTestnet,
-  id: 1442,
-  name: 'Polygon zkEVM Testnet',
-  network: 'polygon-zkevm-testnet',
-  nativeCurrency: {
-    decimals: 18,
-    name: 'Ether',
-    symbol: 'ETH',
-  },
-  rpcUrls: {
-    default: {
-      http: ['https://rpc.public.zkevm-test.net'],
-    },
-    public: {
-      http: ['https://rpc.public.zkevm-test.net'],
-    },
-  },
-  blockExplorers: {
-    default: { name: 'PolygonScan', url: 'https://testnet-zkevm.polygonscan.com' },
-  },
-  testnet: true,
-};
-
-export const config = getDefaultConfig({
-  appName: 'Sabi Ride',
-  projectId: '2f05ae7f1116030fde2d36508f472bfb', // Updated with a valid project ID
-  chains: [polygonZkEvmTestnetCustom, polygonZkEvm],
-  ssr: false,
-});
-
 // ThirdWeb Configuration
 export const THIRDWEB_CONFIG = {
   CLIENT_ID: import.meta.env.VITE_THIRDWEB_CLIENT_ID || 'your-thirdweb-client-id',
   SECRET_KEY: import.meta.env.VITE_THIRDWEB_SECRET_KEY || 'your-thirdweb-secret-key',
-  CHAIN_ID: 1442, // Polygon zkEVM Testnet
-  NETWORK: 'polygon-zkevm-testnet',
+  CHAIN_ID: 1101, // Polygon zkEVM Mainnet
+  NETWORK: 'polygon-zkevm',
 };
 
 // ThirdWeb Token Drop Contract Address (Production)
-export const THIRDWEB_TOKEN_DROP_ADDRESS = import.meta.env.VITE_THIRDWEB_TOKEN_DROP_ADDRESS || '0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983';
+export const THIRDWEB_TOKEN_DROP_ADDRESS = import.meta.env.VITE_THIRDWEB_TOKEN_DROP_ADDRESS || '0x3884Ac9400D3D57eB8E94bcb5Bb6987477c3169d';
 
 // Sabi Cash Token Contract Address (ThirdWeb deployed)
-export const SABI_CASH_CONTRACT_ADDRESS = import.meta.env.VITE_SABI_CASH_CONTRACT_ADDRESS || '0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983';
+export const SABI_CASH_CONTRACT_ADDRESS = import.meta.env.VITE_SABI_CASH_CONTRACT_ADDRESS || '0x3884Ac9400D3D57eB8E94bcb5Bb6987477c3169d';
 
 // Contract ABI for Sabi Cash Token (ThirdWeb Standard + Custom)
 export const SABI_CASH_ABI = [
@@ -85,6 +50,15 @@ export const SABI_CASH_ABI = [
   'event TokensClaimed(address indexed claimer, address indexed receiver, uint256 indexed startTokenId, uint256 quantityClaimed)',
   'event TokensMinted(address indexed to, uint256 amount)',
   'event TokensBurned(address indexed from, uint256 amount)',
+  'event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender)',
+  'event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender)',
+
+  // Access Control
+  'function hasRole(bytes32 role, address account) view returns (bool)',
+  'function grantRole(bytes32 role, address account)',
+  'function revokeRole(bytes32 role, address account)',
+  'function getRoleAdmin(bytes32 role) view returns (bytes32)',
+  'function DEFAULT_ADMIN_ROLE() view returns (bytes32)',
 ];
 
 // USDT Contract Address on Polygon zkEVM Testnet
@@ -99,60 +73,20 @@ export const UNISWAP_CONFIG = {
   POOL_FEE: 3000, // 0.3% pool fee
 };
 
-// Sabi Ride API Configuration (Production)
-export const SABI_RIDE_API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL  || 'https://tmp.sabirideweb.com.ng/api/v1',
-  ENDPOINTS: {
-    LOGIN: '/auth/login',
-    DRIVER_PROFILE: '/users/me/sabi-rider',
-    PASSENGER_PROFILE: '/users/me/sabi-passenger',
-    POINTS_BALANCE: '/users/points',
-    POINTS_HISTORY: '/users/points/history',
-    POINTS_CONVERT: '/users/points/convert',
-    TRIPS_COMPLETE: '/trips/complete',
-  }
-};
+export const IS_DEMO_MODE = false;
+
+// Admin Wallet Addresses
+export const ADMIN_WALLET_ADDRESSES = [
+  "0x3884Ac9400D3D57eB8E94bcb5Bb6987477c3169d", // Default deployer/admin
+];
 
 // Mining Plans Configuration
-export const MINING_PLANS = {
-  FREE: {
-    id: 0,
-    name: 'Free Plan',
-    deposit: 0,
-    dailyReward: 0.9,
-    duration: 1, // 24 hours
-    autoTrigger: false,
-  },
-  BASIC: {
-    id: 1,
-    name: 'Basic Plan',
-    deposit: 100,
-    dailyReward: 15,
-    duration: 30, // 30 days
-    autoTrigger: false,
-  },
-  PREMIUM: {
-    id: 2,
-    name: 'Premium Plan',
-    deposit: 1000,
-    dailyReward: 170,
-    duration: 30, // 30 days
-    autoTrigger: true,
-  },
-};
+export const MINING_PLANS = [
+  { id: 1, name: 'Basic', duration: 30, apy: 12, minStake: 100 },
+  { id: 2, name: 'Standard', duration: 90, apy: 24, minStake: 500 },
+  { id: 3, name: 'Premium', duration: 180, apy: 48, minStake: 2000 },
+];
 
-// Task Rewards Configuration
-export const TASK_REWARDS = {
-  REFERRAL: 7,
-  FOLLOW_X: 7,
-  LIKE_POST: 7,
-  COMMENT: 7,
-};
-
-// Point to Sabi Cash Conversion Rate
-export const POINT_TO_SABI_RATE = 0.5; // 1 point = 0.5 Sabi Cash
-export const MIN_POINT_CONVERSION = 500; // Minimum 500 points to convert
-
-// Production Environment Check
-export const IS_PRODUCTION = import.meta.env.NODE_ENV === 'production';
-export const IS_DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true' || false;
+// Point Conversion Configuration
+export const POINT_TO_SABI_RATE = 0.5; // 1 Point = 0.5 Sabi Cash
+export const MIN_POINT_CONVERSION = 500; // Minimum points to convert

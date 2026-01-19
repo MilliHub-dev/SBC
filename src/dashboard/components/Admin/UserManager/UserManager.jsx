@@ -14,7 +14,9 @@ import {
 	Stat,
 	InputGroup,
 	Avatar,
+	Center,
 	Portal,
+	Spinner,
 	Table,
 	Dialog,
 	Menu,
@@ -25,13 +27,13 @@ import {
 	FaDownload,
 	FaEye,
 	FaBan,
-	FaUserShield,
 	FaGift,
 	FaChevronDown,
 } from "react-icons/fa";
 import { toaster } from "../../../../components/ui/toaster";
 import UserDetailsModal from "./UserDetailsModal";
 import SendRewardsModal from "./SendRewardsModal";
+import { adminAPI } from "../../../../config/apiConfig";
 
 const UserManager = () => {
 	const [users, setUsers] = useState([]);
@@ -59,73 +61,56 @@ const UserManager = () => {
 		type: "bonus",
 	});
 
-	// Mock user data
-	useEffect(() => {
-		const mockUsers = [
-			{
-				id: 1,
-				email: "john.doe@example.com",
-				walletAddress: "0x1234...5678",
-				name: "John Doe",
-				status: "active",
-				userType: "premium",
-				points: 1250,
-				sabiEarned: 625,
-				totalRides: 47,
-				referrals: 3,
-				tasksCompleted: 8,
-				joinedDate: "2024-01-15",
-				lastActive: "2024-01-20",
-				isBlocked: false,
-				avatar: null,
-			},
-			{
-				id: 2,
-				email: "jane.smith@example.com",
-				walletAddress: "0xabcd...efgh",
-				name: "Jane Smith",
-				status: "active",
-				userType: "regular",
-				points: 890,
-				sabiEarned: 445,
-				totalRides: 23,
-				referrals: 1,
-				tasksCompleted: 5,
-				joinedDate: "2024-01-10",
-				lastActive: "2024-01-19",
-				isBlocked: false,
-				avatar: null,
-			},
-			{
-				id: 3,
-				email: "mike.wilson@example.com",
-				walletAddress: "0x9876...4321",
-				name: "Mike Wilson",
-				status: "inactive",
-				userType: "regular",
-				points: 2100,
-				sabiEarned: 1050,
-				totalRides: 89,
-				referrals: 7,
-				tasksCompleted: 12,
-				joinedDate: "2024-01-05",
-				lastActive: "2024-01-10",
-				isBlocked: true,
-				avatar: null,
-			},
-		];
+	// Fetch users from API
+	const fetchUsers = async () => {
+		setIsLoading(true);
+		try {
+			const response = await adminAPI.getUsers();
+			if (response.success) {
+				const mappedUsers = response.results.map((user) => ({
+					id: user.id,
+					email: user.email,
+					walletAddress: user.wallet_address || "N/A",
+					name: user.username || `${user.first_name || ""} ${user.last_name || ""}`.trim() || "Unknown",
+					status: user.is_active ? "active" : "inactive",
+					userType: user.user_type,
+					points: parseInt(user.total_points) || 0,
+					sabiEarned: parseFloat(user.sabi_cash_balance) || 0,
+					totalRides: 0, // Not available in list view
+					referrals: 0, // Not available in list view
+					tasksCompleted: 0, // Not available in list view
+					joinedDate: new Date(user.created_at).toLocaleDateString(),
+					lastActive: user.last_login ? new Date(user.last_login).toLocaleDateString() : "Never",
+					isBlocked: !user.is_active,
+					avatar: null,
+				}));
 
-		setUsers(mockUsers);
-		setFilteredUsers(mockUsers);
-		setUserStats({
-			totalUsers: mockUsers.length,
-			activeUsers: mockUsers.filter((u) => u.status === "active").length,
-			totalPoints: mockUsers.reduce((sum, user) => sum + user.points, 0),
-			totalSabiEarned: mockUsers.reduce(
-				(sum, user) => sum + user.sabiEarned,
-				0
-			),
-		});
+				setUsers(mappedUsers);
+				setFilteredUsers(mappedUsers);
+				
+				// Update stats
+				setUserStats({
+					totalUsers: response.count || mappedUsers.length,
+					activeUsers: mappedUsers.filter((u) => u.status === "active").length,
+					totalPoints: mappedUsers.reduce((sum, user) => sum + user.points, 0),
+					totalSabiEarned: mappedUsers.reduce((sum, user) => sum + user.sabiEarned, 0),
+				});
+			}
+		} catch (error) {
+			console.error("Error fetching users:", error);
+			toaster.create({
+				title: "Error",
+				description: "Failed to fetch users",
+				type: "error",
+				duration: 3000,
+			});
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchUsers();
 	}, []);
 
 	// Filter users based on search and filters
@@ -163,6 +148,11 @@ const UserManager = () => {
 		try {
 			switch (action) {
 				case "block":
+					// API Call: Toggle active status
+					// If currently blocked (inactive), set to active (true)
+					// If currently active (not blocked), set to inactive (false)
+					await adminAPI.updateUserStatus(user.id, user.isBlocked);
+					
 					setUsers((prev) =>
 						prev.map((u) =>
 							u.id === user.id
@@ -184,30 +174,6 @@ const UserManager = () => {
 					});
 					break;
 
-				case "promote":
-					setUsers((prev) =>
-						prev.map((u) =>
-							u.id === user.id
-								? {
-										...u,
-										userType:
-											u.userType === "premium"
-												? "regular"
-												: "premium",
-								  }
-								: u
-						)
-					);
-					toaster.create({
-						title: "User Updated",
-						description: `${user.name} is now a ${
-							user.userType === "premium" ? "regular" : "premium"
-						} user`,
-						type: "success",
-						duration: 3000,
-					});
-					break;
-
 				case "reward":
 					setOpenSendRewardsModal(true);
 					break;
@@ -216,6 +182,7 @@ const UserManager = () => {
 					break;
 			}
 		} catch (error) {
+			console.error("User action error:", error);
 			toaster.create({
 				title: "Error",
 				description: "Failed to perform action. Please try again.",
@@ -229,16 +196,16 @@ const UserManager = () => {
 		if (!selectedUser || !rewardForm.amount || !rewardForm.reason) return;
 
 		try {
+			const type = rewardForm.type === "bonus" ? "sabi_cash" : "points";
+			await adminAPI.sendReward(selectedUser.id, rewardForm.amount, type, rewardForm.reason);
+
 			setUsers((prev) =>
 				prev.map((u) =>
 					u.id === selectedUser.id
 						? {
 								...u,
-								sabiEarned: u.sabiEarned + rewardForm.amount,
-								points:
-									rewardForm.type === "points"
-										? u.points + rewardForm.amount
-										: u.points,
+								sabiEarned: type === "sabi_cash" ? u.sabiEarned + rewardForm.amount : u.sabiEarned,
+								points: type === "points" ? u.points + rewardForm.amount : u.points,
 						  }
 						: u
 				)
@@ -247,7 +214,7 @@ const UserManager = () => {
 			toaster.create({
 				title: "Reward Sent",
 				description: `${rewardForm.amount} ${
-					rewardForm.type === "points" ? "points" : "SABI"
+					type === "points" ? "points" : "SABI"
 				} awarded to ${selectedUser.name}`,
 				type: "success",
 				duration: 3000,
@@ -256,6 +223,7 @@ const UserManager = () => {
 			setRewardForm({ amount: 0, reason: "", type: "bonus" });
 			setOpenSendRewardsModal(false);
 		} catch (error) {
+			console.error("Reward error:", error);
 			toaster.create({
 				title: "Error",
 				description: "Failed to send reward. Please try again.",
@@ -309,6 +277,40 @@ const UserManager = () => {
 		});
 	};
 
+	const handleViewUser = async (user) => {
+		setSelectedUser(user);
+		try {
+			const response = await adminAPI.getUserDetails(user.id);
+			if (!response.success) return;
+			const details = response.user;
+			const statistics = response.statistics;
+
+			setSelectedUser((prev) => ({
+				...prev,
+				email: details.email ?? prev.email,
+				name:
+					details.username ||
+					`${details.first_name || ""} ${details.last_name || ""}`.trim() ||
+					prev.name,
+				walletAddress: details.wallet_address || prev.walletAddress,
+				status: details.is_active ? "active" : "inactive",
+				userType: details.user_type || prev.userType,
+				points: Number(details.total_points ?? prev.points) || 0,
+				sabiEarned: Number(details.sabi_cash_balance ?? prev.sabiEarned) || 0,
+				joinedDate: details.created_at
+					? new Date(details.created_at).toLocaleDateString()
+					: prev.joinedDate,
+				lastActive: details.last_login
+					? new Date(details.last_login).toLocaleDateString()
+					: prev.lastActive,
+				isBlocked: !details.is_active,
+				tasksCompleted: Number(statistics?.total_task_completions ?? prev.tasksCompleted) || 0,
+			}));
+		} catch (error) {
+			console.error("Error fetching user details:", error);
+		}
+	};
+
 	const getStatusColor = (status) => {
 		switch (status) {
 			case "active":
@@ -322,10 +324,12 @@ const UserManager = () => {
 
 	const getUserTypeColor = (userType) => {
 		switch (userType) {
-			case "premium":
+			case "admin":
 				return "purple";
-			case "regular":
+			case "driver":
 				return "blue";
+			case "passenger":
+				return "green";
 			default:
 				return "gray";
 		}
@@ -425,8 +429,9 @@ const UserManager = () => {
 							>
 								<NativeSelect.Field>
 									<option value="all">All Types</option>
-									<option value="regular">Regular</option>
-									<option value="premium">Premium</option>
+									<option value="passenger">Passenger</option>
+									<option value="driver">Driver</option>
+									<option value="admin">Admin</option>
 								</NativeSelect.Field>
 								<NativeSelect.Indicator />
 							</NativeSelect.Root>
@@ -457,159 +462,138 @@ const UserManager = () => {
 								</Table.Row>
 							</Table.Header>
 							<Table.Body>
-								{filteredUsers.map((user) => (
-									<Table.Row key={user.id}>
-										<Table.Cell>
-											<HStack>
-												<Avatar.Root size={`sm`}>
-													<Avatar.Fallback name={user.name} />
-													<Avatar.Image src={user.avatar} />
-												</Avatar.Root>
-												<Box>
-													<Text fontWeight="bold">
-														{user.name}
-													</Text>
-													<Text fontSize="sm" color="gray.600">
-														{user.email}
-													</Text>
-												</Box>
-											</HStack>
-										</Table.Cell>
-										<Table.Cell>
-											<Text fontSize="sm" fontFamily="mono">
-												{user.walletAddress}
-											</Text>
-										</Table.Cell>
-										<Table.Cell>
-											<Badge
-												colorPalette={getStatusColor(user.status)}
-											>
-												{user.status}
-											</Badge>
-										</Table.Cell>
-										<Table.Cell>
-											<Badge
-												colorPalette={getUserTypeColor(
-													user.userType
-												)}
-											>
-												{user.userType}
-											</Badge>
-										</Table.Cell>
-										<Table.Cell>
-											{user.points.toLocaleString()}
-										</Table.Cell>
-										<Table.Cell>
-											{user.sabiEarned.toLocaleString()}
-										</Table.Cell>
-										<Table.Cell>{user.totalRides}</Table.Cell>
-										<Table.Cell>
-											<Menu.Root closeOnSelect={false}>
-												<Menu.Trigger asChild>
-													<Button size="sm">
-														Actions <FaChevronDown />
-													</Button>
-												</Menu.Trigger>
-												<Portal>
-													<Menu.Positioner>
-														<Menu.Content>
-															{/* User Details Modal */}
-															<UserDetailsModal
-																getStatusColor={getStatusColor}
-																getUserTypeColor={
-																	getUserTypeColor
-																}
-																selectedUser={selectedUser}
-															>
-																<Menu.Item
-																	value="view details"
-																	onClick={() => {
-																		setSelectedUser(user);
-																	}}
-																>
-																	<Dialog.Trigger
-																		display={`flex`}
-																		alignItems={`center`}
-																		gap={2}
-																	>
-																		<FaEye /> View Details
-																	</Dialog.Trigger>
-																</Menu.Item>
-															</UserDetailsModal>
-
-															{/* Send Rewards Modal */}
-															<SendRewardsModal
-																handleRewardUser={
-																	handleRewardUser
-																}
-																rewardForm={rewardForm}
-																selectedUser={selectedUser}
-																setRewardForm={setRewardForm}
-																openSendRewardsModal={
-																	openSendRewardsModal
-																}
-																setOpenSendRewardsModal={
-																	setOpenSendRewardsModal
-																}
-															>
-																<Menu.Item
-																	value="send reward"
-																	onClick={() =>
-																		handleUserAction(
-																			"reward",
-																			user
-																		)
-																	}
-																>
-																	<Dialog.Trigger
-																		display={`flex`}
-																		alignItems={`center`}
-																		gap={2}
-																	>
-																		<FaGift /> Send Reward
-																	</Dialog.Trigger>
-																</Menu.Item>
-															</SendRewardsModal>
-															<Menu.Item
-																value="promote or demote"
-																onClick={() =>
-																	handleUserAction(
-																		"promote",
-																		user
-																	)
-																}
-															>
-																<FaUserShield />{" "}
-																{user.userType === "premium"
-																	? "Demote to Regular"
-																	: "Promote to Premium"}
-															</Menu.Item>
-															<Menu.Item
-																value="block or unblock"
-																onClick={() =>
-																	handleUserAction(
-																		"block",
-																		user
-																	)
-																}
-																color={
-																	user.isBlocked
-																		? "green.500"
-																		: "red.500"
-																}
-															>
-																<FaBan />{" "}
-																{user.isBlocked
-																	? "Unblock User"
-																	: "Block User"}
-															</Menu.Item>
-														</Menu.Content>
-													</Menu.Positioner>
-												</Portal>
-											</Menu.Root>
+								{isLoading ? (
+									<Table.Row>
+										<Table.Cell colSpan={8}>
+											<Center py={8}>
+												<Spinner />
+											</Center>
 										</Table.Cell>
 									</Table.Row>
-								))}
+								) : (
+									filteredUsers.map((user) => (
+										<Table.Row key={user.id}>
+											<Table.Cell>
+												<HStack>
+													<Avatar.Root size={`sm`}>
+														<Avatar.Fallback name={user.name} />
+														<Avatar.Image src={user.avatar} />
+													</Avatar.Root>
+													<Box>
+														<Text fontWeight="bold">
+															{user.name}
+														</Text>
+														<Text fontSize="sm" color="gray.600">
+															{user.email}
+														</Text>
+													</Box>
+												</HStack>
+											</Table.Cell>
+											<Table.Cell>
+												<Text fontSize="sm" fontFamily="mono">
+													{user.walletAddress}
+												</Text>
+											</Table.Cell>
+											<Table.Cell>
+												<Badge
+													colorPalette={getStatusColor(user.status)}
+												>
+													{user.status}
+												</Badge>
+											</Table.Cell>
+											<Table.Cell>
+												<Badge
+													colorPalette={getUserTypeColor(
+														user.userType
+													)}
+												>
+													{user.userType}
+												</Badge>
+											</Table.Cell>
+											<Table.Cell>
+												{user.points.toLocaleString()}
+											</Table.Cell>
+											<Table.Cell>
+												{user.sabiEarned.toLocaleString()}
+											</Table.Cell>
+											<Table.Cell>{user.totalRides}</Table.Cell>
+											<Table.Cell>
+												<Menu.Root closeOnSelect={false}>
+													<Menu.Trigger asChild>
+														<Button size="sm">
+															Actions <FaChevronDown />
+														</Button>
+													</Menu.Trigger>
+													<Portal>
+														<Menu.Positioner>
+															<Menu.Content>
+																<UserDetailsModal
+																	getStatusColor={getStatusColor}
+																	getUserTypeColor={getUserTypeColor}
+																	selectedUser={selectedUser}
+																>
+																	<Menu.Item
+																		value="view details"
+																		onClick={() => handleViewUser(user)}
+																	>
+																		<Dialog.Trigger
+																			display={`flex`}
+																			alignItems={`center`}
+																			gap={2}
+																		>
+																			<FaEye /> View Details
+																		</Dialog.Trigger>
+																	</Menu.Item>
+																</UserDetailsModal>
+
+																<SendRewardsModal
+																	handleRewardUser={handleRewardUser}
+																	rewardForm={rewardForm}
+																	selectedUser={selectedUser}
+																	setRewardForm={setRewardForm}
+																	openSendRewardsModal={openSendRewardsModal}
+																	setOpenSendRewardsModal={setOpenSendRewardsModal}
+																>
+																	<Menu.Item
+																		value="send reward"
+																		onClick={() =>
+																			handleUserAction("reward", user)
+																		}
+																	>
+																		<Dialog.Trigger
+																			display={`flex`}
+																			alignItems={`center`}
+																			gap={2}
+																		>
+																			<FaGift /> Send Reward
+																		</Dialog.Trigger>
+																	</Menu.Item>
+																</SendRewardsModal>
+
+																<Menu.Item
+																	value="block or unblock"
+																	onClick={() =>
+																		handleUserAction("block", user)
+																	}
+																	color={
+																		user.isBlocked
+																			? "green.500"
+																			: "red.500"
+																	}
+																>
+																	<FaBan />{" "}
+																	{user.isBlocked
+																		? "Unblock User"
+																		: "Block User"}
+																</Menu.Item>
+															</Menu.Content>
+														</Menu.Positioner>
+													</Portal>
+												</Menu.Root>
+											</Table.Cell>
+										</Table.Row>
+									))
+								)}
 							</Table.Body>
 						</Table.Root>
 					</Table.ScrollArea>

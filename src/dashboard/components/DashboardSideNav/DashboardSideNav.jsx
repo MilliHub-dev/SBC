@@ -7,9 +7,19 @@ import { Link, useLocation } from "react-router-dom";
 import { RiQuestionLine } from "react-icons/ri";
 import navigationItems from "./NavigationItems";
 import NavItem from "./NavItem";
+import { useAddress } from "@thirdweb-dev/react";
+import { ADMIN_WALLET_ADDRESSES } from "../../../config/web3Config";
 
 const DashboardSideNav = ({ sidebarWidth, isExpanded, onToggleSidebar }) => {
 	const location = useLocation();
+	const address = useAddress();
+
+	const filteredNavItems = navigationItems.filter(item => {
+		if (item.name === "admin") {
+			return address && ADMIN_WALLET_ADDRESSES.map(a => a.toLowerCase()).includes(address.toLowerCase());
+		}
+		return true;
+	});
 
 	return (
 		<Box
@@ -67,9 +77,7 @@ const DashboardSideNav = ({ sidebarWidth, isExpanded, onToggleSidebar }) => {
 							}}
 							onClick={onToggleSidebar}
 						>
-							<Icon size={"md"}>
-								<IoMenuSharp />
-							</Icon>
+							<Icon as={IoMenuSharp} boxSize={5} />
 						</ChakraLink>
 						<Image
 							src={"../Sabi-Cash.png"}
@@ -94,7 +102,7 @@ const DashboardSideNav = ({ sidebarWidth, isExpanded, onToggleSidebar }) => {
 						gap={2}
 						py={5}
 					>
-						{navigationItems.map((item, index) => {
+						{filteredNavItems.map((item, index) => {
 							const isActive = item.exact
 								? location.pathname === item.path
 								: location.pathname.startsWith(item.path);
@@ -148,9 +156,7 @@ const DashboardSideNav = ({ sidebarWidth, isExpanded, onToggleSidebar }) => {
 						textDecoration={"none"}
 						color={"#fff"}
 					>
-						<Icon size={"lg"}>
-							<RiQuestionLine />
-						</Icon>
+						<Icon as={RiQuestionLine} boxSize={5} />
 						<Text
 							whiteSpace={"nowrap"}
 							opacity={isExpanded ? 1 : 0}

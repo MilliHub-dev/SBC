@@ -16,9 +16,8 @@ import {
 } from "@chakra-ui/react";
 import { useWeb3 } from "../../hooks/useWeb3";
 import { toaster } from "../ui/toaster";
-import { FaInfoCircle, FaExclamationTriangle, FaUser, FaCar } from "react-icons/fa";
+import { FaExclamationTriangle, FaUser, FaCar } from "react-icons/fa";
 import AlertNotification from "@/dashboard/components/AlertNotification/AlertNotification";
-import { authAPI } from "../../config/apiConfig";
 
 // isOpen, onClose,
 const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
@@ -30,7 +29,7 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 	const [error, setError] = useState("");
 	const [userType, setUserType] = useState("passenger"); // 'passenger' or 'driver'
 
-	const { loginToSabiRide, isConnected, address } = useWeb3();
+	const { login, isConnected, address } = useWeb3();
 
 	const handleInputChange = (e) => {
 		const { name, value } = e.target;
@@ -40,12 +39,7 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 		}));
 	};
 
-	const handleDemoLogin = () => {
-		setFormData({
-			email: userType === "driver" ? "driver@sabiride.com" : "passenger@sabiride.com",
-			password: "demo123",
-		});
-	};
+
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -53,74 +47,43 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 		setError("");
 
 		try {
-			const credentials = {
-				email: formData.email,
-				password: formData.password,
-				walletAddress: address || null,
-			};
-
-			let response;
-			try {
-				// Use existing Sabi Ride login endpoint
-				response = await authAPI.login(credentials);
+			// Check for Demo Mode login first
+			if (import.meta.env.DEV && formData.password === "demo123") {
+				const response = {
+					success: true,
+					token: `demo_jwt_token_${userType}`,
+					points: userType === 'driver' ? 2500 : 1250,
+					user: {
+						id: userType === 'driver' ? 'driver_001' : 'passenger_001',
+						email: formData.email,
+						name: `Demo ${userType.charAt(0).toUpperCase() + userType.slice(1)}`,
+						user_type: userType,
+					},
+					userType: userType
+				};
 				
-				// After successful login, get user profile based on type
-				if (response.success || response.token) {
-					let profileResponse;
-					try {
-						if (userType === "driver") {
-							profileResponse = await authAPI.getDriverProfile();
-						} else {
-							profileResponse = await authAPI.getPassengerProfile();
-						}
-						
-						// Merge profile data with login response
-						response = {
-							...response,
-							user: profileResponse,
-							userType: userType,
-							points: profileResponse.total_points || 0,
-						};
-					} catch (profileError) {
-						console.warn("Could not fetch profile, using basic login data:", profileError);
-						// Continue with basic login data
-						response.userType = userType;
-					}
-				}
-			} catch (apiError) {
-				// Fallback to demo mode for development
-				if (process.env.NODE_ENV === 'development') {
-					response = {
-						success: true,
-						token: `demo_jwt_token_${userType}`,
-						points: userType === 'driver' ? 2500 : 1250,
-						user: {
-							id: userType === 'driver' ? 'driver_001' : 'passenger_001',
-							email: formData.email,
-							name: `Demo ${userType.charAt(0).toUpperCase() + userType.slice(1)}`,
-							userType: userType,
-						},
-					};
-				} else {
-					throw apiError;
-				}
-			}
-
-			if (response.success || response.token) {
-				// Store auth data
+				// Store demo auth data
 				localStorage.setItem("authToken", response.token);
 				localStorage.setItem("userType", userType);
 				localStorage.setItem("userPoints", response.points || 0);
 				localStorage.setItem("userEmail", formData.email);
-				localStorage.setItem("userId", response.user?.id || response.id);
+				localStorage.setItem("userId", response.user.id);
+				
+				toaster.create({
+					title: "Login successful (Demo)",
+					description: `Welcome ${userType}! You have ${response.points || 0} points.`,
+					type: "success",
+					duration: 3000,
+				});
+				
+				setOpenLoginModal(false);
+				return;
+			}
 
-				// Also call the existing web3 login function for compatibility
-				try {
-					await loginToSabiRide(formData.email, formData.password);
-				} catch (web3Error) {
-					console.warn("Web3 login compatibility issue:", web3Error);
-				}
+			// Production / Real Login Flow using useWeb3 hook
+			const response = await login(formData.email, formData.password, userType);
 
+			if (response.success) {
 				toaster.create({
 					title: "Login successful",
 					description: `Welcome ${userType}! You have ${response.points || 0} points.`,
@@ -131,6 +94,7 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 				setOpenLoginModal(false);
 			}
 		} catch (err) {
+			console.error("Login failed:", err);
 			setError(err.message || "Login failed");
 			toaster.create({
 				title: "Login failed",
@@ -159,7 +123,7 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 							<Dialog.Title color={`#000`}>
 								Login to Sabi Ride
 							</Dialog.Title>
-							<Dialog.CloseTrigger />
+							<Dialog.CloseTrigger color="black" />
 						</Dialog.Header>
 						<Dialog.Body>
 							<VStack gap={4}>
@@ -172,68 +136,35 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 										<Button
 											flex={1}
 											size="sm"
-											variant={userType === "passenger" ? "solid" : "outline"}
-											colorPalette={userType === "passenger" ? "blue" : "gray"}
+											bg={userType === "passenger" ? "blue.500" : "transparent"}
+											color={userType === "passenger" ? "white" : "gray.600"}
+											border="1px solid"
+											borderColor={userType === "passenger" ? "blue.500" : "gray.200"}
+											_hover={{
+												bg: userType === "passenger" ? "blue.600" : "gray.50",
+											}}
 											onClick={() => setUserType("passenger")}
-											leftIcon={<FaUser />}
 										>
-											Passenger
+											<FaUser /> Passenger
 										</Button>
 										<Button
 											flex={1}
 											size="sm"
-											variant={userType === "driver" ? "solid" : "outline"}
-											colorPalette={userType === "driver" ? "blue" : "gray"}
+											bg={userType === "driver" ? "blue.500" : "transparent"}
+											color={userType === "driver" ? "white" : "gray.600"}
+											border="1px solid"
+											borderColor={userType === "driver" ? "blue.500" : "gray.200"}
+											_hover={{
+												bg: userType === "driver" ? "blue.600" : "gray.50",
+											}}
 											onClick={() => setUserType("driver")}
-											leftIcon={<FaCar />}
 										>
-											Driver
+											<FaCar /> Driver
 										</Button>
 									</HStack>
 								</Box>
 
-								{/* Demo credentials info */}
-								<Box
-									w="full"
-									p={3}
-									bg="blue.50"
-									border="1px solid"
-									borderColor="blue.200"
-									rounded="md"
-								>
-									<Flex alignItems="center" gap={2} mb={2}>
-										<Icon color="blue.500">
-											<FaInfoCircle />
-										</Icon>
-										<Text
-											fontSize="sm"
-											fontWeight="bold"
-											color="blue.700"
-										>
-											Demo Mode Available
-										</Text>
-									</Flex>
-									<Text fontSize="xs" color="blue.600" mb={2}>
-										Demo credentials for {userType}:
-									</Text>
-									<Box fontSize="xs" color="blue.600">
-										<Text>
-											<strong>Email:</strong> {userType}@sabiride.com
-										</Text>
-										<Text>
-											<strong>Password:</strong> demo123
-										</Text>
-									</Box>
-									<Button
-										size="sm"
-										variant="outline"
-										colorPalette="blue"
-										mt={2}
-										onClick={handleDemoLogin}
-									>
-										Use Demo Credentials
-									</Button>
-								</Box>
+
 
 								{/* Wallet Connection Status */}
 								{address && (
@@ -306,7 +237,9 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 										</Field.Root>
 										<Button
 											type="submit"
-											colorScheme="blue"
+											bg="blue.500"
+											color="white"
+											_hover={{ bg: "blue.600" }}
 											isLoading={isLoading}
 											loadingText="Logging in..."
 											width="full"

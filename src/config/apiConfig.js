@@ -1,7 +1,9 @@
 
 // API Configuration for SabiCash Backend
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787/api';
-const SABI_RIDE_API_URL = import.meta.env.VITE_SABI_RIDE_API_URL || 'https://tmp.sabirideweb.com.ng/api/v1';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787/api';
+export const SABI_RIDE_API_URL = import.meta.env.DEV 
+  ? '/sabi-api' 
+  : (import.meta.env.VITE_SABI_RIDE_API_URL || 'https://tmp.sabirideweb.com.ng/api/v1');
 
 
 export const API_ENDPOINTS = {
@@ -17,8 +19,8 @@ export const API_ENDPOINTS = {
 
   // Sabi Ride API endpoints (for getting user token)
   SABI_RIDE: {
-    LOGIN_DRIVER: `${SABI_RIDE_API_URL}/auth/login`,
-    LOGIN_PASSENGER: `${SABI_RIDE_API_URL}/auth/login`,
+    LOGIN_DRIVER: `${SABI_RIDE_API_URL}/users/login/sabi-rider`,
+    LOGIN_PASSENGER: `${SABI_RIDE_API_URL}/users/login/sabi-passenger`,
     DRIVER_PROFILE: `${SABI_RIDE_API_URL}/users/me/sabi-rider`,
     PASSENGER_PROFILE: `${SABI_RIDE_API_URL}/users/me/sabi-passenger`,
   },
@@ -41,6 +43,8 @@ export const API_ENDPOINTS = {
     VERIFY: (taskId) => `${API_BASE_URL}/tasks/${taskId}/verify`,
     USER_TASKS: `${API_BASE_URL}/tasks/user`,
     PENDING: `${API_BASE_URL}/tasks/pending`,
+    UPDATE: (taskId) => `${API_BASE_URL}/tasks/${taskId}`,
+    DELETE: (taskId) => `${API_BASE_URL}/tasks/${taskId}`,
   },
 
   // Mining System
@@ -80,6 +84,11 @@ export const API_ENDPOINTS = {
     TOUCH: `${API_BASE_URL}/sessions/touch`,
     DELETE: `${API_BASE_URL}/sessions`,
   },
+
+  // Trips (Sabi Ride)
+  TRIPS: {
+    COMPLETE: `${SABI_RIDE_API_URL}/trips/complete`,
+  },
 };
 
 // Request configuration
@@ -92,7 +101,7 @@ export const API_CONFIG = {
 
 // Helper function to get auth headers
 export const getAuthHeaders = () => {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('sabiCashToken');
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
@@ -126,16 +135,36 @@ export const apiRequest = async (url, options = {}) => {
 // Specific API functions
 export const authAPI = {
   // Login with Sabi Ride token
-  login: (sabiRideToken, walletAddress) => apiRequest(API_ENDPOINTS.AUTH.LOGIN, {
-    method: 'POST',
-    body: JSON.stringify({ sabiRideToken, walletAddress }),
-  }),
+  login: async (sabiRideToken, walletAddress, userType) => {
+    const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ sabiRideToken, walletAddress, userType }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || data.detail || 'Login failed');
+    }
+    return data;
+  },
 
   // Legacy login for testing
-  loginLegacy: (credentials) => apiRequest(API_ENDPOINTS.AUTH.LOGIN_LEGACY, {
-    method: 'POST',
-    body: JSON.stringify(credentials),
-  }),
+  loginLegacy: async (credentials) => {
+    const response = await fetch(API_ENDPOINTS.AUTH.LOGIN_LEGACY, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || data.detail || 'Login failed');
+    }
+    return data;
+  },
 
   // Get current user profile
   getProfile: () => apiRequest(API_ENDPOINTS.AUTH.ME, {
@@ -161,15 +190,63 @@ export const authAPI = {
 
 // Sabi Ride API functions (for getting user token)
 export const sabiRideAPI = {
-  loginDriver: (credentials) => apiRequest(API_ENDPOINTS.SABI_RIDE.LOGIN_DRIVER, {
-    method: 'POST',
-    body: JSON.stringify(credentials),
-  }),
+  loginDriver: async (credentials) => {
+    try {
+      // Use Backend Proxy instead of direct external call
+      const response = await fetch(`${API_BASE_URL}/auth/proxy-login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...credentials, userType: 'driver' }),
+      });
 
-  loginPassenger: (credentials) => apiRequest(API_ENDPOINTS.SABI_RIDE.LOGIN_PASSENGER, {
-    method: 'POST',
-    body: JSON.stringify(credentials),
-  }),
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || data.detail || `Login failed with status ${response.status}`);
+        }
+        return data;
+      } else {
+        const text = await response.text();
+        console.error('Non-JSON response from Sabi Ride API (via Proxy):', text);
+        throw new Error(`Server returned non-JSON response (Status ${response.status})`);
+      }
+    } catch (error) {
+      console.error('Driver login error:', error);
+      throw error;
+    }
+  },
+
+  loginPassenger: async (credentials) => {
+    try {
+      // Use Backend Proxy instead of direct external call
+      const response = await fetch(`${API_BASE_URL}/auth/proxy-login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...credentials, userType: 'passenger' }),
+      });
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || data.detail || `Login failed with status ${response.status}`);
+        }
+        return data;
+      } else {
+        const text = await response.text();
+        console.error('Non-JSON response from Sabi Ride API (via Proxy):', text);
+        throw new Error(`Server returned non-JSON response (Status ${response.status})`);
+      }
+    } catch (error) {
+      console.error('Passenger login error:', error);
+      throw error;
+    }
+  },
 
   getDriverProfile: (token) => fetch(API_ENDPOINTS.SABI_RIDE.DRIVER_PROFILE, {
     headers: { Authorization: `Bearer ${token}` },
@@ -240,6 +317,15 @@ export const tasksAPI = {
     const queryString = new URLSearchParams(params).toString();
     return apiRequest(`${API_ENDPOINTS.TASKS.PENDING}?${queryString}`);
   },
+
+  updateTask: (taskId, taskData) => apiRequest(API_ENDPOINTS.TASKS.UPDATE(taskId), {
+    method: 'PUT',
+    body: JSON.stringify(taskData),
+  }),
+
+  deleteTask: (taskId) => apiRequest(API_ENDPOINTS.TASKS.DELETE(taskId), {
+    method: 'DELETE',
+  }),
 };
 
 export const miningAPI = {
@@ -307,9 +393,9 @@ export const adminAPI = {
 
   getUserDetails: (userId) => apiRequest(API_ENDPOINTS.ADMIN.USER_DETAILS(userId)),
 
-  updateUserStatus: (userId, isActive, isVerified) => apiRequest(API_ENDPOINTS.ADMIN.UPDATE_USER_STATUS(userId), {
+  updateUserStatus: (userId, isActive, isVerified, userType) => apiRequest(API_ENDPOINTS.ADMIN.UPDATE_USER_STATUS(userId), {
     method: 'PUT',
-    body: JSON.stringify({ isActive, isVerified }),
+    body: JSON.stringify({ isActive, isVerified, userType }),
   }),
 
   sendReward: (userId, amount, type, reason) => apiRequest(API_ENDPOINTS.ADMIN.SEND_REWARD(userId), {

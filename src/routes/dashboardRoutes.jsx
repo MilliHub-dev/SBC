@@ -1,5 +1,6 @@
 // Dashboard Layout and routing
 import DashboardLayout from "../dashboard/layout/DashboardLayout";
+import ProtectedRoute from "../components/Auth/ProtectedRoute";
 import StartMining from "../dashboard/pages/start-mining/StartMining";
 import BuyTokens from "../dashboard/pages/buy/BuyTokens";
 import ConvertTokens from "../dashboard/pages/convert/ConvertTokens";
@@ -11,11 +12,15 @@ import AdminPanel from "../dashboard/pages/admin/AdminPanel";
 export const dashboardRoutes = [
 	{
 		path: "/dashboard",
-		element: <DashboardLayout />,
+		element: (
+			<ProtectedRoute>
+				<DashboardLayout />
+			</ProtectedRoute>
+		),
 		children: [
 			{
 				index: true,
-				element: <StartMining />,
+				element: <ConvertTokens />,
 			},
 			{
 				path: "start-mining",

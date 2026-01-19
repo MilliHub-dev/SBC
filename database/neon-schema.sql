@@ -14,6 +14,7 @@ CREATE TABLE users (
     last_name VARCHAR(100),
     phone_number VARCHAR(20),
     user_type VARCHAR(20) NOT NULL CHECK (user_type IN ('passenger', 'driver', 'admin')),
+    external_id VARCHAR(255) UNIQUE,
     
     -- Points system
     total_points INTEGER DEFAULT 0,

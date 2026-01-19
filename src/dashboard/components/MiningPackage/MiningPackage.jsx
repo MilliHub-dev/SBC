@@ -21,12 +21,8 @@ const MiningPackage = ({
 	},
 }) => {
 	const [showDetails, setShowDetails] = useState(false);
-	const [quantity, setQuantity] = useState(2);
+	const [quantity] = useState(2);
 	const { buySabiWithPolygon, isConnected } = useWeb3();
-
-	const handleQuantityChange = (increment) => {
-		setQuantity((prev) => Math.max(1, prev + increment));
-	};
 
 	const handleSelectPackage = async () => {
 		try {
@@ -115,9 +111,7 @@ const MiningPackage = ({
 					<Text>
 						Total Est. Value After {packageData.duration} Months:
 					</Text>
-					<Icon size={"lg"} color={"gray.400"}>
-						<BiInfoCircle />
-					</Icon>
+					<Icon as={BiInfoCircle} boxSize={5} color={"gray.400"} />
 				</Flex>
 				<Text fontWeight={"bold"} fontSize={25} color={"#fff"}>
 					{totalEstimatedValue.toFixed(2)} SBC
@@ -146,9 +140,7 @@ const MiningPackage = ({
 				_hover={{ bg: "gray.700" }}
 			>
 				Package Details
-				<Icon size={"sm"}>
-					{showDetails ? <FaChevronUp /> : <FaChevronDown />}
-				</Icon>
+				<Icon as={showDetails ? FaChevronUp : FaChevronDown} boxSize={4} />
 			</Button>
 
 			<Box

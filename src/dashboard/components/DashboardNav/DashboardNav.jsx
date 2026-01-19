@@ -8,9 +8,9 @@ import {
 	Text,
 } from "@chakra-ui/react";
 import React, { useState } from "react";
-import { FaWallet, FaUser } from "react-icons/fa6";
+import { FaWallet, FaUser, FaRightFromBracket } from "react-icons/fa6";
 import { IoMenuSharp } from "react-icons/io5";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectWallet } from "@thirdweb-dev/react";
 import { useWeb3 } from "../../../hooks/useWeb3";
 import LoginModal from "../../../components/Login/LoginModal";
 import { useNavigate } from "react-router-dom";
@@ -21,13 +21,18 @@ const DashboardNav = ({ onToggleSidebar }) => {
 
 	const {
 		isConnected,
-		address,
 		isLoggedIn,
 		userPoints,
 		sabiBalance,
 		ethBalance,
+		logout,
 	} = useWeb3();
-	const [openLoginModal, setOpenLoginModal] = useState(true);
+	const [openLoginModal, setOpenLoginModal] = useState(false);
+
+	const handleLogout = async () => {
+		await logout();
+		navigate('/');
+	};
 
 	return (
 		<>
@@ -102,7 +107,7 @@ const DashboardNav = ({ onToggleSidebar }) => {
 								</Box>
 								<Box textAlign="center">
 									<Text fontSize="xs" color="gray.400">
-										SABI
+										SBC
 									</Text>
 									<Text fontSize="sm" fontWeight="bold">
 										{sabiBalance}
@@ -118,10 +123,26 @@ const DashboardNav = ({ onToggleSidebar }) => {
 										</Text>
 									</Box>
 								)}
+								{isLoggedIn && (
+									<Button
+										bg={"red.500"}
+										rounded={"sm"}
+										padding={".3rem 1rem"}
+										color={"#fff"}
+										onClick={handleLogout}
+										size="sm"
+										_hover={{ bg: "red.600" }}
+									>
+										<Icon mr={2}>
+											<FaRightFromBracket />
+										</Icon>
+										Logout
+									</Button>
+								)}
 							</Box>
 						)}
 
-						{isConnected && !isLoggedIn && (
+						{!isLoggedIn && (
 							<Button
 								bg={"#0088CD"}
 								rounded={"sm"}
@@ -137,7 +158,7 @@ const DashboardNav = ({ onToggleSidebar }) => {
 							</Button>
 						)}
 
-						<ConnectButton />
+						<ConnectWallet theme="dark" btnTitle="Connect Wallet" />
 
 						<Link
 							as={"button"}
@@ -151,9 +172,7 @@ const DashboardNav = ({ onToggleSidebar }) => {
 							_hover={{ bg: "gray.800" }}
 							onClick={onToggleSidebar}
 						>
-							<Icon size={"md"}>
-								<IoMenuSharp />
-							</Icon>
+							<Icon as={IoMenuSharp} boxSize={5} />
 						</Link>
 					</Box>
 				</Box>

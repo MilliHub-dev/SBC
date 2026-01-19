@@ -128,18 +128,17 @@ const AddEditTaskModal = ({
 
 									<HStack w="full" gap={4}>
 										<Field.Root required>
-											<Field.Label>Reward (SABI)</Field.Label>
+											<Field.Label>Reward (Points)</Field.Label>
 											<NumberInput.Root
 												w={`full`}
-												value={taskForm.reward}
+												value={taskForm.rewardPoints}
 												onValueChange={(details) =>
 													setTaskForm((prev) => ({
 														...prev,
-														reward: parseInt(details.value) || 0,
+														rewardPoints: parseInt(details.value) || 0,
 													}))
 												}
-												min={1}
-												max={100}
+												min={0}
 											>
 												<NumberInput.Input />
 												<NumberInput.Control>
@@ -149,6 +148,29 @@ const AddEditTaskModal = ({
 											</NumberInput.Root>
 										</Field.Root>
 
+										<Field.Root>
+											<Field.Label>Reward (Sabi Cash)</Field.Label>
+											<NumberInput.Root
+												w={`full`}
+												value={taskForm.rewardSabiCash}
+												onValueChange={(details) =>
+													setTaskForm((prev) => ({
+														...prev,
+														rewardSabiCash: parseFloat(details.value) || 0,
+													}))
+												}
+												min={0}
+											>
+												<NumberInput.Input />
+												<NumberInput.Control>
+													<NumberInput.IncrementTrigger />
+													<NumberInput.DecrementTrigger />
+												</NumberInput.Control>
+											</NumberInput.Root>
+										</Field.Root>
+									</HStack>
+
+									<HStack w="full" gap={4}>
 										<Field.Root required>
 											<Field.Label>Max Completions</Field.Label>
 											<NumberInput.Root
@@ -175,11 +197,11 @@ const AddEditTaskModal = ({
 									<Field.Root>
 										<Field.Label>External Link</Field.Label>
 										<Input
-											value={taskForm.externalLink}
+											value={taskForm.externalUrl}
 											onChange={(e) =>
 												setTaskForm((prev) => ({
 													...prev,
-													externalLink: e.target.value,
+													externalUrl: e.target.value,
 												}))
 											}
 											placeholder="https://twitter.com/sabiride"

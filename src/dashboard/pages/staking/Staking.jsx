@@ -29,7 +29,6 @@ const Staking = () => {
 		MINING_PLANS,
 	} = useWeb3();
 
-	const [selectedPlan, setSelectedPlan] = useState(null);
 	const [isStaking, setIsStaking] = useState(false);
 	const [isClaiming, setIsClaiming] = useState(false);
 	const [lastClaimTime, setLastClaimTime] = useState(null);
@@ -220,7 +219,7 @@ const Staking = () => {
 												color={"gray.400"}
 												fontWeight="medium"
 											>
-												Earn rewards by staking your SABI tokens
+												Earn rewards by staking your SBC tokens
 											</Text>
 										</VStack>
 										<HStack
@@ -248,7 +247,7 @@ const Staking = () => {
 												Staked Amount:
 											</Text>
 											<Text fontWeight="semibold" color={"gray.400"}>
-												{stakingData.stakedAmount} SABI
+												{stakingData.stakedAmount} SBC
 											</Text>
 										</HStack>
 										<HStack
@@ -266,7 +265,7 @@ const Staking = () => {
 												color={"white"}
 												fontSize={"lg"}
 											>
-												{stakingData.earnedRewards} SABI
+												{stakingData.earnedRewards} SBC
 											</Text>
 										</HStack>
 
@@ -396,7 +395,7 @@ const Staking = () => {
 												>
 													{plan.deposit === 0
 														? "FREE"
-														: `${plan.deposit} SABI`}
+														: `${plan.deposit} SBC`}
 												</Text>
 											</Box>
 
@@ -406,7 +405,7 @@ const Staking = () => {
 													<Box as={FaCoins} color="green.500" />
 													<Text fontSize="sm">
 														<strong>
-															{plan.dailyReward} SABI
+															{plan.dailyReward} SBC
 														</strong>{" "}
 														per day
 													</Text>
@@ -450,7 +449,7 @@ const Staking = () => {
 													Total potential:{" "}
 													<strong>
 														{plan.dailyReward * plan.duration}{" "}
-														SABI
+														SBC
 													</strong>
 												</Text>
 
@@ -495,7 +494,7 @@ const Staking = () => {
 										fontSize="md"
 										p={2}
 									>
-										{sabiBalance} SABI
+										{sabiBalance} SBC
 									</Badge>
 								</HStack>
 							</Card.Body>

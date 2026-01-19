@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
 	Box,
 	Card,
@@ -16,133 +16,57 @@ import {
 } from "@chakra-ui/react";
 import { FaDownload, FaArrowUp, FaArrowDown } from "react-icons/fa";
 
-const AnalyticsDashboard = ({ stats }) => {
+const AnalyticsDashboard = ({ stats, data }) => {
 	const [timeRange, setTimeRange] = useState("30d");
-	const [recentActivity, setRecentActivity] = useState([]);
-	const [topUsers, setTopUsers] = useState([]);
-	const [taskPerformance, setTaskPerformance] = useState([]);
 
-	useEffect(() => {
-		// Mock data for recent activity
-		setRecentActivity([
-			{
-				id: 1,
-				type: "task_completed",
-				user: "john.doe@example.com",
-				description: 'Completed "Follow on Twitter" task',
-				reward: 7,
-				timestamp: "2 minutes ago",
-			},
-			{
-				id: 2,
-				type: "points_converted",
-				user: "jane.smith@example.com",
-				description: "Converted 1000 points to 500 SABI",
-				reward: 500,
-				timestamp: "5 minutes ago",
-			},
-			{
-				id: 3,
-				type: "token_purchase",
-				user: "mike.wilson@example.com",
-				description: "Purchased 100 SABI with ETH",
-				reward: 100,
-				timestamp: "12 minutes ago",
-			},
-			{
-				id: 4,
-				type: "staking_reward",
-				user: "alice.brown@example.com",
-				description: "Claimed staking rewards",
-				reward: 15,
-				timestamp: "18 minutes ago",
-			},
-			{
-				id: 5,
-				type: "referral",
-				user: "bob.davis@example.com",
-				description: "Successful referral bonus",
-				reward: 7,
-				timestamp: "25 minutes ago",
-			},
-		]);
+	// Process data from props
+	const recentActivity = (data?.recentActivity || []).map((item, index) => {
+		let description = "";
+		let reward = 0;
+		let user = "";
+		let type = "unknown";
 
-		// Mock data for top users
-		setTopUsers([
-			{
-				rank: 1,
-				name: "Alice Brown",
-				email: "alice.brown@example.com",
-				totalEarned: 2450,
-				tasksCompleted: 15,
-				trend: "up",
-			},
-			{
-				rank: 2,
-				name: "John Doe",
-				email: "john.doe@example.com",
-				totalEarned: 1890,
-				tasksCompleted: 12,
-				trend: "up",
-			},
-			{
-				rank: 3,
-				name: "Jane Smith",
-				email: "jane.smith@example.com",
-				totalEarned: 1650,
-				tasksCompleted: 10,
-				trend: "down",
-			},
-			{
-				rank: 4,
-				name: "Mike Wilson",
-				email: "mike.wilson@example.com",
-				totalEarned: 1420,
-				tasksCompleted: 8,
-				trend: "up",
-			},
-			{
-				rank: 5,
-				name: "Sarah Johnson",
-				email: "sarah.johnson@example.com",
-				totalEarned: 1200,
-				tasksCompleted: 7,
-				trend: "up",
-			},
-		]);
+		if (item.type === 'user_registration') {
+			type = 'referral';
+			description = "New User Registration";
+			user = item.data.email;
+		} else if (item.type === 'task_completion') {
+			type = 'task_completed';
+			description = `Task Completed: ${item.data.title || item.data.task_id}`;
+			user = item.data.email || "Unknown User";
+		} else if (item.type === 'mining_stake') {
+			type = 'staking_reward';
+			description = `New Mining Stake (${item.data.plan_type})`;
+			reward = item.data.amount;
+			user = item.data.email || "Unknown User";
+		}
 
-		// Mock data for task performance
-		setTaskPerformance([
-			{
-				taskName: "Follow on Twitter",
-				completions: 245,
-				successRate: 89.2,
-				avgTimeToComplete: "2.3 minutes",
-				totalRewards: 1715,
-			},
-			{
-				taskName: "Refer a Friend",
-				completions: 89,
-				successRate: 76.4,
-				avgTimeToComplete: "1.2 days",
-				totalRewards: 623,
-			},
-			{
-				taskName: "Like a Post",
-				completions: 156,
-				successRate: 94.1,
-				avgTimeToComplete: "1.8 minutes",
-				totalRewards: 1092,
-			},
-			{
-				taskName: "Comment on Post",
-				completions: 78,
-				successRate: 82.5,
-				avgTimeToComplete: "3.1 minutes",
-				totalRewards: 546,
-			},
-		]);
-	}, [timeRange]);
+		return {
+			id: index,
+			type,
+			user,
+			description,
+			reward,
+			timestamp: new Date(item.created_at).toLocaleString()
+		};
+	});
+
+	const topUsers = (data?.topUsers || []).map((user, index) => ({
+		rank: index + 1,
+		name: user.username || "Unknown",
+		email: user.email,
+		totalEarned: user.totalEarned,
+		tasksCompleted: user.tasksCompleted,
+		trend: "neutral"
+	}));
+
+	const taskPerformance = (data?.taskPerformance || []).map(task => ({
+		taskName: task.taskName,
+		completions: parseInt(task.completions),
+		successRate: parseFloat(task.successRate).toFixed(1),
+		avgTimeToComplete: "-",
+		totalRewards: parseInt(task.totalRewards)
+	}));
 
 	const getActivityIcon = (type) => {
 		switch (type) {
@@ -250,10 +174,9 @@ const AnalyticsDashboard = ({ stats }) => {
 					<Card.Body>
 						<Stat.Root>
 							<Stat.Label>Task Completion Rate</Stat.Label>
-							<Stat.ValueText>87.3%</Stat.ValueText>
+							<Stat.ValueText>{stats.taskCompletionRate}%</Stat.ValueText>
 							<Stat.HelpText>
-								<Stat.UpIndicator />
-								+2.1% from last week
+								Verified completions
 							</Stat.HelpText>
 						</Stat.Root>
 					</Card.Body>
@@ -263,10 +186,9 @@ const AnalyticsDashboard = ({ stats }) => {
 					<Card.Body>
 						<Stat.Root>
 							<Stat.Label>Avg. Tokens per User</Stat.Label>
-							<Stat.ValueText>425</Stat.ValueText>
+							<Stat.ValueText>{stats.avgTokensPerUser}</Stat.ValueText>
 							<Stat.HelpText>
-								<Stat.UpIndicator />
-								+15.2% growth
+								SABI per user
 							</Stat.HelpText>
 						</Stat.Root>
 					</Card.Body>
@@ -276,10 +198,9 @@ const AnalyticsDashboard = ({ stats }) => {
 					<Card.Body>
 						<Stat.Root>
 							<Stat.Label>Daily Active Users</Stat.Label>
-							<Stat.ValueText>2,847</Stat.ValueText>
+							<Stat.ValueText>{parseInt(stats.dailyActiveUsers).toLocaleString()}</Stat.ValueText>
 							<Stat.HelpText>
-								<Stat.DownIndicator />
-								-1.2% vs yesterday
+								Last 24 hours
 							</Stat.HelpText>
 						</Stat.Root>
 					</Card.Body>
