@@ -8,22 +8,25 @@ import {
 	Text,
 	Flex,
 	Container,
+	Grid,
+	Badge,
 } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { useWeb3 } from "../../../hooks/useWeb3";
 import AlertNotification from "@/dashboard/components/AlertNotification/AlertNotification";
+import { FaCubes, FaCheckCircle, FaWallet, FaBolt, FaFire } from "react-icons/fa";
+import { HiOutlineSparkles } from "react-icons/hi2";
 
 const StartMining = () => {
 	const [selectedCurrency, setSelectedCurrency] = useState("solana");
 	const { isConnected, address } = useWeb3();
 
-	// Updated mining packages as requested: Free, 100 Sabi Cash, 1000 Sabi Cash
 	const miningPackages = [
 		{
 			name: "Free Plan",
 			price: 0,
 			apr: 5.0,
-			duration: 24, // 24 hours
+			duration: 24,
 			hashpower: "0.1 TH/s",
 			electricityCost: "$0.00/kwh",
 			totalElectricityCost: "$0.00",
@@ -33,12 +36,14 @@ const StartMining = () => {
 			minedAmount: 0.5,
 			btcPrice: 105506.0,
 			description: "Try mining for free! Limited daily rewards.",
+			popular: false,
+			color: "cyan",
 		},
 		{
 			name: "Standard Mining",
 			price: 100,
 			apr: 26.34,
-			duration: 30, // 30 days
+			duration: 30,
 			hashpower: "2.5 TH/s",
 			electricityCost: "$0.0685/kwh",
 			totalElectricityCost: "$5.89",
@@ -47,14 +52,15 @@ const StartMining = () => {
 			retainedAmount: 105.67,
 			minedAmount: 26.34,
 			btcPrice: 105506.0,
-			description:
-				"Deposit 100 Sabi Cash for 30 days of mining with good returns.",
+			description: "Deposit 100 Sabi Cash for 30 days of mining with good returns.",
+			popular: true,
+			color: "purple",
 		},
 		{
 			name: "Pro Mining",
 			price: 1000,
 			apr: 35.5,
-			duration: 30, // 30 days
+			duration: 30,
 			hashpower: "15.8 TH/s",
 			electricityCost: "$0.0550/kwh",
 			totalElectricityCost: "$45.23",
@@ -63,161 +69,249 @@ const StartMining = () => {
 			retainedAmount: 1155.0,
 			minedAmount: 355.0,
 			btcPrice: 105506.0,
-			description:
-				"Deposit 1000 Sabi Cash for maximum mining power and highest returns.",
+			description: "Deposit 1000 Sabi Cash for maximum mining power and highest returns.",
+			popular: false,
+			color: "pink",
 		},
 	];
 
 	return (
-		<Container maxW="6xl" p={0}>
+		<Box>
+			{/* Page Header */}
+			<Flex direction="column" mb={8}>
+				<Flex align="center" gap={3} mb={2}>
+					<Box
+						w="48px"
+						h="48px"
+						borderRadius="xl"
+						bg="linear-gradient(135deg, rgba(0, 255, 255, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)"
+						display="flex"
+						alignItems="center"
+						justifyContent="center"
+						className="mining-pulse"
+					>
+						<Icon as={FaCubes} color="cyan.400" boxSize={6} />
+					</Box>
+					<Box>
+						<Text
+							fontSize={{ base: "2xl", md: "3xl" }}
+							fontWeight="bold"
+							fontFamily="'Space Grotesk', sans-serif"
+						>
+							Start <Text as="span" className="text-gradient-cyber">Mining</Text>
+						</Text>
+						<Text color="whiteAlpha.600" fontSize="sm">
+							Choose a plan and start earning crypto rewards
+						</Text>
+					</Box>
+				</Flex>
+			</Flex>
+
 			{!isConnected && (
-				<AlertNotification
-					status={"warning"}
-					alertMsg={
-						"	Please connect your wallet to start mining and make purchases."
-					}
-				/>
+				<Box
+					className="blockchain-card"
+					p={4}
+					mb={6}
+					borderColor="rgba(251, 191, 36, 0.3)"
+				>
+					<Flex align="center" gap={3}>
+						<Box
+							w="40px"
+							h="40px"
+							borderRadius="xl"
+							bg="rgba(251, 191, 36, 0.1)"
+							display="flex"
+							alignItems="center"
+							justifyContent="center"
+						>
+							<Icon as={FaWallet} color="yellow.400" boxSize={5} />
+						</Box>
+						<Box>
+							<Text fontWeight="600" color="yellow.400">
+								Wallet Not Connected
+							</Text>
+							<Text fontSize="sm" color="whiteAlpha.600">
+								Connect your wallet to start mining and make purchases
+							</Text>
+						</Box>
+					</Flex>
+				</Box>
 			)}
 
-			<Box
-				bg={"gray.900"}
-				rounded={"md"}
-				padding={"2.3rem"}
-				display={"flex"}
-				flexDirection={"column"}
-				gap={3}
-				mb={6}
-				mt={3}
-			>
-				<Text as={"p"} fontSize={18} color={"gray.400"}>
-					Step 1
-				</Text>
-				<Text as={"h2"} fontSize={20} fontWeight={"bold"}>
+			{/* Step 1 - Choose Currency */}
+			<Box className="blockchain-card" p={6} mb={6}>
+				<Flex align="center" gap={3} mb={4}>
+					<Badge
+						bg="rgba(0, 255, 255, 0.1)"
+						color="cyan.400"
+						px={3}
+						py={1}
+						borderRadius="full"
+						fontSize="xs"
+						fontWeight="bold"
+					>
+						STEP 1
+					</Badge>
+				</Flex>
+				<Text
+					fontSize="xl"
+					fontWeight="bold"
+					fontFamily="'Space Grotesk', sans-serif"
+					mb={2}
+				>
 					Choose Currency to Mine
 				</Text>
+				<Text fontSize="sm" color="whiteAlpha.600" mb={6}>
+					Select the cryptocurrency you want to earn from mining
+				</Text>
 
-				<Box
-					display={"flex"}
-					alignItems={"center"}
-					gap={2}
-					flexWrap={"wrap"}
-				>
+				<Flex gap={3} flexWrap="wrap">
 					{whatWeMine.map((item) => {
 						const isSelected = selectedCurrency === item.crypto;
 						return (
 							<Button
 								key={item.crypto}
-								fontSize={14}
-								padding={"10px 15px"}
-								rounded={"md"}
-								bg={isSelected ? "#0088CD" : "transparent"}
-								border={"1px solid"}
-								borderColor={isSelected ? "#0088CD" : "gray.700"}
-								color={isSelected ? "#fff" : "#fff"}
-								display={"flex"}
-								alignItems={"center"}
-								justifyContent={"center"}
-								h={"full"}
-								gap={2}
 								onClick={() => setSelectedCurrency(item.crypto)}
+								className={isSelected ? "" : "glass"}
+								bg={isSelected ? "linear-gradient(135deg, #00FFFF 0%, #A855F7 100%)" : "transparent"}
+								color={isSelected ? "#0a0a0f" : "white"}
+								border="1px solid"
+								borderColor={isSelected ? "transparent" : "whiteAlpha.200"}
+								borderRadius="xl"
+								px={4}
+								py={3}
+								h="auto"
+								fontWeight="600"
+								fontSize="sm"
+								display="flex"
+								alignItems="center"
+								gap={2}
+								transition="all 0.3s ease"
 								_hover={{
-									bg: isSelected ? "#0077B3" : "gray.800",
-									borderColor: "#0088CD",
+									transform: "translateY(-2px)",
+									boxShadow: isSelected
+										? "0 0 30px rgba(0, 255, 255, 0.4)"
+										: "0 0 20px rgba(0, 255, 255, 0.2)",
 								}}
-								transition={"all 0.2s"}
 							>
 								<Image
-									height={"20px"}
-									width={"20px"}
+									h="24px"
+									w="24px"
 									src={item.img}
 									alt={item.crypto}
-									objectFit={"contain"}
+									objectFit="contain"
+									className={isSelected ? "" : "token-icon"}
 								/>
 								{item.name}
 							</Button>
 						);
 					})}
-				</Box>
+				</Flex>
 
 				{selectedCurrency && (
-					<Box mt={3} p={3} bg={"gray.800"} rounded={"md"}>
-						<Text fontSize={"sm"} color={"gray.400"}>
-							Selected currency:{" "}
-							<Text as="span" fontWeight="bold" color="#0088CD">
-								{selectedCurrency}
+					<Box mt={6} className="glass" p={4} borderRadius="xl">
+						<Flex align="center" gap={2}>
+							<Icon as={FaCheckCircle} color="green.400" boxSize={4} />
+							<Text fontSize="sm" color="whiteAlpha.700">
+								Mining currency:{" "}
+								<Text as="span" fontWeight="bold" className="text-gradient-cyber">
+									{selectedCurrency.toUpperCase()}
+								</Text>
 							</Text>
-						</Text>
-						<Text fontSize={"xs"} color={"gray.500"} mt={1}>
-							Mining rewards will be distributed in the selected
-							cryptocurrency
+						</Flex>
+						<Text fontSize="xs" color="whiteAlpha.500" mt={2} pl={6}>
+							Rewards will be distributed in the selected cryptocurrency
 						</Text>
 					</Box>
 				)}
 			</Box>
 
-			<Box
-				display={"flex"}
-				flexDirection={"column"}
-				gap={3}
-				padding={"2.3rem"}
-				border={"1px solid"}
-				rounded={"md"}
-				borderColor={"gray.700"}
-				my={5}
-			>
-				<Text as={"p"} color={"gray.400"}>
-					Step 2
-				</Text>
-				<Text as={"h2"} fontSize={20} fontWeight={"bold"}>
+			{/* Step 2 - Select Package */}
+			<Box className="blockchain-card" p={6} mb={6}>
+				<Flex align="center" gap={3} mb={4}>
+					<Badge
+						bg="rgba(168, 85, 247, 0.1)"
+						color="purple.400"
+						px={3}
+						py={1}
+						borderRadius="full"
+						fontSize="xs"
+						fontWeight="bold"
+					>
+						STEP 2
+					</Badge>
+				</Flex>
+				<Text
+					fontSize="xl"
+					fontWeight="bold"
+					fontFamily="'Space Grotesk', sans-serif"
+					mb={2}
+				>
 					Select Mining Package
 				</Text>
-				<Text fontSize={"sm"} color={"gray.500"}>
-					Choose from our range of mining packages with different hash
-					rates and returns
+				<Text fontSize="sm" color="whiteAlpha.600">
+					Choose from our range of mining packages with different hash rates and returns
 				</Text>
 			</Box>
 
-			<Box
-				display={"grid"}
-				gridTemplateColumns={"repeat(auto-fit, minmax(300px, 1fr))"}
-				gap={5}
+			{/* Mining Packages Grid */}
+			<Grid
+				templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }}
+				gap={6}
+				mb={8}
 			>
 				{miningPackages.map((packageData, index) => (
 					<MiningPackage key={index} packageData={packageData} />
 				))}
-			</Box>
+			</Grid>
 
+			{/* Connected Status */}
 			{isConnected && (
-				<Box mt={8} p={6} bg={"gray.900"} rounded={"md"} mx={8}>
-					<Flex alignItems={"center"} gap={3} mb={4}>
-						<Icon as={checkIcon} color={"green.400"} />
+				<Box className="blockchain-card" p={6} position="relative" overflow="hidden">
+					{/* Glow effect */}
+					<Box
+						position="absolute"
+						top="-50%"
+						right="-10%"
+						w="200px"
+						h="200px"
+						bg="radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)"
+						filter="blur(40px)"
+						pointerEvents="none"
+					/>
 
-						<Text fontWeight={"bold"} color={"green.400"}>
-							Wallet Connected
-						</Text>
+					<Flex align="center" gap={4} position="relative" zIndex={1}>
+						<Box
+							w="50px"
+							h="50px"
+							borderRadius="xl"
+							bg="rgba(16, 185, 129, 0.1)"
+							display="flex"
+							alignItems="center"
+							justifyContent="center"
+							border="1px solid"
+							borderColor="green.400"
+						>
+							<Icon as={FaCheckCircle} color="green.400" boxSize={6} />
+						</Box>
+						<Box flex="1">
+							<Flex align="center" gap={2} mb={1}>
+								<Text fontWeight="bold" color="green.400">
+									Wallet Connected
+								</Text>
+								<Box className="network-online" />
+							</Flex>
+							<Text fontSize="sm" color="whiteAlpha.600" fontFamily="mono">
+								{address?.slice(0, 6)}...{address?.slice(-4)}
+							</Text>
+							<Text fontSize="xs" color="whiteAlpha.500" mt={1}>
+								Ready to purchase mining packages and earn rewards
+							</Text>
+						</Box>
 					</Flex>
-					<Text fontSize={"sm"} color={"gray.400"}>
-						Address: {address}
-					</Text>
-					<Text fontSize={"sm"} color={"gray.500"} mt={2}>
-						You can now purchase mining packages and start earning
-						rewards!
-					</Text>
 				</Box>
 			)}
-		</Container>
-	);
-};
-
-const checkIcon = () => {
-	return (
-		<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-			<path
-				fillRule="evenodd"
-				d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-				clipRule="evenodd"
-			/>
-		</svg>
+		</Box>
 	);
 };
 

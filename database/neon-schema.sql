@@ -20,7 +20,7 @@ CREATE TABLE users (
     total_points INTEGER DEFAULT 0,
     
     -- Web3 integration
-    wallet_address VARCHAR(44) UNIQUE,
+    wallet_address VARCHAR(255) UNIQUE,
     sabi_cash_balance DECIMAL(20, 8) DEFAULT 0,
     
     -- Status and metadata
@@ -156,8 +156,8 @@ CREATE TABLE web3_transactions (
     user_id UUID REFERENCES users(id),
     
     -- Transaction details
-    transaction_hash VARCHAR(88) UNIQUE NOT NULL,
-    wallet_address VARCHAR(44) NOT NULL,
+    transaction_hash VARCHAR(255) UNIQUE NOT NULL,
+    wallet_address VARCHAR(255) NOT NULL,
     transaction_type VARCHAR(50) NOT NULL, -- 'buy_tokens', 'stake', 'claim_rewards', 'convert_points'
     
     -- Amounts

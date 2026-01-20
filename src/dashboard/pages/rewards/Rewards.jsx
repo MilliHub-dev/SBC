@@ -2,35 +2,27 @@ import React, { useState, useEffect } from "react";
 import {
 	Box,
 	Container,
-	Heading,
 	Text,
 	Button,
-	Card,
-	VStack,
-	HStack,
+	Flex,
 	Badge,
-	SimpleGrid,
+	Grid,
 	Icon,
 	Spinner,
-	Center,
 } from "@chakra-ui/react";
 import {
 	FaTwitter,
 	FaUserPlus,
 	FaThumbsUp,
-	FaComment,
-	FaCheck,
-	FaExternalLinkAlt,
 	FaTelegram,
 	FaDiscord,
 	FaYoutube,
-	FaGlobe,
 } from "react-icons/fa";
+import { FaGift, FaCheck, FaArrowRight, FaTrophy, FaCoins, FaBolt, FaRocket, FaStar, FaCircleCheck } from "react-icons/fa6";
+import { HiOutlineSparkles } from "react-icons/hi2";
 import { useWeb3 } from "../../../hooks/useWeb3";
 import { toaster } from "../../../components/ui/toaster";
 import AlertNotification from "@/dashboard/components/AlertNotification/AlertNotification";
-import SimpleHeading from "@/dashboard/components/SimpleHeading/SimpleHeading";
-import { FaGift } from "react-icons/fa6";
 import { tasksAPI } from "../../../config/apiConfig";
 
 const Rewards = () => {
@@ -46,14 +38,12 @@ const Rewards = () => {
 		const fetchData = async () => {
 			setIsLoading(true);
 			try {
-				// Fetch active tasks
 				const tasksResponse = await tasksAPI.getTasks({ active_only: true });
-				
+
 				if (tasksResponse.success) {
 					setTasks(tasksResponse.results);
 				}
 
-				// If logged in, fetch user stats
 				if (isLoggedIn) {
 					const userTasksResponse = await tasksAPI.getUserTasks();
 					if (userTasksResponse.success && userTasksResponse.summary) {
@@ -91,18 +81,38 @@ const Rewards = () => {
 		return FaGift;
 	};
 
-	const getTaskColor = (category) => {
+	const getTaskColors = (category) => {
 		switch (category) {
-			case 'social': return 'blue';
-			case 'referral': return 'green';
-			case 'content': return 'purple';
-			default: return 'orange';
+			case 'social':
+				return {
+					gradient: "linear-gradient(135deg, #00FFFF 0%, #0088CC 100%)",
+					light: "cyan.400",
+					bg: "rgba(0, 255, 255, 0.1)"
+				};
+			case 'referral':
+				return {
+					gradient: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+					light: "green.400",
+					bg: "rgba(16, 185, 129, 0.1)"
+				};
+			case 'content':
+				return {
+					gradient: "linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)",
+					light: "purple.400",
+					bg: "rgba(168, 85, 247, 0.1)"
+				};
+			default:
+				return {
+					gradient: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
+					light: "yellow.400",
+					bg: "rgba(245, 158, 11, 0.1)"
+				};
 		}
 	};
 
 	const handleTaskClick = async (task) => {
 		if (task.user_completed) return;
-		
+
 		if (task.externalUrl) {
 			window.open(task.externalUrl, '_blank');
 		}
@@ -115,192 +125,414 @@ const Rewards = () => {
 		});
 	};
 
+	const completionPercentage = tasks.length > 0
+		? Math.round((userStats.completed_tasks / tasks.length) * 100)
+		: 0;
+
 	return (
-		<>
-			{/* Removed Modal component */}
+		<Container maxW="1400px" p={0}>
+			<Flex direction="column" gap={8}>
+				{/* Page Header */}
+				<Box>
+					<Flex align="center" gap={3} mb={3}>
+						<Box
+							w="50px"
+							h="50px"
+							borderRadius="xl"
+							bg="linear-gradient(135deg, #10B981 0%, #059669 100%)"
+							display="flex"
+							alignItems="center"
+							justifyContent="center"
+							boxShadow="0 0 20px rgba(16, 185, 129, 0.3)"
+						>
+							<Icon as={FaGift} color="white" boxSize={6} />
+						</Box>
+						<Box>
+							<Text
+								fontSize={{ base: "xl", md: "2xl" }}
+								fontWeight="bold"
+								fontFamily="'Space Grotesk', sans-serif"
+							>
+								Rewards & Tasks
+							</Text>
+							<Text fontSize="sm" color="whiteAlpha.600">
+								Complete tasks to earn SBC rewards and unlock exclusive benefits
+							</Text>
+						</Box>
+					</Flex>
+				</Box>
 
-			<Container maxW="4xl" p={0}>
-				<VStack gap={6} align="stretch">
-					<SimpleHeading
-						icon={FaGift}
-						headingTitle={"Rewards & Tasks"}
-						headingDesc={"	Complete tasks to earn Sabi Cash rewards"}
+				{!isConnected && (
+					<AlertNotification
+						status={"warning"}
+						alertMsg={"Please connect your wallet to access rewards and tasks"}
 					/>
+				)}
 
-					{!isConnected && (
-						<AlertNotification
-							status={"warning"}
-							alertMsg={
-								"  Please connect your wallet to access rewards and tasks"
-							}
-						/>
-					)}
-
-					{isLoading ? (
-						<Center py={10}>
-							<Spinner size="xl" />
-						</Center>
-					) : (
-						isConnected && (
-							<>
-								{/* Earnings Summary */}
-								<Card.Root border={0} mb={3} rounded={"sm"}>
-									<Card.Body rounded={"sm"}>
-										<VStack gap={4}>
-											<HStack justify="space-between" w="full">
-												<Text fontWeight="500">Tasks Completed:</Text>
-												<Badge
-													colorPalette="green"
-													variant={"solid"}
-													fontSize="md"
-													p={2}
-												>
-													{userStats.completed_tasks} / {tasks.length}
-												</Badge>
-											</HStack>
-											<HStack justify="space-between" w="full">
-												<Text fontWeight="500">Total Earned:</Text>
-												<Badge
-													colorPalette="green"
-													variant={"solid"}
-													fontSize="md"
-													p={2}
-												>
-													{Number(userStats.total_rewards_sabi).toFixed(2)} SBC
-												</Badge>
-											</HStack>
-										</VStack>
-									</Card.Body>
-								</Card.Root>
-
-								{/* Available Tasks */}
-								<SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
-									{tasks.map((task) => {
-										const isCompleted = task.user_completed;
-										const TaskIcon = getTaskIcon(task.taskType, task.category);
-										const colorScheme = getTaskColor(task.category);
-
-										return (
-											<Card.Root
-												key={task.id}
-												border="2px solid"
-												borderColor={
-													isCompleted ? "green.500" : "gray.200"
-												}
-												opacity={isCompleted ? 0.7 : 1}
-												cursor={isCompleted ? "default" : "pointer"}
-												_hover={
-													!isCompleted
-														? {
-																borderColor: `${colorScheme}.300`,
-																transform: "translateY(-2px)",
-														  }
-														: {}
-												}
-												transition="all 0.2s"
-												onClick={() => handleTaskClick(task)}
+				{isLoading ? (
+					<Flex justify="center" align="center" py={20}>
+						<Box textAlign="center">
+							<Spinner
+								size="xl"
+								color="cyan.400"
+								thickness="4px"
+								speed="0.8s"
+							/>
+							<Text mt={4} color="whiteAlpha.600" fontSize="sm">
+								Loading tasks...
+							</Text>
+						</Box>
+					</Flex>
+				) : (
+					isConnected && (
+						<>
+							{/* Stats Overview */}
+							<Grid templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }} gap={4}>
+								<Box className="blockchain-card" p={5}>
+									<Flex align="center" justify="space-between">
+										<Box>
+											<Text fontSize="sm" color="whiteAlpha.600" mb={1}>Tasks Completed</Text>
+											<Text
+												fontSize="2xl"
+												fontWeight="bold"
+												fontFamily="'Space Grotesk', sans-serif"
+												color="cyan.400"
 											>
-												<Card.Body>
-													<VStack gap={4} align="stretch">
-														<HStack>
-															<Icon
-																as={
-																	isCompleted
-																		? FaCheck
-																		: TaskIcon
-																}
-																color={
-																	isCompleted
-																		? "green.500"
-																		: `${colorScheme}.500`
-																}
-																boxSize={6}
-															/>
+												{userStats.completed_tasks} / {tasks.length}
+											</Text>
+										</Box>
+										<Box
+											w="45px"
+											h="45px"
+											borderRadius="xl"
+											bg="rgba(0, 255, 255, 0.1)"
+											display="flex"
+											alignItems="center"
+											justifyContent="center"
+										>
+											<Icon as={FaCircleCheck} color="cyan.400" boxSize={5} />
+										</Box>
+									</Flex>
+								</Box>
+
+								<Box className="blockchain-card" p={5}>
+									<Flex align="center" justify="space-between">
+										<Box>
+											<Text fontSize="sm" color="whiteAlpha.600" mb={1}>Total Earned</Text>
+											<Text
+												fontSize="2xl"
+												fontWeight="bold"
+												fontFamily="'Space Grotesk', sans-serif"
+												className="text-gradient-cyber"
+											>
+												{Number(userStats.total_rewards_sabi).toFixed(2)} SBC
+											</Text>
+										</Box>
+										<Box
+											w="45px"
+											h="45px"
+											borderRadius="xl"
+											bg="rgba(16, 185, 129, 0.1)"
+											display="flex"
+											alignItems="center"
+											justifyContent="center"
+										>
+											<Icon as={FaCoins} color="green.400" boxSize={5} />
+										</Box>
+									</Flex>
+								</Box>
+
+								<Box className="blockchain-card" p={5}>
+									<Flex align="center" justify="space-between">
+										<Box>
+											<Text fontSize="sm" color="whiteAlpha.600" mb={1}>Completion Rate</Text>
+											<Text
+												fontSize="2xl"
+												fontWeight="bold"
+												fontFamily="'Space Grotesk', sans-serif"
+												color="purple.400"
+											>
+												{completionPercentage}%
+											</Text>
+										</Box>
+										<Box
+											w="45px"
+											h="45px"
+											borderRadius="xl"
+											bg="rgba(168, 85, 247, 0.1)"
+											display="flex"
+											alignItems="center"
+											justifyContent="center"
+										>
+											<Icon as={FaTrophy} color="purple.400" boxSize={5} />
+										</Box>
+									</Flex>
+								</Box>
+							</Grid>
+
+							{/* Progress Bar */}
+							<Box className="blockchain-card" p={5}>
+								<Flex align="center" justify="space-between" mb={3}>
+									<Text fontSize="sm" fontWeight="600">Task Progress</Text>
+									<Text fontSize="sm" color="whiteAlpha.600">
+										{userStats.completed_tasks} of {tasks.length} completed
+									</Text>
+								</Flex>
+								<Box
+									w="full"
+									h="8px"
+									bg="whiteAlpha.100"
+									borderRadius="full"
+									overflow="hidden"
+								>
+									<Box
+										h="full"
+										w={`${completionPercentage}%`}
+										bg="linear-gradient(90deg, #00FFFF 0%, #A855F7 100%)"
+										borderRadius="full"
+										transition="width 0.5s ease"
+									/>
+								</Box>
+							</Box>
+
+							{/* Available Tasks */}
+							<Box>
+								<Flex align="center" gap={2} mb={6}>
+									<Icon as={HiOutlineSparkles} color="cyan.400" boxSize={5} />
+									<Text
+										fontSize="xl"
+										fontWeight="bold"
+										fontFamily="'Space Grotesk', sans-serif"
+									>
+										Available Tasks
+									</Text>
+								</Flex>
+
+								{tasks.length === 0 ? (
+									<Box className="blockchain-card" p={8} textAlign="center">
+										<Box
+											w="60px"
+											h="60px"
+											borderRadius="full"
+											bg="rgba(0, 255, 255, 0.1)"
+											display="flex"
+											alignItems="center"
+											justifyContent="center"
+											mx="auto"
+											mb={4}
+										>
+											<Icon as={FaStar} color="cyan.400" boxSize={7} />
+										</Box>
+										<Text fontWeight="600" mb={2}>No Tasks Available</Text>
+										<Text fontSize="sm" color="whiteAlpha.600">
+											Check back later for new earning opportunities!
+										</Text>
+									</Box>
+								) : (
+									<Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap={5}>
+										{tasks.map((task) => {
+											const isCompleted = task.user_completed;
+											const TaskIcon = getTaskIcon(task.taskType, task.category);
+											const colors = getTaskColors(task.category);
+
+											return (
+												<Box
+													key={task.id}
+													className="blockchain-card"
+													p={5}
+													position="relative"
+													overflow="hidden"
+													role="group"
+													cursor={isCompleted ? "default" : "pointer"}
+													opacity={isCompleted ? 0.8 : 1}
+													border={isCompleted ? "1px solid" : "1px solid"}
+													borderColor={isCompleted ? "green.500" : "rgba(255, 255, 255, 0.1)"}
+													onClick={() => handleTaskClick(task)}
+													_hover={!isCompleted ? {
+														borderColor: colors.light,
+														transform: "translateY(-2px)",
+													} : {}}
+													transition="all 0.3s ease"
+												>
+													{/* Completed badge */}
+													{isCompleted && (
+														<Badge
+															position="absolute"
+															top={4}
+															right={4}
+															bg="green.500"
+															color="white"
+															px={3}
+															py={1}
+															borderRadius="full"
+															fontSize="xs"
+															fontWeight="bold"
+															display="flex"
+															alignItems="center"
+															gap={1}
+														>
+															<Icon as={FaCheck} boxSize={3} />
+															COMPLETED
+														</Badge>
+													)}
+
+													{/* Glow effect */}
+													<Box
+														position="absolute"
+														top="-50%"
+														right="-20%"
+														w="200px"
+														h="200px"
+														bg={`radial-gradient(circle, ${colors.bg} 0%, transparent 70%)`}
+														filter="blur(40px)"
+														opacity={0}
+														transition="opacity 0.3s ease"
+														_groupHover={{ opacity: isCompleted ? 0 : 1 }}
+														pointerEvents="none"
+													/>
+
+													<Flex direction="column" gap={4} position="relative" zIndex={1}>
+														{/* Task Header */}
+														<Flex align="flex-start" gap={3}>
+															<Box
+																w="48px"
+																h="48px"
+																borderRadius="xl"
+																bg={isCompleted ? "rgba(16, 185, 129, 0.2)" : colors.bg}
+																display="flex"
+																alignItems="center"
+																justifyContent="center"
+																flexShrink={0}
+															>
+																<Icon
+																	as={isCompleted ? FaCheck : TaskIcon}
+																	color={isCompleted ? "green.400" : colors.light}
+																	boxSize={5}
+																/>
+															</Box>
 															<Box flex={1}>
-																<Heading size="sm" mb={1}>
-																	{task.title}
-																</Heading>
 																<Text
-																	fontSize="sm"
-																	color="gray.600"
+																	fontWeight="bold"
+																	fontSize="md"
+																	fontFamily="'Space Grotesk', sans-serif"
+																	mb={1}
 																>
+																	{task.title}
+																</Text>
+																<Text fontSize="sm" color="whiteAlpha.600" lineHeight="1.5">
 																	{task.description}
 																</Text>
 															</Box>
-															<Badge
-																colorScheme={
-																	isCompleted
-																		? "green"
-																		: colorScheme
-																}
-																fontSize="sm"
-																p={2}
-															>
-																{isCompleted
-																	? "✓ Done"
-																	: `+${Number(task.rewardSabiCash).toFixed(0)} SBC`}
-															</Badge>
-														</HStack>
+														</Flex>
 
-														{!isCompleted && (
-															<Button
-																bg={`${colorScheme}.500`}
-																color="white"
-																size="sm"
-																_hover={{
-																	bg: `${colorScheme}.600`,
-																}}
-															>
-																{task.externalUrl ? "Go to Task" : "View Details"}
-															</Button>
-														)}
-													</VStack>
-												</Card.Body>
-											</Card.Root>
-										);
-									})}
-									{tasks.length === 0 && (
-										<Box gridColumn="1 / -1">
-											<AlertNotification
-												status="info"
-												alertMsg="No tasks available at the moment. Check back later!"
-											/>
-										</Box>
-									)}
-								</SimpleGrid>
+														{/* Reward and Action */}
+														<Flex align="center" justify="space-between" mt={2}>
+															<Box className="glass" px={4} py={2} borderRadius="full">
+																<Flex align="center" gap={2}>
+																	<Icon as={FaCoins} color={isCompleted ? "green.400" : "yellow.400"} boxSize={4} />
+																	<Text
+																		fontWeight="bold"
+																		fontFamily="'Space Grotesk', sans-serif"
+																		color={isCompleted ? "green.400" : "yellow.400"}
+																	>
+																		{isCompleted ? "Earned" : "+"}{Number(task.rewardSabiCash).toFixed(0)} SBC
+																	</Text>
+																</Flex>
+															</Box>
 
-								{/* Information */}
-								<Card.Root bg="blue.900" borderColor="blue.700" mt={"5"}>
-									<Card.Body>
-										<VStack gap={3} align="start">
-											<Text fontWeight="bold" color="blue.200">
-												Task Rewards Information:
+															{!isCompleted && (
+																<Button
+																	size="sm"
+																	bg={colors.gradient}
+																	color="white"
+																	borderRadius="full"
+																	px={4}
+																	rightIcon={<FaArrowRight />}
+																	_hover={{
+																		transform: "translateX(2px)",
+																		boxShadow: `0 0 20px ${colors.bg}`,
+																	}}
+																	transition="all 0.3s ease"
+																>
+																	{task.externalUrl ? "Go to Task" : "View Details"}
+																</Button>
+															)}
+														</Flex>
+													</Flex>
+												</Box>
+											);
+										})}
+									</Grid>
+								)}
+							</Box>
+
+							{/* Information Card */}
+							<Box className="blockchain-card" p={6} position="relative" overflow="hidden">
+								<Box
+									position="absolute"
+									top="-30%"
+									left="-10%"
+									w="300px"
+									h="300px"
+									bg="radial-gradient(circle, rgba(0, 255, 255, 0.05) 0%, transparent 70%)"
+									filter="blur(60px)"
+									pointerEvents="none"
+								/>
+
+								<Flex direction="column" gap={4} position="relative" zIndex={1}>
+									<Flex align="center" gap={2}>
+										<Icon as={HiOutlineSparkles} color="cyan.400" boxSize={5} />
+										<Text
+											fontWeight="bold"
+											fontSize="lg"
+											fontFamily="'Space Grotesk', sans-serif"
+										>
+											How Rewards Work
+										</Text>
+									</Flex>
+
+									<Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap={4}>
+										{[
+											{ icon: FaBolt, text: "Tasks are verified automatically when possible", color: "cyan.400" },
+											{ icon: FaRocket, text: "Some tasks may require manual verification (24-48 hours)", color: "purple.400" },
+											{ icon: FaCoins, text: "Rewards are sent directly to your connected wallet", color: "green.400" },
+											{ icon: FaStar, text: "New tasks are added regularly for more earning opportunities", color: "yellow.400" },
+										].map((item, index) => (
+											<Flex key={index} align="center" gap={3} className="glass" p={4} borderRadius="xl">
+												<Box
+													w="36px"
+													h="36px"
+													borderRadius="lg"
+													bg={`rgba(${item.color === "cyan.400" ? "0, 255, 255" : item.color === "purple.400" ? "168, 85, 247" : item.color === "green.400" ? "16, 185, 129" : "234, 179, 8"}, 0.1)`}
+													display="flex"
+													alignItems="center"
+													justifyContent="center"
+													flexShrink={0}
+												>
+													<Icon as={item.icon} color={item.color} boxSize={4} />
+												</Box>
+												<Text fontSize="sm" color="whiteAlpha.700">
+													{item.text}
+												</Text>
+											</Flex>
+										))}
+									</Grid>
+
+									<Box className="glass" p={4} borderRadius="xl" mt={2}>
+										<Flex align="center" gap={2}>
+											<Box className="network-online" />
+											<Text fontSize="sm" color="whiteAlpha.600">
+												All rewards are distributed securely on the Solana blockchain
 											</Text>
-											<Text fontSize="sm" color="blue.300">
-												• Tasks are verified automatically when
-												possible
-											</Text>
-											<Text fontSize="sm" color="blue.300">
-												• Some tasks may require manual verification
-												(24-48 hour review)
-											</Text>
-											<Text fontSize="sm" color="blue.300">
-												• Rewards are sent directly to your connected
-												wallet
-											</Text>
-											<Text fontSize="sm" color="blue.300">
-												• More tasks will be added regularly for
-												additional earning opportunities
-											</Text>
-										</VStack>
-									</Card.Body>
-								</Card.Root>
-							</>
-						)
-					)}
-				</VStack>
-			</Container>
-		</>
+										</Flex>
+									</Box>
+								</Flex>
+							</Box>
+						</>
+					)
+				)}
+			</Flex>
+		</Container>
 	);
 };
 

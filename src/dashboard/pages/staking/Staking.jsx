@@ -2,22 +2,19 @@ import React, { useState, useEffect } from "react";
 import {
 	Box,
 	Container,
-	Heading,
 	Text,
 	Button,
-	Card,
-	VStack,
-	HStack,
+	Flex,
 	Badge,
-	Separator,
+	Icon,
+	Grid,
+	GridItem,
 } from "@chakra-ui/react";
-import { FaClock, FaCoins, FaGift, FaPlay, FaPause } from "react-icons/fa6";
+import { FaClock, FaCoins, FaGift, FaPlay, FaPause, FaRocket, FaStar, FaCrown, FaLock, FaUnlock, FaChartLine, FaBolt } from "react-icons/fa6";
+import { HiOutlineSparkles } from "react-icons/hi2";
 import { useWeb3 } from "../../../hooks/useWeb3";
 import { toaster } from "../../../components/ui/toaster";
 import AlertNotification from "@/dashboard/components/AlertNotification/AlertNotification";
-import SimpleHeading from "@/dashboard/components/SimpleHeading/SimpleHeading";
-import { Clock, PiggyBank } from "lucide-react";
-import { FaPiggyBank } from "react-icons/fa";
 
 const Staking = () => {
 	const {
@@ -34,7 +31,6 @@ const Staking = () => {
 	const [lastClaimTime, setLastClaimTime] = useState(null);
 	const [nextClaimTime, setNextClaimTime] = useState(null);
 
-	// Mock staking data - in real app this would come from contract
 	const [stakingData, setStakingData] = useState({
 		currentPlan: null,
 		stakedAmount: 0,
@@ -44,7 +40,6 @@ const Staking = () => {
 	});
 
 	useEffect(() => {
-		// Calculate next claim time for free plan
 		if (lastClaimTime) {
 			const nextClaim = new Date(
 				lastClaimTime.getTime() + 24 * 60 * 60 * 1000
@@ -76,7 +71,7 @@ const Staking = () => {
 				stakedAmount: plan.deposit,
 				earnedRewards: 0,
 				stakingStartTime: new Date(),
-				canClaim: plan.id === 0, // Free plan can claim immediately
+				canClaim: plan.id === 0,
 			});
 
 			toaster.create({
@@ -101,7 +96,6 @@ const Staking = () => {
 		setIsClaiming(true);
 		try {
 			if (stakingData.currentPlan?.id === 0) {
-				// Free plan mining rewards
 				await claimMiningRewards();
 				setLastClaimTime(new Date());
 				setStakingData((prev) => ({
@@ -111,11 +105,10 @@ const Staking = () => {
 					canClaim: false,
 				}));
 			} else {
-				// Paid plan staking rewards
 				await claimStakingRewards();
 				setStakingData((prev) => ({
 					...prev,
-					earnedRewards: 0, // Reset after claiming
+					earnedRewards: 0,
 				}));
 			}
 
@@ -141,11 +134,11 @@ const Staking = () => {
 		if (!lastClaimTime) return true;
 		const now = new Date();
 		const timeDiff = now.getTime() - lastClaimTime.getTime();
-		return timeDiff >= 24 * 60 * 60 * 1000; // 24 hours
+		return timeDiff >= 24 * 60 * 60 * 1000;
 	};
 
 	const getTimeUntilNextClaim = () => {
-		if (!nextClaimTime) return "";
+		if (!nextClaimTime) return "Ready to claim!";
 		const now = new Date();
 		const diff = nextClaimTime.getTime() - now.getTime();
 
@@ -157,29 +150,50 @@ const Staking = () => {
 		return `${hours}h ${minutes}m`;
 	};
 
-	// if (!isConnected) {
-	// 	return (
-	// 		<Container maxW="6xl">
-	// 			<AlertNotification
-	// 				status={"warning"}
-	// 				alertMsg={
-	// 					"Please connect your wallet to access staking features"
-	// 				}
-	// 			/>
-	// 		</Container>
-	// 	);
-	// }
+	const planColors = {
+		0: { gradient: "linear-gradient(135deg, #10B981 0%, #059669 100%)", light: "green.400", bg: "rgba(16, 185, 129, 0.1)" },
+		1: { gradient: "linear-gradient(135deg, #00FFFF 0%, #0088CC 100%)", light: "cyan.400", bg: "rgba(0, 255, 255, 0.1)" },
+		2: { gradient: "linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)", light: "purple.400", bg: "rgba(168, 85, 247, 0.1)" },
+	};
+
+	const planIcons = {
+		0: FaStar,
+		1: FaRocket,
+		2: FaCrown,
+	};
 
 	return (
-		<Container maxW="6xl" p={0}>
-			<VStack gap={6} alignContent="stretch">
-				<SimpleHeading
-					icon={FaPiggyBank}
-					headingTitle={"Staking & Mining"}
-					headingDesc={
-						"  Stake your Sabi Cash or start mining to earn daily rewards"
-					}
-				/>
+		<Container maxW="1400px" p={0}>
+			<Flex direction="column" gap={8}>
+				{/* Page Header */}
+				<Box>
+					<Flex align="center" gap={3} mb={3}>
+						<Box
+							w="50px"
+							h="50px"
+							borderRadius="xl"
+							bg="linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)"
+							display="flex"
+							alignItems="center"
+							justifyContent="center"
+							boxShadow="0 0 20px rgba(168, 85, 247, 0.3)"
+						>
+							<Icon as={FaCoins} color="white" boxSize={6} />
+						</Box>
+						<Box>
+							<Text
+								fontSize={{ base: "xl", md: "2xl" }}
+								fontWeight="bold"
+								fontFamily="'Space Grotesk', sans-serif"
+							>
+								Staking & Mining
+							</Text>
+							<Text fontSize="sm" color="whiteAlpha.600">
+								Stake your SBC tokens or start mining to earn daily rewards
+							</Text>
+						</Box>
+					</Flex>
+				</Box>
 
 				{!isConnected && (
 					<AlertNotification
@@ -192,351 +206,504 @@ const Staking = () => {
 
 				{isConnected && (
 					<>
-						{/* Current Staking Status */}
+						{/* Stats Overview */}
+						<Grid templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }} gap={4}>
+							<Box className="blockchain-card" p={5}>
+								<Flex align="center" justify="space-between">
+									<Box>
+										<Text fontSize="sm" color="whiteAlpha.600" mb={1}>Available Balance</Text>
+										<Text
+											fontSize="2xl"
+											fontWeight="bold"
+											fontFamily="'Space Grotesk', sans-serif"
+											className="text-gradient-cyber"
+										>
+											{sabiBalance} SBC
+										</Text>
+									</Box>
+									<Box
+										w="45px"
+										h="45px"
+										borderRadius="xl"
+										bg="rgba(0, 255, 255, 0.1)"
+										display="flex"
+										alignItems="center"
+										justifyContent="center"
+									>
+										<Icon as={FaCoins} color="cyan.400" boxSize={5} />
+									</Box>
+								</Flex>
+							</Box>
+
+							<Box className="blockchain-card" p={5}>
+								<Flex align="center" justify="space-between">
+									<Box>
+										<Text fontSize="sm" color="whiteAlpha.600" mb={1}>Current Plan</Text>
+										<Text
+											fontSize="2xl"
+											fontWeight="bold"
+											fontFamily="'Space Grotesk', sans-serif"
+											color={stakingData.currentPlan ? "purple.400" : "whiteAlpha.500"}
+										>
+											{stakingData.currentPlan ? stakingData.currentPlan.name : "None Active"}
+										</Text>
+									</Box>
+									<Box
+										w="45px"
+										h="45px"
+										borderRadius="xl"
+										bg="rgba(168, 85, 247, 0.1)"
+										display="flex"
+										alignItems="center"
+										justifyContent="center"
+									>
+										<Icon as={FaChartLine} color="purple.400" boxSize={5} />
+									</Box>
+								</Flex>
+							</Box>
+
+							<Box className="blockchain-card" p={5}>
+								<Flex align="center" justify="space-between">
+									<Box>
+										<Text fontSize="sm" color="whiteAlpha.600" mb={1}>Total Earned</Text>
+										<Text
+											fontSize="2xl"
+											fontWeight="bold"
+											fontFamily="'Space Grotesk', sans-serif"
+											color="green.400"
+										>
+											{stakingData.earnedRewards} SBC
+										</Text>
+									</Box>
+									<Box
+										w="45px"
+										h="45px"
+										borderRadius="xl"
+										bg="rgba(16, 185, 129, 0.1)"
+										display="flex"
+										alignItems="center"
+										justifyContent="center"
+									>
+										<Icon as={FaGift} color="green.400" boxSize={5} />
+									</Box>
+								</Flex>
+							</Box>
+						</Grid>
+
+						{/* Active Staking Dashboard */}
 						{stakingData.currentPlan && (
-							<Box p={4} w={450}>
-								<Card.Root
-									bg={"gray.900"}
-									borderRadius="1xl"
-									shadow="2xl"
-									border="1px solid"
-									borderColor={0}
-									overflow="hidden"
-									position="relative"
-								>
-									<Card.Body p={8}>
-										<VStack gap={2} mb={7} textAlign="center">
-											<Box fontSize="2xl">💎</Box>
-											<Text
-												fontSize="2xl"
-												fontWeight="bold"
-												color={"white"}
-											>
-												Staking Dashboard
-											</Text>
-											<Text
-												fontSize="sm"
-												color={"gray.400"}
-												fontWeight="medium"
-											>
-												Earn rewards by staking your SBC tokens
-											</Text>
-										</VStack>
-										<HStack
-											justify="space-between"
-											w="full"
-											py={4}
-											borderBottom="1px solid"
-											borderColor={"gray.600"}
-										>
-											<Text fontWeight="500" color={"gray.400"}>
-												Current Plan:
-											</Text>
-											<Badge colorPalette="blue" fontSize="md" p={2}>
-												{stakingData.currentPlan.name}
-											</Badge>
-										</HStack>
-										<HStack
-											justify="space-between"
-											w="full"
-											py={4}
-											borderBottom="1px solid"
-											borderColor={"gray.600"}
-										>
-											<Text fontWeight="500" color={"gray.400"}>
-												Staked Amount:
-											</Text>
-											<Text fontWeight="semibold" color={"gray.400"}>
-												{stakingData.stakedAmount} SBC
-											</Text>
-										</HStack>
-										<HStack
-											justify="space-between"
-											w="full"
-											py={4}
-											borderBottom="1px solid"
-											borderColor={"gray.600"}
-										>
-											<Text fontWeight="500" color={"gray.400"}>
-												Earned Rewards:
-											</Text>
-											<Text
-												fontWeight="bold"
-												color={"white"}
-												fontSize={"lg"}
-											>
-												{stakingData.earnedRewards} SBC
-											</Text>
-										</HStack>
+							<Box className="blockchain-card" p={6} position="relative" overflow="hidden">
+								{/* Glow effect */}
+								<Box
+									position="absolute"
+									top="-50%"
+									right="-10%"
+									w="300px"
+									h="300px"
+									bg={`radial-gradient(circle, ${planColors[stakingData.currentPlan.id]?.bg || planColors[0].bg} 0%, transparent 70%)`}
+									filter="blur(60px)"
+									pointerEvents="none"
+								/>
 
-										{stakingData.currentPlan.id === 0 && (
+								<Flex direction="column" gap={6} position="relative" zIndex={1}>
+									<Flex align="center" justify="space-between" flexWrap="wrap" gap={4}>
+										<Flex align="center" gap={3}>
 											<Box
-												p={5}
-												rounded={"sm"}
-												border="1px solid"
-												borderColor={"gray.600"}
-												my={4}
-											>
-												{/* Next Claim Timer */}
-
-												<HStack
-													justify="space-between"
-													alignItems="center"
-													mb={4}
-												>
-													<HStack gap={2}>
-														<Clock size={16} color="#fff" />
-														<Text
-															fontSize="sm"
-															color={"gray.400"}
-															fontWeight="400"
-														>
-															Next Claim Available:
-														</Text>
-													</HStack>
-													<Box
-														bg={`gray.800`}
-														px={3}
-														py={1}
-														borderRadius="lg"
-														shadow="sm"
-														border="1px solid"
-														borderColor={"gray.600"}
-													>
-														<Text
-															fontSize="sm"
-															fontWeight="bold"
-															color={"white"}
-														>
-															{getTimeUntilNextClaim()}
-														</Text>
-													</Box>
-												</HStack>
-												<Button
-													w={"full"}
-													bg="#0088CD"
-													color="white"
-													py={6}
-													borderRadius="xl"
-													fontSize="md"
-													fontWeight="600"
-													onClick={handleClaimRewards}
-													isLoading={isClaiming}
-													loadingText="Claiming..."
-													isDisabled={!canClaimFree()}
-													transition="all 0.3s ease"
-												>
-													<FaGift />
-													Claim Free Rewards
-												</Button>
-											</Box>
-										)}
-
-										{stakingData.currentPlan.id > 0 && (
-											<Button
-												bg="#0088CD"
-												color="white"
-												py={6}
+												w="50px"
+												h="50px"
 												borderRadius="xl"
-												fontSize="md"
+												bg={planColors[stakingData.currentPlan.id]?.gradient || planColors[0].gradient}
+												display="flex"
+												alignItems="center"
+												justifyContent="center"
+												boxShadow={`0 0 20px ${planColors[stakingData.currentPlan.id]?.bg || planColors[0].bg}`}
+											>
+												<Icon as={planIcons[stakingData.currentPlan.id] || FaStar} color="white" boxSize={6} />
+											</Box>
+											<Box>
+												<Text
+													fontSize="xl"
+													fontWeight="bold"
+													fontFamily="'Space Grotesk', sans-serif"
+												>
+													Active Staking
+												</Text>
+												<Badge
+													bg={planColors[stakingData.currentPlan.id]?.bg || planColors[0].bg}
+													color={planColors[stakingData.currentPlan.id]?.light || planColors[0].light}
+													px={3}
+													py={1}
+													borderRadius="full"
+													fontSize="xs"
+												>
+													{stakingData.currentPlan.name}
+												</Badge>
+											</Box>
+										</Flex>
+
+										{stakingData.currentPlan.id === 0 ? (
+											<Button
+												bg={canClaimFree() ? planColors[0].gradient : "whiteAlpha.200"}
+												color={canClaimFree() ? "white" : "whiteAlpha.500"}
+												px={6}
+												py={5}
+												borderRadius="xl"
+												fontWeight="600"
+												onClick={handleClaimRewards}
+												isLoading={isClaiming}
+												loadingText="Claiming..."
+												isDisabled={!canClaimFree()}
+												leftIcon={<FaGift />}
+												_hover={canClaimFree() ? {
+													transform: "translateY(-2px)",
+													boxShadow: `0 0 30px ${planColors[0].bg}`,
+												} : {}}
+												transition="all 0.3s ease"
+											>
+												Claim Rewards
+											</Button>
+										) : (
+											<Button
+												bg={stakingData.earnedRewards > 0 ? planColors[stakingData.currentPlan.id]?.gradient : "whiteAlpha.200"}
+												color={stakingData.earnedRewards > 0 ? "white" : "whiteAlpha.500"}
+												px={6}
+												py={5}
+												borderRadius="xl"
 												fontWeight="600"
 												onClick={handleClaimRewards}
 												isLoading={isClaiming}
 												isDisabled={stakingData.earnedRewards === 0}
+												leftIcon={<FaGift />}
+												_hover={stakingData.earnedRewards > 0 ? {
+													transform: "translateY(-2px)",
+													boxShadow: `0 0 30px ${planColors[stakingData.currentPlan.id]?.bg}`,
+												} : {}}
 												transition="all 0.3s ease"
 											>
-												<FaGift /> Claim Staking Rewards
+												Claim Rewards
 											</Button>
 										)}
-									</Card.Body>
-								</Card.Root>
+									</Flex>
+
+									{/* Staking Stats */}
+									<Grid templateColumns={{ base: "1fr", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }} gap={4}>
+										<Box className="glass" p={4} borderRadius="xl" textAlign="center">
+											<Text fontSize="xs" color="whiteAlpha.600" mb={1}>Staked Amount</Text>
+											<Text
+												fontSize="xl"
+												fontWeight="bold"
+												fontFamily="'Space Grotesk', sans-serif"
+												color={planColors[stakingData.currentPlan.id]?.light || "cyan.400"}
+											>
+												{stakingData.stakedAmount} SBC
+											</Text>
+										</Box>
+
+										<Box className="glass" p={4} borderRadius="xl" textAlign="center">
+											<Text fontSize="xs" color="whiteAlpha.600" mb={1}>Daily Reward</Text>
+											<Text
+												fontSize="xl"
+												fontWeight="bold"
+												fontFamily="'Space Grotesk', sans-serif"
+												color="green.400"
+											>
+												+{stakingData.currentPlan.dailyReward} SBC
+											</Text>
+										</Box>
+
+										<Box className="glass" p={4} borderRadius="xl" textAlign="center">
+											<Text fontSize="xs" color="whiteAlpha.600" mb={1}>Duration</Text>
+											<Text
+												fontSize="xl"
+												fontWeight="bold"
+												fontFamily="'Space Grotesk', sans-serif"
+											>
+												{stakingData.currentPlan.duration} Days
+											</Text>
+										</Box>
+
+										<Box className="glass" p={4} borderRadius="xl" textAlign="center">
+											<Text fontSize="xs" color="whiteAlpha.600" mb={1}>
+												{stakingData.currentPlan.id === 0 ? "Next Claim" : "Claim Mode"}
+											</Text>
+											<Text
+												fontSize="xl"
+												fontWeight="bold"
+												fontFamily="'Space Grotesk', sans-serif"
+												color={stakingData.currentPlan.autoTrigger ? "green.400" : "yellow.400"}
+											>
+												{stakingData.currentPlan.id === 0
+													? getTimeUntilNextClaim()
+													: stakingData.currentPlan.autoTrigger ? "Auto" : "Manual"}
+											</Text>
+										</Box>
+									</Grid>
+								</Flex>
 							</Box>
 						)}
 
-						{/* Mining Plans */}
-						<Box
-							display={"grid"}
-							gridTemplateColumns={{
-								base: "1fr",
-								md: "1fr 1fr",
-								lg: "1fr 1fr 1fr",
-							}}
-							w={"full"}
-							my={10}
-							gap={10}
-						>
-							{Object.values(MINING_PLANS).map((plan, index) => (
-								<Card.Root
-									key={plan.id}
-									border="2px solid"
-									borderColor={
-										stakingData.currentPlan?.id === plan.id
-											? "blue.500"
-											: "gray.200"
-									}
-									_hover={{
-										borderColor: "blue.300",
-										transform: "translateY(-2px)",
-									}}
-									scale={`${index == 1 ? 1.05 : 1}`}
-									transition="all 0.2s"
+						{/* Staking Plans */}
+						<Box>
+							<Flex align="center" gap={2} mb={6}>
+								<Icon as={HiOutlineSparkles} color="cyan.400" boxSize={5} />
+								<Text
+									fontSize="xl"
+									fontWeight="bold"
+									fontFamily="'Space Grotesk', sans-serif"
 								>
-									<Card.Body>
-										<VStack spaceY={4} alignItems="stretch">
-											<Box textAlign="center">
-												<Heading size="md" color="blue.600">
-													{plan.name}
-												</Heading>
-												<Text
-													fontSize="2xl"
-													fontWeight="bold"
-													mt={2}
-													color={"#212121"}
-												>
-													{plan.deposit === 0
-														? "FREE"
-														: `${plan.deposit} SBC`}
-												</Text>
-											</Box>
+									Available Plans
+								</Text>
+							</Flex>
 
-											<Separator />
-											<VStack gap={3} align="stretch">
-												<HStack>
-													<Box as={FaCoins} color="green.500" />
-													<Text fontSize="sm">
-														<strong>
-															{plan.dailyReward} SBC
-														</strong>{" "}
-														per day
-													</Text>
-												</HStack>
-												<HStack>
-													<Box as={FaClock} color="blue.500" />
-													<Text fontSize="sm">
-														Duration:{" "}
-														<strong>
-															{plan.duration} day
-															{plan.duration > 1 ? "s" : ""}
-														</strong>
-													</Text>
-												</HStack>
-												<HStack>
-													<Box
-														as={
-															plan.autoTrigger ? FaPlay : FaPause
-														}
-														color={
-															plan.autoTrigger
-																? "green.500"
-																: "orange.500"
-														}
-													/>
-													<Text fontSize="sm">
-														{plan.autoTrigger
-															? "Auto claim"
-															: "Manual claim"}
-													</Text>
-												</HStack>
-											</VStack>
-											<Separator />
+							<Grid
+								templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }}
+								gap={6}
+							>
+								{Object.values(MINING_PLANS).map((plan, index) => {
+									const colors = planColors[plan.id] || planColors[0];
+									const PlanIcon = planIcons[plan.id] || FaStar;
+									const isActive = stakingData.currentPlan?.id === plan.id;
+									const canAfford = plan.deposit === 0 || plan.deposit <= parseFloat(sabiBalance);
 
-											<VStack justifySelf={"end"}>
-												<Text
-													fontSize="sm"
-													color="gray.600"
-													textAlign="center"
-												>
-													Total potential:{" "}
-													<strong>
-														{plan.dailyReward * plan.duration}{" "}
-														SBC
-													</strong>
-												</Text>
-
-												<Button
-													bg="#0088CD"
+									return (
+										<Box
+											key={plan.id}
+											className="blockchain-card"
+											p={6}
+											position="relative"
+											overflow="hidden"
+											role="group"
+											border={isActive ? "2px solid" : "1px solid"}
+											borderColor={isActive ? colors.light : "rgba(255, 255, 255, 0.1)"}
+											transform={index === 1 ? "scale(1.02)" : "scale(1)"}
+											_hover={{
+												borderColor: colors.light,
+												transform: index === 1 ? "scale(1.04) translateY(-4px)" : "translateY(-4px)",
+											}}
+											transition="all 0.3s ease"
+										>
+											{/* Popular badge */}
+											{index === 1 && (
+												<Badge
+													position="absolute"
+													top={4}
+													right={4}
+													bg={colors.gradient}
 													color="white"
-													w="full"
-													py={6}
-													rounded={"md"}
+													px={3}
+													py={1}
+													borderRadius="full"
+													fontSize="xs"
+													fontWeight="bold"
+												>
+													POPULAR
+												</Badge>
+											)}
+
+											{/* Glow effect */}
+											<Box
+												position="absolute"
+												top="-50%"
+												right="-20%"
+												w="200px"
+												h="200px"
+												bg={`radial-gradient(circle, ${colors.bg} 0%, transparent 70%)`}
+												filter="blur(40px)"
+												opacity={0}
+												transition="opacity 0.3s ease"
+												_groupHover={{ opacity: 1 }}
+												pointerEvents="none"
+											/>
+
+											<Flex direction="column" gap={5} position="relative" zIndex={1}>
+												{/* Plan Header */}
+												<Flex align="center" gap={3}>
+													<Box
+														w="48px"
+														h="48px"
+														borderRadius="xl"
+														bg={colors.bg}
+														display="flex"
+														alignItems="center"
+														justifyContent="center"
+													>
+														<Icon as={PlanIcon} color={colors.light} boxSize={6} />
+													</Box>
+													<Box>
+														<Text
+															fontSize="lg"
+															fontWeight="bold"
+															fontFamily="'Space Grotesk', sans-serif"
+														>
+															{plan.name}
+														</Text>
+														<Text fontSize="xs" color="whiteAlpha.600">
+															{plan.autoTrigger ? "Auto-claim rewards" : "Manual claim required"}
+														</Text>
+													</Box>
+												</Flex>
+
+												{/* Price */}
+												<Box className="glass" p={4} borderRadius="xl" textAlign="center">
+													<Text
+														fontSize="3xl"
+														fontWeight="bold"
+														fontFamily="'Space Grotesk', sans-serif"
+														color={colors.light}
+													>
+														{plan.deposit === 0 ? "FREE" : `${plan.deposit} SBC`}
+													</Text>
+													<Text fontSize="xs" color="whiteAlpha.600">
+														{plan.deposit === 0 ? "No deposit required" : "Deposit amount"}
+													</Text>
+												</Box>
+
+												{/* Plan Details */}
+												<Flex direction="column" gap={3}>
+													<Flex align="center" justify="space-between" className="glass" p={3} borderRadius="lg">
+														<Flex align="center" gap={2}>
+															<Icon as={FaCoins} color="green.400" boxSize={4} />
+															<Text fontSize="sm" color="whiteAlpha.700">Daily Reward</Text>
+														</Flex>
+														<Text fontWeight="bold" color="green.400">
+															+{plan.dailyReward} SBC
+														</Text>
+													</Flex>
+
+													<Flex align="center" justify="space-between" className="glass" p={3} borderRadius="lg">
+														<Flex align="center" gap={2}>
+															<Icon as={FaClock} color="cyan.400" boxSize={4} />
+															<Text fontSize="sm" color="whiteAlpha.700">Duration</Text>
+														</Flex>
+														<Text fontWeight="bold">
+															{plan.duration} Day{plan.duration > 1 ? "s" : ""}
+														</Text>
+													</Flex>
+
+													<Flex align="center" justify="space-between" className="glass" p={3} borderRadius="lg">
+														<Flex align="center" gap={2}>
+															<Icon as={plan.autoTrigger ? FaUnlock : FaLock} color={plan.autoTrigger ? "green.400" : "yellow.400"} boxSize={4} />
+															<Text fontSize="sm" color="whiteAlpha.700">Claim Mode</Text>
+														</Flex>
+														<Text fontWeight="bold" color={plan.autoTrigger ? "green.400" : "yellow.400"}>
+															{plan.autoTrigger ? "Auto" : "Manual"}
+														</Text>
+													</Flex>
+												</Flex>
+
+												{/* Total Potential */}
+												<Box className="glass" p={4} borderRadius="xl" textAlign="center">
+													<Text fontSize="xs" color="whiteAlpha.600" mb={1}>Total Potential Earnings</Text>
+													<Text
+														fontSize="2xl"
+														fontWeight="bold"
+														fontFamily="'Space Grotesk', sans-serif"
+														className="text-gradient-cyber"
+													>
+														{plan.dailyReward * plan.duration} SBC
+													</Text>
+												</Box>
+
+												{/* Action Button */}
+												<Button
 													onClick={() => handleStake(plan.id)}
 													isLoading={isStaking}
-													isDisabled={
-														stakingData.currentPlan?.id ===
-															plan.id ||
-														(plan.deposit > 0 &&
-															plan.deposit >
-																parseFloat(sabiBalance))
-													}
-													_hover={{ bg: "#0077B6" }}
+													isDisabled={isActive || !canAfford}
+													bg={isActive ? "whiteAlpha.200" : canAfford ? colors.gradient : "whiteAlpha.200"}
+													color={isActive || !canAfford ? "whiteAlpha.500" : "white"}
+													py={6}
+													h="auto"
+													fontWeight="bold"
+													borderRadius="xl"
+													transition="all 0.3s ease"
+													_hover={!isActive && canAfford ? {
+														transform: "translateY(-2px)",
+														boxShadow: `0 0 30px ${colors.bg}`,
+													} : {}}
+													_disabled={{
+														cursor: "not-allowed",
+														opacity: 0.6,
+													}}
+													leftIcon={isActive ? <FaBolt /> : <FaRocket />}
 												>
-													{stakingData.currentPlan?.id === plan.id
-														? "Active"
-														: "Start Plan"}
+													{isActive
+														? "Currently Active"
+														: !canAfford
+														? "Insufficient Balance"
+														: "Start Staking"}
 												</Button>
-											</VStack>
-										</VStack>
-									</Card.Body>
-								</Card.Root>
-							))}
+											</Flex>
+										</Box>
+									);
+								})}
+							</Grid>
 						</Box>
 
-						{/* Account Info */}
-						<Card.Root rounded={"lg"} w={"full"}>
-							<Card.Body rounded={"lg"} p={6}>
-								<HStack justifyContent="space-between" w="full">
-									<Text fontWeight="500" fontSize={18}>
-										Available Sabi Cash:
-									</Text>
-									<Badge
-										colorPalette={"green"}
-										variant={"solid"}
-										fontSize="md"
-										p={2}
-									>
-										{sabiBalance} SBC
-									</Badge>
-								</HStack>
-							</Card.Body>
-						</Card.Root>
+						{/* Information Card */}
+						<Box className="blockchain-card" p={6} position="relative" overflow="hidden">
+							<Box
+								position="absolute"
+								top="-30%"
+								left="-10%"
+								w="300px"
+								h="300px"
+								bg="radial-gradient(circle, rgba(0, 255, 255, 0.05) 0%, transparent 70%)"
+								filter="blur(60px)"
+								pointerEvents="none"
+							/>
 
-						{/* Information */}
-						<Card.Root bg="blue.900" mt={8} borderColor="blue.700">
-							<Card.Body>
-								<VStack gap={3} align="start">
+							<Flex direction="column" gap={4} position="relative" zIndex={1}>
+								<Flex align="center" gap={2}>
+									<Icon as={HiOutlineSparkles} color="cyan.400" boxSize={5} />
 									<Text
 										fontWeight="bold"
-										fontSize={19}
-										color="blue.200"
+										fontSize="lg"
+										fontFamily="'Space Grotesk', sans-serif"
 									>
-										Mining & Staking Information:
+										How Staking Works
 									</Text>
-									<Text fontSize="sm" color="blue.300">
-										• <strong>Free Plan:</strong> Earn 0.9 Sabi Cash
-										every 24 hours (manual claim required)
-									</Text>
-									<Text fontSize="sm" color="blue.300">
-										• <strong>Basic Plan:</strong> Deposit 100 Sabi
-										Cash, earn 15 Sabi Cash daily for 30 days
-									</Text>
-									<Text fontSize="sm" color="blue.300">
-										• <strong>Premium Plan:</strong> Deposit 1000 Sabi
-										Cash, earn 170 Sabi Cash daily for 30 days
-										(auto-claim)
-									</Text>
-									<Text fontSize="sm" color="blue.300">
-										• You can only be in one plan at a time
-									</Text>
-									<Text fontSize="sm" color="blue.300">
-										• Contract deployment required before staking can
-										begin
-									</Text>
-								</VStack>
-							</Card.Body>
-						</Card.Root>
+								</Flex>
+
+								<Grid templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }} gap={4}>
+									{[
+										{ icon: FaStar, text: "Free Plan: Earn 0.9 SBC every 24 hours with manual claim", color: "green.400" },
+										{ icon: FaRocket, text: "Basic Plan: Deposit 100 SBC, earn 15 SBC daily for 30 days", color: "cyan.400" },
+										{ icon: FaCrown, text: "Premium Plan: Deposit 1000 SBC, earn 170 SBC daily with auto-claim", color: "purple.400" },
+										{ icon: FaLock, text: "You can only participate in one plan at a time", color: "yellow.400" },
+									].map((item, index) => (
+										<Flex key={index} align="center" gap={3} className="glass" p={4} borderRadius="xl">
+											<Box
+												w="36px"
+												h="36px"
+												borderRadius="lg"
+												bg={`rgba(${item.color === "green.400" ? "16, 185, 129" : item.color === "cyan.400" ? "0, 255, 255" : item.color === "purple.400" ? "168, 85, 247" : "234, 179, 8"}, 0.1)`}
+												display="flex"
+												alignItems="center"
+												justifyContent="center"
+												flexShrink={0}
+											>
+												<Icon as={item.icon} color={item.color} boxSize={4} />
+											</Box>
+											<Text fontSize="sm" color="whiteAlpha.700">
+												{item.text}
+											</Text>
+										</Flex>
+									))}
+								</Grid>
+
+								<Box className="glass" p={4} borderRadius="xl" mt={2}>
+									<Flex align="center" gap={2}>
+										<Box className="network-online" />
+										<Text fontSize="sm" color="whiteAlpha.600">
+											Smart contracts are audited and secured on Solana blockchain
+										</Text>
+									</Flex>
+								</Box>
+							</Flex>
+						</Box>
 					</>
 				)}
-			</VStack>
+			</Flex>
 		</Container>
 	);
 };

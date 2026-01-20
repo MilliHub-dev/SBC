@@ -16,7 +16,7 @@ import {
 } from "@chakra-ui/react";
 import { useWeb3 } from "../../hooks/useWeb3";
 import { toaster } from "../ui/toaster";
-import { FaExclamationTriangle, FaUser, FaCar } from "react-icons/fa";
+import { FaExclamationTriangle, FaUser, FaCar, FaWallet } from "react-icons/fa";
 import AlertNotification from "@/dashboard/components/AlertNotification/AlertNotification";
 
 // isOpen, onClose,
@@ -61,21 +61,21 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 					},
 					userType: userType
 				};
-				
+
 				// Store demo auth data
 				localStorage.setItem("authToken", response.token);
 				localStorage.setItem("userType", userType);
 				localStorage.setItem("userPoints", response.points || 0);
 				localStorage.setItem("userEmail", formData.email);
 				localStorage.setItem("userId", response.user.id);
-				
+
 				toaster.create({
 					title: "Login successful (Demo)",
 					description: `Welcome ${userType}! You have ${response.points || 0} points.`,
 					type: "success",
 					duration: 3000,
 				});
-				
+
 				setOpenLoginModal(false);
 				return;
 			}
@@ -116,32 +116,40 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 			size={{ base: `xs`, md: `sm` }}
 		>
 			<Portal>
-				<Dialog.Backdrop />
+				<Dialog.Backdrop bg="blackAlpha.700" backdropFilter="blur(8px)" />
 				<Dialog.Positioner>
-					<Dialog.Content mx={4}>
-						<Dialog.Header>
-							<Dialog.Title color={`#000`}>
-								Login to Sabi Ride
+					<Dialog.Content
+						mx={4}
+						bg="#0f172a"
+						border="1px solid"
+						borderColor="cyan.800"
+						borderRadius="xl"
+						boxShadow="0 0 30px rgba(0, 255, 255, 0.1)"
+					>
+						<Dialog.Header borderBottom="1px solid" borderColor="whiteAlpha.100" pb={4}>
+							<Dialog.Title color="white" fontWeight="bold">
+								Login to SabiCash
 							</Dialog.Title>
-							<Dialog.CloseTrigger color="black" />
+							<Dialog.CloseTrigger color="whiteAlpha.600" _hover={{ color: "white" }} />
 						</Dialog.Header>
-						<Dialog.Body>
+						<Dialog.Body py={5}>
 							<VStack gap={4}>
 								{/* User Type Selection */}
 								<Box w="full">
-									<Text fontSize="sm" fontWeight="bold" color="gray.700" mb={2}>
+									<Text fontSize="sm" fontWeight="600" color="whiteAlpha.800" mb={2}>
 										Login as:
 									</Text>
-									<HStack gap={2} w="full">
+									<HStack gap={3} w="full">
 										<Button
 											flex={1}
 											size="sm"
-											bg={userType === "passenger" ? "blue.500" : "transparent"}
-											color={userType === "passenger" ? "white" : "gray.600"}
+											bg={userType === "passenger" ? "cyan.500" : "whiteAlpha.100"}
+											color={userType === "passenger" ? "white" : "whiteAlpha.700"}
 											border="1px solid"
-											borderColor={userType === "passenger" ? "blue.500" : "gray.200"}
+											borderColor={userType === "passenger" ? "cyan.500" : "whiteAlpha.200"}
+											borderRadius="lg"
 											_hover={{
-												bg: userType === "passenger" ? "blue.600" : "gray.50",
+												bg: userType === "passenger" ? "cyan.600" : "whiteAlpha.200",
 											}}
 											onClick={() => setUserType("passenger")}
 										>
@@ -150,12 +158,13 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 										<Button
 											flex={1}
 											size="sm"
-											bg={userType === "driver" ? "blue.500" : "transparent"}
-											color={userType === "driver" ? "white" : "gray.600"}
+											bg={userType === "driver" ? "purple.500" : "whiteAlpha.100"}
+											color={userType === "driver" ? "white" : "whiteAlpha.700"}
 											border="1px solid"
-											borderColor={userType === "driver" ? "blue.500" : "gray.200"}
+											borderColor={userType === "driver" ? "purple.500" : "whiteAlpha.200"}
+											borderRadius="lg"
 											_hover={{
-												bg: userType === "driver" ? "blue.600" : "gray.50",
+												bg: userType === "driver" ? "purple.600" : "whiteAlpha.200",
 											}}
 											onClick={() => setUserType("driver")}
 										>
@@ -171,17 +180,22 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 									<Box
 										w="full"
 										p={3}
-										bg="green.50"
+										bg="green.900"
 										border="1px solid"
-										borderColor="green.200"
-										rounded="md"
+										borderColor="green.700"
+										borderRadius="lg"
 									>
-										<Text fontSize="xs" color="green.600" mb={1}>
-											Connected Wallet:
-										</Text>
-										<Text fontSize="sm" color="green.700" fontFamily="mono">
-											{address.slice(0, 6)}...{address.slice(-4)}
-										</Text>
+										<Flex align="center" gap={2}>
+											<Icon as={FaWallet} color="green.400" />
+											<Box>
+												<Text fontSize="xs" color="green.400" fontWeight="600">
+													Wallet Connected
+												</Text>
+												<Text fontSize="sm" color="green.300" fontFamily="mono">
+													{address.slice(0, 6)}...{address.slice(-4)}
+												</Text>
+											</Box>
+										</Flex>
 									</Box>
 								)}
 								{error && (
@@ -213,8 +227,8 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 								)}
 								<form onSubmit={handleSubmit} style={{ width: "100%" }}>
 									<VStack gap={4} w="full">
-										<Field.Root w="full" color={`#000`}>
-											<Field.Label>Email</Field.Label>
+										<Field.Root w="full">
+											<Field.Label color="whiteAlpha.800" fontSize="sm">Email</Field.Label>
 											<Input
 												name="email"
 												type="email"
@@ -222,10 +236,18 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 												onChange={handleInputChange}
 												placeholder="Enter your email"
 												required
+												bg="whiteAlpha.100"
+												border="1px solid"
+												borderColor="whiteAlpha.200"
+												borderRadius="lg"
+												color="white"
+												_placeholder={{ color: "whiteAlpha.500" }}
+												_hover={{ borderColor: "cyan.600" }}
+												_focus={{ borderColor: "cyan.500", boxShadow: "0 0 0 1px rgba(0, 255, 255, 0.3)" }}
 											/>
 										</Field.Root>
-										<Field.Root w="full" color={`#000`}>
-											<Field.Label>Password</Field.Label>
+										<Field.Root w="full">
+											<Field.Label color="whiteAlpha.800" fontSize="sm">Password</Field.Label>
 											<Input
 												name="password"
 												type="password"
@@ -233,27 +255,48 @@ const LoginModal = ({ openLoginModal, setOpenLoginModal }) => {
 												onChange={handleInputChange}
 												placeholder="Enter your password"
 												required
+												bg="whiteAlpha.100"
+												border="1px solid"
+												borderColor="whiteAlpha.200"
+												borderRadius="lg"
+												color="white"
+												_placeholder={{ color: "whiteAlpha.500" }}
+												_hover={{ borderColor: "cyan.600" }}
+												_focus={{ borderColor: "cyan.500", boxShadow: "0 0 0 1px rgba(0, 255, 255, 0.3)" }}
 											/>
 										</Field.Root>
 										<Button
 											type="submit"
-											bg="blue.500"
+											bg="linear-gradient(135deg, #00FFFF 0%, #0088CC 100%)"
 											color="white"
-											_hover={{ bg: "blue.600" }}
+											fontWeight="bold"
+											borderRadius="lg"
+											_hover={{
+												transform: "translateY(-1px)",
+												boxShadow: "0 0 20px rgba(0, 255, 255, 0.4)",
+											}}
+											_disabled={{
+												opacity: 0.5,
+												cursor: "not-allowed",
+											}}
 											isLoading={isLoading}
 											loadingText="Logging in..."
 											width="full"
 											isDisabled={!isConnected}
+											transition="all 0.2s ease"
 										>
 											Login
 										</Button>
 										<Text
 											fontSize="xs"
-											color="gray.500"
+											color="whiteAlpha.600"
 											textAlign="center"
 										>
-											Don't have an account? Contact support to
-											create one.
+											Don't have an account?{" "}
+											<Text as="span" color="cyan.400" cursor="pointer">
+												Contact support
+											</Text>{" "}
+											to create one.
 										</Text>
 									</VStack>
 								</form>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
 	Box,
 	Button,
@@ -6,18 +6,30 @@ import {
 	Image,
 	Link as ChakraLink,
 	Text,
+	Flex,
+	Container,
 } from "@chakra-ui/react";
 import { Link, useNavigate } from "react-router-dom";
-import { CiMenuKebab } from "react-icons/ci";
+import { HiMenuAlt3 } from "react-icons/hi";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { FaCircleUser } from "react-icons/fa6";
+import { FaUser, FaChartLine } from "react-icons/fa";
+import { HiOutlineSparkles } from "react-icons/hi2";
 import LoginModal from "../Login/LoginModal";
 import { useWeb3 } from "../../hooks/useWeb3";
 
 const Navbar = ({ setIsOpenNavbar }) => {
 	const [openLoginModal, setOpenLoginModal] = useState(false);
+	const [scrolled, setScrolled] = useState(false);
 	const { isLoggedIn } = useWeb3();
 	const navigate = useNavigate();
+
+	useEffect(() => {
+		const handleScroll = () => {
+			setScrolled(window.scrollY > 20);
+		};
+		window.addEventListener("scroll", handleScroll);
+		return () => window.removeEventListener("scroll", handleScroll);
+	}, []);
 
 	const handleDashboardClick = () => {
 		if (isLoggedIn) {
@@ -27,6 +39,13 @@ const Navbar = ({ setIsOpenNavbar }) => {
 		}
 	};
 
+	const navLinks = [
+		{ label: "Features", href: "#features" },
+		{ label: "FAQ", href: "#faq" },
+		{ label: "About", href: "#about" },
+		{ label: "Tokenomics", href: "#tokenomics" },
+	];
+
 	return (
 		<>
 			<LoginModal
@@ -34,113 +53,164 @@ const Navbar = ({ setIsOpenNavbar }) => {
 				setOpenLoginModal={setOpenLoginModal}
 			/>
 			<Box
-				as={"nav"}
-			display={"flex"}
-			alignItems={"center"}
-			justifyContent={{ base: `space-between`, md: `space-around` }}
-			padding={"3rem 0rem"}
-			fontSize={{ md: 18, base: 16 }}
-		>
-			<Box mt={0}>
-				<Link href="#">
-					<Image
-						src="./Sabi-Cash.png"
-						alt="sabi cash"
-						h={"40px"}
-						w={"200px"}
-					/>
-				</Link>
-			</Box>
-			<Box
-				mt={2}
-				display={{ base: "none", md: "flex" }}
-				gap={6}
-				alignItems={"center"}
-				justifyContent={`space-between`}
-				rounded={"sm"}
+				as="nav"
+				position="fixed"
+				top={0}
+				left={0}
+				right={0}
+				zIndex={1000}
+				transition="all 0.3s ease"
+				bg={scrolled ? "rgba(10, 10, 15, 0.9)" : "transparent"}
+				backdropFilter={scrolled ? "blur(20px)" : "none"}
+				borderBottom={scrolled ? "1px solid rgba(0, 255, 255, 0.1)" : "none"}
 			>
-				<ChakraLink
-					href="#"
-					outline={`none`}
-					color={`#fff`}
-					textDecoration={`none`}
-					_hover={{ color: `#0088c6` }}
-				>
-					Comparison
-				</ChakraLink>
-				<ChakraLink
-					href="#faq"
-					outline={`none`}
-					color={`#fff`}
-					textDecoration={`none`}
-					_hover={{ color: `#0088c6` }}
-				>
-					FAQ
-				</ChakraLink>
-				<ChakraLink
-					href="#about"
-					outline={`none`}
-					color={`#fff`}
-					textDecoration={`none`}
-					_hover={{ color: `#0088c6` }}
-				>
-					About
-				</ChakraLink>
-				<ChakraLink
-					href="#"
-					outline={`none`}
-					color={`#fff`}
-					textDecoration={`none`}
-					_hover={{ color: `#0088c6` }}
-				>
-					Socials
-				</ChakraLink>
-			</Box>
-			<Box display={"flex"} alignItems={"center"} gap={3}>
-				<ChakraLink
-					bg={{ base: "#0088CD" }}
-					rounded={"lg"}
-					color={`#fff`}
-					padding={".46rem 1.2rem"}
-					fontSize={18}
-					onClick={handleDashboardClick}
-					cursor="pointer"
-					fontWeight={`600`}
-					_hover={{ textDecoration: 'none', bg: "#0077B6" }}
-				>
-					<FaCircleUser />
-					<Text display={{ base: `none`, md: `block` }}>Dashboard</Text>
-				</ChakraLink>
-				{!isLoggedIn && (
-					<Button
-						onClick={() => setOpenLoginModal(true)}
-						bg={"#0088CD"}
-						color={"#fff"}
-						rounded={"lg"}
-						padding={".46rem 1.2rem"}
-						fontSize={18}
-						fontWeight={`600`}
-						_hover={{ bg: "#0077B6" }}
-						display={{ base: "none", md: "flex" }}
-						gap={2}
+				<Container maxW="1400px">
+					<Flex
+						align="center"
+						justify="space-between"
+						py={scrolled ? 3 : 5}
+						transition="all 0.3s ease"
 					>
-						<FaCircleUser />
-						Login
-					</Button>
+						{/* Logo */}
+						<Link to="/">
+							<Flex align="center" gap={2}>
+								<Image
+									src="/Sabi-Cash.png"
+									alt="SabiCash Logo"
+									h={{ base: "90px", md: "100px" }}
+									w="auto"
+									objectFit="contain"
+								/>
+							</Flex>
+						</Link>
+
+						{/* Desktop Navigation */}
+						<Flex
+							display={{ base: "none", lg: "flex" }}
+							gap={1}
+							align="center"
+							className="glass"
+							borderRadius="full"
+							px={2}
+							py={1}
+						>
+							{navLinks.map((link, index) => (
+								<ChakraLink
+									key={index}
+									href={link.href}
+									px={4}
+									py={2}
+									borderRadius="full"
+									color="whiteAlpha.800"
+									fontSize="sm"
+									fontWeight="medium"
+									transition="all 0.3s ease"
+									_hover={{
+										color: "#00FFFF",
+										bg: "rgba(0, 255, 255, 0.1)",
+										textDecoration: "none",
+									}}
+								>
+									{link.label}
+								</ChakraLink>
+							))}
+						</Flex>
+
+						{/* Right side buttons */}
+						<Flex align="center" gap={3}>
+							{/* Dashboard button */}
+							<Button
+								onClick={handleDashboardClick}
+								size="sm"
+								leftIcon={<FaChartLine />}
+								className="glass"
+								color="white"
+								borderRadius="full"
+								px={4}
+								_hover={{
+									bg: "rgba(0, 255, 255, 0.1)",
+									borderColor: "rgba(0, 255, 255, 0.3)",
+								}}
+								display={{ base: "none", md: "flex" }}
+							>
+								Dashboard
+							</Button>
+
+							{/* Login button */}
+							{!isLoggedIn && (
+								<Button
+									onClick={() => setOpenLoginModal(true)}
+									size="sm"
+									leftIcon={<FaUser />}
+									bg="linear-gradient(135deg, #00FFFF 0%, #A855F7 100%)"
+									color="#0a0a0f"
+									borderRadius="full"
+									px={4}
+									fontWeight="600"
+									_hover={{
+										transform: "translateY(-1px)",
+										boxShadow: "0 0 20px rgba(0, 255, 255, 0.4)",
+									}}
+									display={{ base: "none", md: "flex" }}
+								>
+									Login
+								</Button>
+							)}
+
+							{/* Wallet button */}
+							<Box display={{ base: "none", md: "block" }}>
+								<WalletMultiButton
+									style={{
+										background: "linear-gradient(135deg, #00FFFF 0%, #A855F7 100%)",
+										borderRadius: "9999px",
+										padding: "8px 16px",
+										fontWeight: "600",
+										fontSize: "14px",
+										height: "auto",
+										border: "none",
+										boxShadow: "0 0 20px rgba(0, 255, 255, 0.3)",
+									}}
+								/>
+							</Box>
+
+							{/* Mobile menu button */}
+							<Button
+								onClick={() => setIsOpenNavbar(true)}
+								display={{ base: "flex", lg: "none" }}
+								className="glass"
+								color="white"
+								borderRadius="xl"
+								p={2}
+								_hover={{
+									bg: "rgba(0, 255, 255, 0.1)",
+								}}
+							>
+								<Icon as={HiMenuAlt3} boxSize={6} />
+							</Button>
+						</Flex>
+					</Flex>
+				</Container>
+
+				{/* Animated bottom border on scroll */}
+				{scrolled && (
+					<Box
+						position="absolute"
+						bottom={0}
+						left={0}
+						right={0}
+						h="1px"
+						overflow="hidden"
+					>
+						<Box
+							h="full"
+							bg="linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.5), transparent)"
+						/>
+					</Box>
 				)}
-				<Box display={{ base: "none", md: "block" }}>
-					<WalletMultiButton style={{ backgroundColor: "#0088CD" }} />
-				</Box>
-				<Button
-					onClick={() => setIsOpenNavbar(true)}
-					bg={"blackAlpha.700"}
-					color={"#fff"}
-					display={{ base: "flex", md: "none" }}
-				>
-					<Icon as={CiMenuKebab} boxSize={5} />
-				</Button>
 			</Box>
-		</Box>
+
+			{/* Spacer to prevent content from hiding behind fixed navbar */}
+			<Box h={{ base: "80px", md: "90px" }} />
 		</>
 	);
 };

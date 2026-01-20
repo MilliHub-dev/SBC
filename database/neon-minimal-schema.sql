@@ -16,7 +16,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     external_user_id TEXT, -- opaque id from Sabi Ride (no PII)
-    wallet_address VARCHAR(44),
+    wallet_address VARCHAR(255),
     session_token_hash TEXT NOT NULL, -- store a hash of token, not raw token
     refresh_token_hash TEXT,          -- optional, hashed
     ip_address INET,
@@ -77,7 +77,7 @@ CREATE INDEX IF NOT EXISTS idx_tasks_created ON tasks(created_at);
 CREATE TABLE IF NOT EXISTS task_completions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     external_user_id TEXT,
-    wallet_address VARCHAR(44),
+    wallet_address VARCHAR(255),
     task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
     status TEXT DEFAULT 'pending' CHECK (status IN ('pending','verified','rejected')),
     verification_data JSONB,            -- links, screenshots, proofs (no PII)
@@ -98,8 +98,8 @@ CREATE INDEX IF NOT EXISTS idx_task_comp_status ON task_completions(status);
 CREATE TABLE IF NOT EXISTS web3_transactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     external_user_id TEXT,
-    wallet_address VARCHAR(44) NOT NULL,
-    transaction_hash VARCHAR(88) UNIQUE NOT NULL,
+    wallet_address VARCHAR(255) NOT NULL,
+    transaction_hash VARCHAR(255) UNIQUE NOT NULL,
     transaction_type TEXT NOT NULL,     -- buy_tokens | stake | claim_rewards | convert_points | admin_reward
     chain_id VARCHAR(20) DEFAULT 'solana-devnet',
     network TEXT DEFAULT 'solana-devnet',
