@@ -3,7 +3,6 @@ import React from "react";
 import Navbar from "./components/Navbar/Navbar";
 import HeroSection from "./components/Hero/HeroSection";
 import FAQ from "./components/FAQ/FAQ";
-import Team from "./components/Team/Team";
 import AboutSabiRide from "./components/About/AboutSabiRide";
 import Footer from "./components/Footer/Footer";
 
@@ -12,7 +11,6 @@ const App = () => {
 		<Container fluid p={0}>
 			<HeroSection />
 			<FAQ />
-			<Team />
 			<AboutSabiRide />
 			<Footer />
 		</Container>

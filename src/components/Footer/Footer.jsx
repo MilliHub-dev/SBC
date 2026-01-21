@@ -1,7 +1,6 @@
-import { Box, Container, Link, Text, Flex, Icon, Grid, GridItem } from "@chakra-ui/react";
+import { Box, Container, Link, Text, Flex, Icon, Grid, GridItem, Image } from "@chakra-ui/react";
 import React from "react";
 import { FaTwitter, FaDiscord, FaTelegram, FaGithub, FaMedium } from "react-icons/fa";
-import { HiOutlineSparkles } from "react-icons/hi2";
 import { Link as RouterLink } from "react-router-dom";
 
 const Footer = () => {
@@ -61,27 +60,15 @@ const Footer = () => {
 				>
 					{/* Brand section */}
 					<GridItem>
-						<Flex align="center" gap={2} mb={4}>
-							<Box
-								w="40px"
-								h="40px"
-								borderRadius="xl"
-								bg="linear-gradient(135deg, #00FFFF 0%, #A855F7 100%)"
-								display="flex"
-								alignItems="center"
-								justifyContent="center"
-							>
-								<Icon as={HiOutlineSparkles} color="#0a0a0f" boxSize={5} />
-							</Box>
-							<Text
-								fontSize="xl"
-								fontWeight="bold"
-								fontFamily="'Space Grotesk', sans-serif"
-								className="text-gradient-cyber"
-							>
-								SabiCash
-							</Text>
-						</Flex>
+						<Box mb={4}>
+							<Image
+								src="/Sabi-Cash.png"
+								alt="SabiCash Logo"
+								h="60px"
+								w="auto"
+								objectFit="contain"
+							/>
+						</Box>
 						<Text color="whiteAlpha.700" fontSize="sm" lineHeight="1.8" mb={6} maxW="300px">
 							The future of mobility rewards. Earn $SBC tokens for every ride, stake for
 							passive income, and be part of the decentralized transportation revolution.
