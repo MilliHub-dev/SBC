@@ -26,11 +26,10 @@ VITE_SOLANA_RPC_URL=https://api.devnet.solana.com
 VITE_SOLANA_NETWORK=devnet
 
 # Contract Addresses (Your Solana Program)
-VITE_SABI_CASH_PROGRAM_ID=your_solana_program_id
-VITE_USDT_CONTRACT=your_usdt_mint_address
+VITE_SABI_CASH_PROGRAM_ID=53hqPA69KCo1Voeidh1riMeeffg16hdRw2PANPm2Crsn
+VITE_USDT_CONTRACT=Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB
 
 # Network Configuration
-VITE_DEFAULT_CHAIN_ID=solana-devnet
 VITE_NETWORK_NAME=solana-devnet
 
 # Database (Neon)
@@ -336,7 +335,7 @@ python manage.py runserver
 psql $NEON_DATABASE_URL < database/neon-schema.sql
 
 # Environment Variables
-export VITE_SABI_CASH_CONTRACT=0x53308b85F0Fceadfc0a474eb0c196F0F02CD4983
+export VITE_SABI_CASH_CONTRACT=53hqPA69KCo1Voeidh1riMeeffg16hdRw2PANPm2Crsn
 export VITE_API_BASE_URL=https://your-api.com/api
 ```
 

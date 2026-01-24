@@ -187,6 +187,13 @@ MINING_PREMIUM_DEPOSIT=1000
 # Points Configuration
 POINTS_TO_SABI_RATE=0.5
 MIN_POINTS_CONVERSION=500
+
+# Web3 Configuration
+SOLANA_RPC_URL=https://api.devnet.solana.com
+SABI_CASH_CONTRACT_ADDRESS=53hqPA69KCo1Voeidh1riMeeffg16hdRw2PANPm2Crsn
+# Add your backend wallet private key here (used to sign redemption requests) - Solana Keypair
+OPERATOR_PRIVATE_KEY=
+OPERATOR_ADDRESS=
 ```
 
 ### Rate Limiting

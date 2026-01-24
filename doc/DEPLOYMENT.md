@@ -69,8 +69,8 @@ The app can be deployed to any static hosting platform that supports SPAs:
 ## Post-deployment Configuration
 
 1. **Test Wallet Connection**
-   - Verify RainbowKit wallet connection works
-   - Test with MetaMask, WalletConnect, etc.
+   - Verify Solana Wallet Adapter connection works
+   - Test with Phantom, Solflare, etc.
 
 2. **Test API Integration**
    - Verify login functionality
@@ -78,7 +78,7 @@ The app can be deployed to any static hosting platform that supports SPAs:
    - Check mining and staking features
 
 3. **Verify Web3 Features**
-   - Test buying tokens with ETH/USDT
+   - Test buying tokens with SOL/USDT
    - Verify staking functionality
    - Test reward claiming
 

@@ -1,4 +1,4 @@
-export const SABI_CASH_CONTRACT_ADDRESS = import.meta.env.VITE_SABI_CASH_CONTRACT_ADDRESS || '7e8b6...'; // Update with valid Solana program ID
+export const SABI_CASH_CONTRACT_ADDRESS = import.meta.env.VITE_SABI_CASH_CONTRACT_ADDRESS || '53hqPA69KCo1Voeidh1riMeeffg16hdRw2PANPm2Crsn'; // Solana Devnet Token Address
 
 // USDT Contract Address on Solana
 export const USDT_CONTRACT_ADDRESS = import.meta.env.VITE_USDT_CONTRACT_ADDRESS || 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';

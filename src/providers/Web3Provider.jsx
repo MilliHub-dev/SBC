@@ -14,10 +14,12 @@ const queryClient = new QueryClient();
 
 const Web3Provider = ({ children }) => {
     // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
-    const network = WalletAdapterNetwork.Mainnet;
+    const network = import.meta.env.VITE_SOLANA_NETWORK === 'mainnet-beta' 
+        ? WalletAdapterNetwork.Mainnet 
+        : WalletAdapterNetwork.Devnet;
 
     // You can also provide a custom RPC endpoint.
-    const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+    const endpoint = useMemo(() => import.meta.env.VITE_SOLANA_RPC_URL || clusterApiUrl(network), [network]);
 
     const wallets = useMemo(
         () => [

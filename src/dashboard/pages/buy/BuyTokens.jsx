@@ -20,6 +20,8 @@ import { toaster } from "../../../components/ui/toaster";
 import AlertNotification from "@/dashboard/components/AlertNotification/AlertNotification";
 import { solanaService } from "../../../services/solanaService";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import axios from "axios";
+import { API_ENDPOINTS } from "../../../config/apiConfig";
 
 const BuyTokens = () => {
 	const [paymentMethod, setPaymentMethod] = useState("sol");
@@ -122,6 +124,21 @@ const BuyTokens = () => {
 
 			if (paymentMethod === "sol") {
 				result = await solanaService.buyWithSOL(connection, publicKey, sendTransaction, amount);
+
+				// Log transaction to backend
+				try {
+					await axios.post(API_ENDPOINTS.TRANSACTIONS.LOG, {
+						walletAddress: publicKey.toString(),
+						transactionHash: result.hash,
+						transactionType: 'buy_with_sol',
+						network: 'solana',
+						ethAmount: result.solSpent, // Using eth_amount for SOL
+						sabiCashAmount: result.tokensReceived || calculateTokensFromSOL(amount),
+						status: 'confirmed'
+					});
+				} catch (logError) {
+					console.error("Failed to log transaction:", logError);
+				}
 
 				toaster.create({
 					title: "Purchase Successful",

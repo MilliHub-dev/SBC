@@ -51,8 +51,8 @@ This document outlines the fixes implemented to resolve the mining interface and
 **Solution**:
 - Created `.env` file with necessary configuration
 - Updated Web3 provider with proper error handling
-- Added RainbowKit theme customization
-- Configured proper chain settings for Polygon zkEVM
+- Added Solana Wallet Adapter theme customization
+- Configured proper network settings for Solana Devnet
 
 ### 6. **UI/UX Improvements**
 **Problem**: Inconsistent styling and missing interactive elements.
@@ -136,8 +136,8 @@ The application now includes a fully functional demo mode:
 
 - **Frontend**: React + Vite
 - **UI Library**: Chakra UI v3
-- **Web3**: RainbowKit + Wagmi + Viem
-- **Blockchain**: Polygon zkEVM (Testnet)
+- **Web3**: Solana Wallet Adapter + Web3.js
+- **Blockchain**: Solana Devnet
 - **State Management**: React Hooks
 - **Styling**: Chakra UI Components + Custom CSS
 

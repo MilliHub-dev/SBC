@@ -7,6 +7,78 @@ import { taskLimiter, generalLimiter, adminLimiter } from '../middleware/rateLim
 
 export const router = Router();
 
+// Helper for Token Transfer
+const transferSabiCash = async (walletAddress, amount) => {
+    if (!amount || amount <= 0) return { success: false, error: 'Invalid amount' };
+    
+    const signerPrivateKey = process.env.OPERATOR_PRIVATE_KEY;
+    const contractAddress = process.env.SABI_CASH_CONTRACT_ADDRESS;
+
+    if (!signerPrivateKey || !contractAddress) {
+        console.warn("Missing OPERATOR_PRIVATE_KEY or SABI_CASH_CONTRACT_ADDRESS");
+        return { success: false, error: 'Configuration missing' };
+    }
+
+    try {
+        const bs58 = await import('bs58');
+        const { Connection, Keypair, PublicKey, clusterApiUrl, Transaction } = await import('@solana/web3.js');
+        const { getOrCreateAssociatedTokenAccount, createTransferInstruction, getMint } = await import('@solana/spl-token');
+
+        const rpcUrl = process.env.SOLANA_RPC_URL || clusterApiUrl('devnet');
+        const connection = new Connection(rpcUrl, 'confirmed');
+
+        let keypair;
+        try {
+            keypair = Keypair.fromSecretKey(bs58.decode(signerPrivateKey));
+        } catch {
+            keypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(signerPrivateKey)));
+        }
+
+        const mintPubkey = new PublicKey(contractAddress);
+        const userPubkey = new PublicKey(walletAddress);
+
+        const sourceAccount = await getOrCreateAssociatedTokenAccount(
+            connection,
+            keypair,
+            mintPubkey,
+            keypair.publicKey
+        );
+
+        const destinationAccount = await getOrCreateAssociatedTokenAccount(
+            connection,
+            keypair,
+            mintPubkey,
+            userPubkey
+        );
+
+        const mintInfo = await getMint(connection, mintPubkey);
+        const decimals = mintInfo.decimals;
+        const amountInSmallestUnit = BigInt(Math.floor(amount * Math.pow(10, decimals)));
+
+        if (sourceAccount.amount < amountInSmallestUnit) {
+             return { success: false, error: 'Insufficient treasury balance' };
+        }
+
+        const tx = new Transaction().add(
+            createTransferInstruction(
+                sourceAccount.address,
+                destinationAccount.address,
+                keypair.publicKey,
+                amountInSmallestUnit
+            )
+        );
+
+        const signature = await connection.sendTransaction(tx, [keypair]);
+        await connection.confirmTransaction(signature, 'confirmed');
+
+        return { success: true, signature };
+    } catch (error) {
+        console.error("Token transfer error:", error);
+        return { success: false, error: error.message };
+    }
+};
+
+
 // List active tasks
 router.get('/', optionalAuth, generalLimiter, validatePagination, async (req, res) => {
   try {
@@ -170,7 +242,7 @@ router.post('/:taskId/complete', requireAuth, taskLimiter, validateUUIDParam('ta
     try {
       // Get task details
       const taskRes = await query(
-        'SELECT id, title, reward_points, reward_sabi_cash, is_active, max_completions, completion_count, expires_at FROM tasks WHERE id = $1',
+        'SELECT id, title, reward_points, reward_sabi_cash, is_active, max_completions, completion_count, expires_at, verification_method FROM tasks WHERE id = $1',
         [taskId]
       );
 
@@ -207,12 +279,41 @@ router.post('/:taskId/complete', requireAuth, taskLimiter, validateUUIDParam('ta
         });
       }
 
+      // Handle Automatic Verification & Rewards
+      const isAutoVerify = task.verification_method === 'automatic';
+      const initialStatus = isAutoVerify ? 'verified' : 'pending';
+      const points = isAutoVerify ? (task.reward_points || 0) : 0;
+      const sabiCash = isAutoVerify ? (Number(task.reward_sabi_cash) || 0) : 0;
+      let transferNote = '';
+      let transferSignature = null;
+
+      if (isAutoVerify && sabiCash > 0) {
+          if (req.user.wallet_address) {
+              const transferResult = await transferSabiCash(req.user.wallet_address, sabiCash);
+              if (transferResult.success) {
+                  transferSignature = transferResult.signature;
+                  transferNote = ` | SBC Transferred: ${transferSignature}`;
+                  // Log transaction
+                   await query(
+                     `INSERT INTO web3_transactions (user_id, wallet_address, transaction_hash, transaction_type, sabi_cash_amount, status, network)
+                      VALUES ($1, $2, $3, 'task_reward', $4, 'confirmed', 'solana')`,
+                     [req.user.id, req.user.wallet_address, transferSignature, sabiCash]
+                   );
+              } else {
+                  console.error(`SBC Transfer failed for task ${taskId}: ${transferResult.error}`);
+                  transferNote = ` | SBC Transfer Failed: ${transferResult.error}`;
+              }
+          } else {
+              transferNote = ' | SBC Transfer Skipped: No Wallet Linked';
+          }
+      }
+
       // Create task completion
       const completeRes = await query(
-        `INSERT INTO task_completions (user_id, task_id, status, verification_data)
-         VALUES ($1, $2, 'pending', $3)
+        `INSERT INTO task_completions (user_id, task_id, status, verification_data, points_awarded, sabi_cash_awarded, admin_notes, verified_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id, status, completed_at as "completedAt"`,
-        [req.user.id, taskId, verificationData || null]
+        [req.user.id, taskId, initialStatus, verificationData || null, points, sabiCash, transferNote || null, isAutoVerify ? new Date() : null]
       );
 
       // Update task completion count
@@ -221,16 +322,24 @@ router.post('/:taskId/complete', requireAuth, taskLimiter, validateUUIDParam('ta
         [taskId]
       );
 
+      // Update user balances if auto-verified
+      if (isAutoVerify && (points > 0 || sabiCash > 0)) {
+           await query(
+             'UPDATE users SET total_points = total_points + $1, sabi_cash_balance = sabi_cash_balance + $2 WHERE id = $3',
+             [points, sabiCash, req.user.id]
+           );
+      }
+
       await query('COMMIT');
 
       res.status(201).json({ 
         success: true, 
         task_id: taskId,
         completion: completeRes.rows[0],
-        status: 'pending',
-        points_awarded: 0,
-        sabi_cash_awarded: 0.0,
-        message: 'Task submitted for verification'
+        status: initialStatus,
+        points_awarded: points,
+        sabi_cash_awarded: sabiCash,
+        message: isAutoVerify ? 'Task verified and rewards sent' : 'Task submitted for verification'
       });
 
     } catch (error) {
@@ -257,11 +366,12 @@ router.post('/:taskId/verify', requireAdmin, adminLimiter, validateUUIDParam('ta
     await query('BEGIN');
 
     try {
-      // Get completion details
+      // Get completion details with user wallet
       const completionResult = await query(
-        `SELECT tc.id, tc.user_id, tc.status, t.reward_points, t.reward_sabi_cash, t.title
+        `SELECT tc.id, tc.user_id, tc.status, t.reward_points, t.reward_sabi_cash, t.title, u.wallet_address
          FROM task_completions tc
          JOIN tasks t ON tc.task_id = t.id
+         JOIN users u ON tc.user_id = u.id
          WHERE tc.id = $1 AND tc.task_id = $2 FOR UPDATE`,
         [completionId, taskId]
       );
@@ -282,13 +392,42 @@ router.post('/:taskId/verify', requireAdmin, adminLimiter, validateUUIDParam('ta
       const finalPointsAwarded = approve ? (pointsAwarded || completion.reward_points) : 0;
       const finalSabiCashAwarded = approve ? (sabiCashAwarded || completion.reward_sabi_cash) : 0;
 
+      // Handle SBC Transfer if approved and has reward
+      let transferSignature = null;
+      let transferNote = '';
+
+      if (approve && finalSabiCashAwarded > 0 && completion.wallet_address) {
+           console.log(`Attempting to transfer ${finalSabiCashAwarded} SBC to ${completion.wallet_address}`);
+           const transferResult = await transferSabiCash(completion.wallet_address, finalSabiCashAwarded);
+           
+           if (transferResult.success) {
+               transferSignature = transferResult.signature;
+               transferNote = ` | SBC Transferred: ${transferSignature}`;
+               
+               // Log to web3_transactions
+               await query(
+                 `INSERT INTO web3_transactions (user_id, wallet_address, transaction_hash, transaction_type, sabi_cash_amount, status, network)
+                  VALUES ($1, $2, $3, 'task_reward', $4, 'confirmed', 'solana')`,
+                 [completion.user_id, completion.wallet_address, transferSignature, finalSabiCashAwarded]
+               );
+           } else {
+               console.error(`SBC Transfer failed for task ${taskId}: ${transferResult.error}`);
+               transferNote = ` | SBC Transfer Failed: ${transferResult.error}`;
+               // We proceed with verification but log the failure
+           }
+      } else if (approve && finalSabiCashAwarded > 0 && !completion.wallet_address) {
+          transferNote = ' | SBC Transfer Skipped: No Wallet Linked';
+      }
+
+      const finalNotes = (adminNotes || '') + transferNote;
+
       // Update completion status
       const result = await query(
         `UPDATE task_completions
          SET status = $1, points_awarded = $2, sabi_cash_awarded = $3, admin_notes = $4, verified_at = NOW(), verified_by = $5
          WHERE id = $6
          RETURNING id, status, points_awarded as "pointsAwarded", sabi_cash_awarded as "sabiCashAwarded", verified_at as "verifiedAt"`,
-        [status, finalPointsAwarded, finalSabiCashAwarded, adminNotes || null, req.user.id, completionId]
+        [status, finalPointsAwarded, finalSabiCashAwarded, finalNotes, req.user.id, completionId]
       );
 
       // If approved, award points and sabi cash

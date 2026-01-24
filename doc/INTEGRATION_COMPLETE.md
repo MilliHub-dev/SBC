@@ -67,8 +67,8 @@ Congratulations! Your Sabi Ride Web3 platform has been successfully integrated w
 ```
 Frontend (React + Vite)
 ├── Chakra UI v3 for components
-├── wagmi + viem for Web3
-├── RainbowKit for wallet connection
+├── @solana/web3.js for Web3
+├── Solana Wallet Adapter for wallet connection
 ├── React Router for navigation
 └── Framer Motion for animations
 

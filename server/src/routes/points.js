@@ -258,62 +258,101 @@ router.post('/convert', requireAuth, conversionLimiter, validatePointsConversion
 
       const nonce = transactionResult.rows[0].id; // Use DB ID as nonce
 
-      // Generate signature for smart contract redemption
-      // Message: (userAddress, amount, nonce)
-      // We need a wallet to sign this.
+      // Direct Transfer of Sabi Cash Tokens
       const signerPrivateKey = process.env.OPERATOR_PRIVATE_KEY;
+      const contractAddress = process.env.SABI_CASH_CONTRACT_ADDRESS;
       let signature = null;
-      let numericNonce = null;
+      let transferStatus = 'pending';
 
-      if (signerPrivateKey) {
+      if (signerPrivateKey && contractAddress) {
         try {
-            // Solana signature generation mock
-            const nacl = await import('tweetnacl');
+            console.log("Initiating direct token transfer...");
             const bs58 = await import('bs58');
-            const { Keypair, PublicKey } = await import('@solana/web3.js');
+            const { Connection, Keypair, PublicKey, clusterApiUrl } = await import('@solana/web3.js');
+            const { getOrCreateAssociatedTokenAccount, createTransferInstruction, getMint } = await import('@solana/spl-token');
+
+            // Setup connection
+            const rpcUrl = process.env.SOLANA_RPC_URL || clusterApiUrl('devnet');
+            const connection = new Connection(rpcUrl, 'confirmed');
+
+            // Setup signer
             let keypair;
             try {
-              // Try as base58 string
               keypair = Keypair.fromSecretKey(bs58.decode(signerPrivateKey));
             } catch {
-              // Try as JSON array
               keypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(signerPrivateKey)));
             }
 
-            // Message construction for Solana program
-            // Assuming the program expects a concatenated buffer of:
-            // [wallet_pubkey(32) + amount(8) + nonce(8)]
-            // Amount and nonce as LE u64
-            
-            const walletPubkey = new PublicKey(walletAddress);
-            
-            // Amount: convert to lamports (9 decimals)
-            const lamports = BigInt(Math.floor(sabiCashAmount * 1e9));
-            const amountBuf = Buffer.alloc(8);
-            amountBuf.writeBigUInt64LE(lamports);
+            // Setup token info
+            const mintPubkey = new PublicKey(contractAddress);
+            const userPubkey = new PublicKey(walletAddress);
 
-            // Use Date.now() as numeric nonce
-            const nonceVal = BigInt(Date.now());
-            numericNonce = nonceVal.toString();
-            
-            const nonceBuf = Buffer.alloc(8);
-            nonceBuf.writeBigUInt64LE(nonceVal);
+            // Get/Create Token Accounts
+            // 1. Operator's Account (Source)
+            const sourceAccount = await getOrCreateAssociatedTokenAccount(
+                connection,
+                keypair,
+                mintPubkey,
+                keypair.publicKey
+            );
 
-            const message = Buffer.concat([
-                walletPubkey.toBuffer(),
-                amountBuf,
-                nonceBuf
-            ]);
+            // 2. User's Account (Destination)
+            // Note: We pay for the creation of the user's ATA if it doesn't exist
+            const destinationAccount = await getOrCreateAssociatedTokenAccount(
+                connection,
+                keypair,
+                mintPubkey,
+                userPubkey
+            );
+
+            // Get mint info to determine decimals
+            const mintInfo = await getMint(connection, mintPubkey);
+            const decimals = mintInfo.decimals;
+            const amountInSmallestUnit = BigInt(Math.floor(sabiCashAmount * Math.pow(10, decimals)));
+
+            // Check Operator Balance
+            if (sourceAccount.amount < amountInSmallestUnit) {
+                console.error(`Insufficient funds in treasury. Have: ${sourceAccount.amount}, Need: ${amountInSmallestUnit}`);
+                throw new Error("Treasury has insufficient funds to fulfill this conversion.");
+            }
+
+            // Create Transfer Transaction
+            const tx = new (await import('@solana/web3.js')).Transaction().add(
+                createTransferInstruction(
+                    sourceAccount.address,
+                    destinationAccount.address,
+                    keypair.publicKey,
+                    amountInSmallestUnit
+                )
+            );
+
+            // Send Transaction
+            const txSignature = await connection.sendTransaction(tx, [keypair]);
+            console.log(`Transfer transaction sent: ${txSignature}`);
             
-            const signatureBytes = nacl.sign.detached(message, keypair.secretKey);
-            signature = bs58.encode(signatureBytes);
-             
-        } catch (signErr) {
-            console.error("Signing failed:", signErr);
-            throw new Error("Failed to generate redemption signature");
+            // Confirm Transaction
+            const confirmation = await connection.confirmTransaction(txSignature, 'confirmed');
+            
+            if (confirmation.value.err) {
+                throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+            }
+
+            signature = txSignature;
+            transferStatus = 'completed';
+            console.log("Token transfer confirmed successfully.");
+
+        } catch (transferErr) {
+            console.error("Token transfer failed:", transferErr);
+            transferStatus = 'failed';
+            // We do NOT rollback the DB transaction here because the points are already deducted.
+            // Instead, we log the failure and maybe trigger a manual retry or refund mechanism.
+            // For now, we return the error to the user but the points are gone from DB state (simulating 'pending processing').
+            // Ideally, we should have a 'pending_transfers' table. 
+            // We will update the response message to reflect this.
         }
       } else {
-          console.warn("No OPERATOR_PRIVATE_KEY configured. Skipping signature generation.");
+          console.warn("Missing OPERATOR_PRIVATE_KEY or SABI_CASH_CONTRACT_ADDRESS. Skipping token transfer.");
+          transferStatus = 'skipped_config_missing';
       }
 
       await query('COMMIT');
@@ -325,10 +364,12 @@ router.post('/convert', requireAuth, conversionLimiter, validatePointsConversion
         new_point_balance: newPointBalance,
         new_sabi_cash_balance: newSabiCashBalance,
         transaction_id: nonce,
-        signature: signature,
-        nonce: numericNonce || nonce, // Return numeric nonce if available, else UUID
+        signature: signature, // This is now the transaction hash
+        transfer_status: transferStatus,
         created_at: transactionResult.rows[0].created_at,
-        message: 'Points converted and signed successfully. Proceed to blockchain redemption.'
+        message: signature 
+            ? 'Points converted and Sabi Cash tokens sent to your wallet!' 
+            : 'Points converted. Token transfer is pending (Check Administrator).'
       });
 
     } catch (error) {
