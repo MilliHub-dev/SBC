@@ -5,7 +5,6 @@ import {
 	Icon,
 	Image,
 	Link as ChakraLink,
-	Text,
 	Flex,
 	Container,
 } from "@chakra-ui/react";
@@ -13,7 +12,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { HiMenuAlt3 } from "react-icons/hi";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { FaUser, FaChartLine } from "react-icons/fa";
-import { HiOutlineSparkles } from "react-icons/hi2";
 import LoginModal from "../Login/LoginModal";
 import { useWeb3 } from "../../hooks/useWeb3";
 
@@ -77,7 +75,7 @@ const Navbar = ({ setIsOpenNavbar }) => {
 								<Image
 									src="/Sabi-Cash.png"
 									alt="SabiCash Logo"
-									h={{ base: "90px", md: "100px" }}
+									h={{ base: "40px", md: "60px" }}
 									w="auto"
 									objectFit="contain"
 								/>
@@ -210,7 +208,7 @@ const Navbar = ({ setIsOpenNavbar }) => {
 			</Box>
 
 			{/* Spacer to prevent content from hiding behind fixed navbar */}
-			<Box h={{ base: "80px", md: "90px" }} />
+			<Box h={{ base: "70px", md: "80px" }} />
 		</>
 	);
 };
