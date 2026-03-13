@@ -1,0 +1,24 @@
+{
+  "name": "Sabi Cash",
+  "symbol": "SBC",
+  "description": "Sabi Cash token for Sabi Ride ecosystem the future of mobility and rewards",
+  "seller_fee_basis_points": 0,
+  "image": "https://ipfs.io/ipfs/bafkreiejvrhunwm2c4vmrtt4olwsfqrgwclo47u3dnfhppzi4esnsweumm",
+  "external_url": "https://sabicash.sabiride.net/",
+  "attributes": [],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://ipfs.io/ipfs/bafkreiejvrhunwm2c4vmrtt4olwsfqrgwclo47u3dnfhppzi4esnsweumm",
+        "type": "image/png"
+      }
+    ],
+    "category": "image",
+    "creators": [
+      {
+        "address": "ApZqNNug2DrJ8RHbn9AyBgdotQjBCL9nRKsbHaUysVFS",
+        "share": 100
+      }
+    ]
+  }
+}

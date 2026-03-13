@@ -2,6 +2,7 @@ import { Box, Container, Link, Text, Flex, Icon, Grid, GridItem, Image } from "@
 import React from "react";
 import { FaTwitter, FaDiscord, FaTelegram, FaGithub, FaMedium } from "react-icons/fa";
 import { Link as RouterLink } from "react-router-dom";
+import { SABI_CASH_CONTRACT_ADDRESS, SOLANA_EXPLORER_MINT_URL, SOLSCAN_MINT_URL } from "../../config/web3Config";
 
 const Footer = () => {
 	const socialLinks = [
@@ -20,16 +21,16 @@ const Footer = () => {
 	];
 
 	const resourceLinks = [
-		{ label: "Documentation", href: "#" },
-		{ label: "Whitepaper", href: "#" },
-		{ label: "Tokenomics", href: "#tokenomics" },
-		{ label: "Roadmap", href: "#" },
+		{ label: "Documentation", href: "/resources#documentation" },
+		{ label: "Whitepaper", href: "/resources#whitepaper" },
+		{ label: "Tokenomics", href: "/resources#tokenomics" },
+		{ label: "Roadmap", href: "/resources#roadmap" },
 	];
 
 	const legalLinks = [
-		{ label: "Privacy Policy", href: "#" },
-		{ label: "Terms of Service", href: "#" },
-		{ label: "Cookie Policy", href: "#" },
+		{ label: "Privacy Policy", href: "/legal#privacy" },
+		{ label: "Terms of Service", href: "/legal#terms" },
+		{ label: "Cookie Policy", href: "/legal#cookies" },
 	];
 
 	return (
@@ -143,17 +144,29 @@ const Footer = () => {
 						</Text>
 						<Flex direction="column" gap={3}>
 							{resourceLinks.map((link, index) => (
-								<Link
-									key={index}
-									href={link.href}
-									color="whiteAlpha.700"
-									fontSize="sm"
-									transition="all 0.3s ease"
-									_hover={{ color: "cyan.400", textDecoration: "none", pl: 1 }}
-								>
-									{link.label}
-								</Link>
+								<RouterLink key={index} to={link.href}>
+									<Text
+										color="whiteAlpha.700"
+										fontSize="sm"
+										transition="all 0.3s ease"
+										_hover={{ color: "cyan.400", pl: 1 }}
+									>
+										{link.label}
+									</Text>
+								</RouterLink>
 							))}
+							<Box mt={4}>
+								<Text fontSize="sm" color="whiteAlpha.700">Token Address</Text>
+								<Text fontSize="sm" color="white" fontWeight="bold">{SABI_CASH_CONTRACT_ADDRESS}</Text>
+								<Flex gap={3} mt={2}>
+									<Link href={SOLANA_EXPLORER_MINT_URL} target="_blank" rel="noopener noreferrer" color="cyan.400" fontSize="sm">
+										Solana Explorer
+									</Link>
+									<Link href={SOLSCAN_MINT_URL} target="_blank" rel="noopener noreferrer" color="cyan.400" fontSize="sm">
+										Solscan
+									</Link>
+								</Flex>
+							</Box>
 						</Flex>
 					</GridItem>
 
@@ -171,16 +184,16 @@ const Footer = () => {
 						</Text>
 						<Flex direction="column" gap={3}>
 							{legalLinks.map((link, index) => (
-								<Link
-									key={index}
-									href={link.href}
-									color="whiteAlpha.700"
-									fontSize="sm"
-									transition="all 0.3s ease"
-									_hover={{ color: "cyan.400", textDecoration: "none", pl: 1 }}
-								>
-									{link.label}
-								</Link>
+								<RouterLink key={index} to={link.href}>
+									<Text
+										color="whiteAlpha.700"
+										fontSize="sm"
+										transition="all 0.3s ease"
+										_hover={{ color: "cyan.400", pl: 1 }}
+									>
+										{link.label}
+									</Text>
+								</RouterLink>
 							))}
 						</Flex>
 					</GridItem>

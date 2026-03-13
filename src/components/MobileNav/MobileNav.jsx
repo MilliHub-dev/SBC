@@ -159,15 +159,16 @@ const MobileNav = ({ openNavbar, setIsOpenNavbar }) => {
 				{/* Bottom Section */}
 				<Box mt="auto" pt={6}>
 					{/* Wallet Button */}
-					<Box mb={4}>
+					<Box mb={4} display="flex" justifyContent="center">
 						<WalletMultiButton
 							style={{
-								width: "100%",
+								width: "auto",
+								minWidth: "180px",
 								background: "linear-gradient(135deg, #00FFFF 0%, #A855F7 100%)",
-								borderRadius: "12px",
-								padding: "16px 24px",
+								borderRadius: "10px",
+								padding: "10px 14px",
 								fontWeight: "600",
-								fontSize: "16px",
+								fontSize: "14px",
 								border: "none",
 								justifyContent: "center",
 							}}

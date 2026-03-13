@@ -5,9 +5,9 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "dev": "set NODE_ENV=development&& node --watch src/index.js",
-    "start": "set NODE_ENV=production&& node src/index.js",
-    "build": "echo 'No build step required for Node.js backend'",
+    "dev": "node init && set NODE_ENV=development&& node --watch src/index.js",
+    "start": "node init && set NODE_ENV=production&& node src/index.js",
+    "build": "node init && echo 'No build step required for Node.js backend'",
     "db:setup": "node src/scripts/setupDatabase.js",
     "db:seed": "node src/scripts/seedDatabase.js",
     "db:migrate": "node src/scripts/migrateDatabase.js",
