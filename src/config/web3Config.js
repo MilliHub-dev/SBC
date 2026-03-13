@@ -1,4 +1,7 @@
-export const SABI_CASH_CONTRACT_ADDRESS = import.meta.env.VITE_SABI_CASH_CONTRACT_ADDRESS || '53hqPA69KCo1Voeidh1riMeeffg16hdRw2PANPm2Crsn'; // Solana Devnet Token Address
+export const SABI_CASH_CONTRACT_ADDRESS = import.meta.env.VITE_SABI_CASH_CONTRACT_ADDRESS || 'AFpvWzvyFawJF9uSRi5Nn9xabUaBZdsAzdxvo3FLajst';
+export const SOLANA_NETWORK = import.meta.env.VITE_SOLANA_NETWORK || 'mainnet-beta';
+export const SOLANA_EXPLORER_MINT_URL = `https://explorer.solana.com/address/${SABI_CASH_CONTRACT_ADDRESS}?cluster=${SOLANA_NETWORK}`;
+export const SOLSCAN_MINT_URL = `https://solscan.io/token/${SABI_CASH_CONTRACT_ADDRESS}`;
 
 // USDT Contract Address on Solana
 export const USDT_CONTRACT_ADDRESS = import.meta.env.VITE_USDT_CONTRACT_ADDRESS || 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';

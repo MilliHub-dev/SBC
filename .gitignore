@@ -26,3 +26,15 @@ dist-ssr
 # Core dumps
 core
 core.*
+.env
+server/.env
+creator.json
+server/creator.json
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+token_info.md

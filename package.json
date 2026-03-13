@@ -12,8 +12,12 @@
 		"@chakra-ui/react": "^3.30.0",
 		"@emotion/react": "^11.11.0",
 		"@emotion/styled": "^11.11.0",
+		"@metaplex-foundation/mpl-token-metadata": "^3.4.0",
+		"@metaplex-foundation/umi": "^1.0.0",
+		"@metaplex-foundation/umi-bundle-defaults": "^1.0.0",
 		"@radix-ui/react-slot": "^1.2.3",
 		"@radix-ui/react-toast": "^1.2.14",
+		"@solana/spl-token": "^0.4.14",
 		"@solana/wallet-adapter-base": "^0.9.27",
 		"@solana/wallet-adapter-react": "^0.15.39",
 		"@solana/wallet-adapter-react-ui": "^0.9.39",
@@ -24,6 +28,7 @@
 		"assert": "^2.1.0",
 		"axios": "^1.7.9",
 		"bcryptjs": "^3.0.2",
+		"bs58": "^6.0.0",
 		"buffer": "^6.0.3",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
@@ -63,5 +68,22 @@
 		"ts-node": "^10.9.2",
 		"typescript": "^5.9.3",
 		"vite": "^5.2.0"
-	}
+	},
+	"description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+	"main": "eslint.config.js",
+	"directories": {
+		"doc": "doc"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/MilliHub-dev/SBC.git"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"type": "commonjs",
+	"bugs": {
+		"url": "https://github.com/MilliHub-dev/SBC/issues"
+	},
+	"homepage": "https://github.com/MilliHub-dev/SBC#readme"
 }

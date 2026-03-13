@@ -161,12 +161,12 @@ const Navbar = ({ setIsOpenNavbar }) => {
 									style={{
 										background: "linear-gradient(135deg, #00FFFF 0%, #A855F7 100%)",
 										borderRadius: "9999px",
-										padding: "8px 16px",
+										padding: "6px 12px",
 										fontWeight: "600",
-										fontSize: "14px",
+										fontSize: "12px",
 										height: "auto",
 										border: "none",
-										boxShadow: "0 0 20px rgba(0, 255, 255, 0.3)",
+										boxShadow: "0 0 12px rgba(0, 255, 255, 0.2)",
 									}}
 								/>
 							</Box>
